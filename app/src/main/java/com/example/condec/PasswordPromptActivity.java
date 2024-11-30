@@ -18,6 +18,9 @@ import com.example.condec.Utils.NumpadView;
 import com.example.condec.Utils.PinController;
 import com.example.condec.Utils.PinView;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class PasswordPromptActivity extends AppCompatActivity implements View.OnClickListener {
 
     private PinController pinController;
@@ -90,21 +93,43 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
         String enteredPassword = this.pinController.getEnteredData();
 
         if (correctPassword.equals(enteredPassword)) {
-            // Correct password, allow disabling Device Admin
-            setResult(1);
+            // Correct password, allow access and finish the activity
+            String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
+            if (currentPackageName != null) {
+                Intent intent = new Intent("com.example.condec.UNLOCK_APP");
+                intent.putExtra("PACKAGE_NAME", currentPackageName);
+                sendBroadcast(intent); // Broadcast the unlock event
+            }
+
             finish();
         } else {
-            // Incorrect password, re-enable Device Admin
-            /*Toast.makeText(PasswordPromptActivity.this, "Incorrect password. Please re-enable Device Admin.", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, mAdminName);
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "You need to enable Device Admin again for enhanced security.");
-            startActivityForResult(intent, 1);*/
-
-            setResult(0);
-            finish();
+            // Incorrect password, show a message
+            Toast.makeText(PasswordPromptActivity.this, "Incorrect password. Try again.", Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Check if the app should still be locked
+        String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
+        SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        Set<String> blockedApps = condecPreferences.getStringSet("blockedApps", new HashSet<>());
+
+        if (blockedApps.contains(currentPackageName)) {
+            // Show the password prompt again
+            if (!isFinishing()) {
+                // Activity is still active, do nothing
+            } else {
+                // Re-launch the password prompt
+                finish();
+                Intent intent = new Intent(this, PasswordPromptActivity.class);
+                intent.putExtra("PACKAGE_NAME", currentPackageName);
+                startActivity(intent);
+            }
+        }
     }
 
 

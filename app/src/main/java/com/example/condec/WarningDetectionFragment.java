@@ -163,17 +163,19 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void toggleService(){
 
-        if (this.isServiceActive == false){
+        if (this.isServiceActive == false && this.isBinded == false){
 
             requestCapturePermission();
 
         }
-        else if(this.isServiceActive == true){
+        else if(this.isServiceActive == true && this.isBinded == true){
 
             stopCondecService();
             this.isServiceActive = false;
 
         }
+
+        update();
 /*
         SharedPreferences.Editor editor = this.condecPreferences.edit();
         editor.putBoolean("isSystemActive", this.isSystemActive);
@@ -275,7 +277,6 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         if (this.btnDetectionServiceStatus == view || this.imgViewDetectionServiceStatus == view){
 
             toggleService();
-            update();
 
         }
 

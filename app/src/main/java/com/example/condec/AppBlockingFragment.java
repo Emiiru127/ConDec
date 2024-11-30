@@ -1,47 +1,60 @@
 package com.example.condec;
 
+import static android.app.Activity.RESULT_OK;
+
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.fragment.app.FragmentResultListener;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link AppBlockingFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AppBlockingFragment extends Fragment {
+public class AppBlockingFragment extends Fragment implements View.OnClickListener {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private final int REQUEST_CODE_OVERLAY_PERMISSION = 1;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private LinearLayout blockedAppsContainer;
+    private List<String> lockedApps;
+
+    private Button btnAddBlockApp;
+
+    private SwitchCompat switchAppBlock;
+    private SharedPreferences sharedPreferences;
+    private static final String SWITCH_STATE_KEY = "switch_state";
 
     public AppBlockingFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AppBlockingFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static AppBlockingFragment newInstance(String param1, String param2) {
         AppBlockingFragment fragment = new AppBlockingFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -50,15 +63,171 @@ public class AppBlockingFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            // Handle your fragment arguments here
         }
+
+        getParentFragmentManager().setFragmentResultListener("appSelection", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                // Refresh the fragment's UI
+                refresh();
+            }
+        });
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_app_blocking, container, false);
+        View view = inflater.inflate(R.layout.fragment_app_blocking, container, false);
+
+        blockedAppsContainer = view.findViewById(R.id.blockedAppsContainer);
+        lockedApps = getLockedAppsFromPreferences();
+
+        // Get the list of installed apps and display them
+        List<ApplicationInfo> installedApps = getInstalledApps();
+
+        for (ApplicationInfo app : installedApps) {
+            // Check if the app is in the locked apps list, if so, add it to the UI
+            if (lockedApps.contains(app.packageName)) {
+                createAppToggleView(app, blockedAppsContainer);
+            }
+        }
+
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        this.btnAddBlockApp = view.findViewById(R.id.btnAddBlockApp);
+
+        this.btnAddBlockApp.setOnClickListener(this);
+
+        this.switchAppBlock = view.findViewById(R.id.switchAppBlock);
+        sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(getActivity())) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getActivity().getPackageName()));
+                startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION);
+            }
+        }
+
+        switchAppBlock.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Save the switch state
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean(SWITCH_STATE_KEY, isChecked);
+            editor.apply();
+
+            if (isChecked) {
+                // Start the service
+                Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
+                getActivity().startService(serviceIntent);
+            } else {
+                // Stop the service
+                Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
+                getActivity().stopService(serviceIntent);
+            }
+        });
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
+            if (Settings.canDrawOverlays(getActivity())) {
+                // Permission granted, you can overlay your activity
+            } else {
+                // Permission denied
+            }
+        }
+    }
+
+    private List<String> getLockedAppsFromPreferences() {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        return new ArrayList<>(sharedPreferences.getStringSet("blockedApps", new HashSet<>()));
+    }
+
+    private List<ApplicationInfo> getInstalledApps() {
+        PackageManager pm = getActivity().getPackageManager();
+        return pm.getInstalledApplications(PackageManager.GET_META_DATA);
+    }
+
+    private void createAppToggleView(ApplicationInfo app, ViewGroup parent) {
+        View appView = LayoutInflater.from(getContext()).inflate(R.layout.item_app_blocking, parent, false);
+
+        ImageView appIcon = appView.findViewById(R.id.appIcon);
+        TextView appName = appView.findViewById(R.id.appName);
+        SwitchCompat appToggle = appView.findViewById(R.id.appSwitch);
+
+        PackageManager pm = getActivity().getPackageManager();
+        appIcon.setImageDrawable(app.loadIcon(pm));
+        appName.setText(app.loadLabel(pm));
+
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        boolean isLocked = sharedPreferences.getBoolean(app.packageName, false);
+        appToggle.setChecked(isLocked);
+
+        appToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            saveLockedAppState(app.packageName, isChecked);
+        });
+
+        parent.addView(appView);
+    }
+
+    private void saveLockedAppState(String packageName, boolean isLocked) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(packageName, isLocked);
+        editor.apply();
+    }
+
+    public void refresh() {
+        // Reload the selected apps from SharedPreferences
+        blockedAppsContainer.removeAllViews();
+
+        // Reload the selected apps from SharedPreferences
+        lockedApps = getLockedAppsFromPreferences();
+
+        // Get the list of installed apps
+        List<ApplicationInfo> installedApps = getInstalledApps();
+
+        // Recreate the UI based on the updated locked apps list
+        for (ApplicationInfo app : installedApps) {
+            if (lockedApps.contains(app.packageName)) {
+                createAppToggleView(app, blockedAppsContainer);
+            }
+        }
+    }
+
+    private void selectApp(){
+
+        Intent intent = new Intent(getActivity(), AppSelectionActivity.class);
+        startActivity(intent);
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void onClick(View view) {
+
+        if (this.btnAddBlockApp == view){
+
+            selectApp();
+
+        }
+
     }
 }

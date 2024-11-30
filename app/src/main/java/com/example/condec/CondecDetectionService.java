@@ -82,7 +82,7 @@ public class CondecDetectionService extends Service {
         this.mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         try {
-            tflite = new Interpreter(loadModelFile(this, "ai models/detect.tflite"));
+            tflite = new Interpreter(loadModelFile(this, "ai models/detect6.tflite"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -348,15 +348,46 @@ public class CondecDetectionService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         // Handle service unbinding
-        stopProjection();
-        stopSelf(); // Optionally stop the service when unbound
+       /* stopProjection();
+        stopSelf();*/ // Optionally stop the service when unbound
         return super.onUnbind(intent);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // Stop the AI processing timer
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+
+        // Release the latest image if it exists
+        if (latestImage != null) {
+            latestImage.close();
+            latestImage = null;
+        }
+
+        // Close the ImageReader
+        if (imageReader != null) {
+            imageReader.close();
+            imageReader = null;
+        }
+
+        // Stop and release the MediaProjection
         stopProjection();
+
+        // Release the TensorFlow Lite interpreter
+        if (tflite != null) {
+            tflite.close();
+            tflite = null;
+        }
+
+        // Optionally, stop the handler thread if it was created just for AI processing
+        if (handler != null) {
+            handler.getLooper().quitSafely();
+            handler = null;
+        }
     }
 
 }
