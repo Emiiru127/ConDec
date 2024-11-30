@@ -17,8 +17,8 @@ import java.util.concurrent.Executors;
 
 public class BlockedURLRepository {
     private final DefaultBlockedUrlDao defaultBlockedUrlDao;
-    private final UserBlockedUrlDao userBlockedUrlDao;
-    private final ExecutorService executorService;
+    public final UserBlockedUrlDao userBlockedUrlDao;
+    public final ExecutorService executorService;
 
     public BlockedURLRepository(Application application) {
         CondecDatabase db = CondecDatabase.getDatabase(application);
