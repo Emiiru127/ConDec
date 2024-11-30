@@ -51,12 +51,20 @@ public class CondecSleepService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && "STOP_SERVICE".equals(intent.getAction())) {
-            Log.d("CondecSleepService", "Stopping service.");
-            stopSelf();
-            return START_NOT_STICKY;
+        if (intent != null) {
+            String action = intent.getAction();
+            if ("START_SERVICE".equals(action)) {
+                // Handle service start
+                startForegroundService();
+                handler.postDelayed(runnable, 500);
+                return START_STICKY;
+            } else if ("STOP_SERVICE".equals(action)) {
+                // Handle service stop
+                stopForeground(true);
+                stopSelf();
+                return START_NOT_STICKY;
+            }
         }
-
         // Service logic here
 
         startForegroundService();

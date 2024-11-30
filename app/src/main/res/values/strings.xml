@@ -1,12 +1,14 @@
 <resources>
     <string name="app_name">ConDec</string>
 
+    <string name="accessibility_service_description">Condec Accessibility</string>
+
     <string name="terms_and_agreements">
 
         <b>Terms of Use:</b>
-        \n\n\t\tBy downloading, installing, or using the Condec Android application, you agree to be bound by the following Terms of Use. If you do not agree to these Terms, you may not use the App. These Terms constitute a legally binding agreement between you and the application.
+        \n\n\t\tBy downloading, installing, or using the ConDec Android application, you agree to be bound by the following Terms of Use. If you do not agree to these Terms, you may not use the App. These Terms constitute a legally binding agreement between you and the application.
         \n\n<b>1. License:</b>
-        \n\t\t• Subject to your compliance with these Terms, Condec grants you a limited, non-exclusive, non-transferable, revocable license to use the App for your personal, non-commercial use.
+        \n\t\t• Subject to your compliance with these Terms, ConDec grants you a limited, non-exclusive, non-transferable, revocable license to use the App for your personal, non-commercial use.
         \n\n<b>2. Use of the App:</b>
         \n\t\t• You agree to use the App only for its intended purpose, which is to assist parents in detecting and removing adult content from children\'s devices.
         \n\t\t• You agree not to use the App in any way that may violate any laws, regulations, or third-party rights.
@@ -15,12 +17,12 @@
         \n\n<b>4. Privacy:</b>
         \n\t\t• Your use of the App is subject to our Privacy Policy, which outlines how we collect, use, disclose, and safeguard your information. By using the App, you consent to the terms of our Privacy Policy.
         \n\n<b>5. Intellectual Property:</b>
-        \n\t\t• All intellectual property rights in the App, including but not limited to copyrights, trademarks, and trade secrets, are owned by Condec or its licensors.
-        \n\t\t• You may not modify, adapt, reproduce, distribute, or create derivative works based on the App without prior written consent from Condec.
+        \n\t\t• All intellectual property rights in the App, including but not limited to copyrights, trademarks, and trade secrets, are owned by ConDec or its licensors.
+        \n\t\t• You may not modify, adapt, reproduce, distribute, or create derivative works based on the App without prior written consent from ConDec.
 
 
         \n\n\n<b>Privacy Policy:</b>
-        \n\n\t\tCondec is committed to ensuring the privacy and security of your information when you use our application. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information in relation to the use of the App.
+        \n\n\t\tConDec is committed to ensuring the privacy and security of your information when you use our application. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information in relation to the use of the App.
         \n\n<b>1. Information We Collect:</b>
         \n\t\t• PIN and Backup Password: When you use the App, you have the option to create a PIN and backup password for security purposes. These credentials are used to access and configure the App\'s settings but are not linked to any personal information or user account.
         \n\n<b>2. Use of Information:</b>
@@ -36,6 +38,30 @@
         \n\t\t• Parents or legal guardians are responsible for installing and using the App on their children\'s devices and should ensure compliance with applicable laws and regulations regarding children\'s privacy and online safety.
         \n\n<b>6. Changes to this Privacy Policy:</b>
         \n\t\t• We reserve the right to update or modify this Privacy Policy at any time. Any changes will be effective immediately upon posting on our website or within the App. We encourage you to review this Privacy Policy periodically for any updates or changes.
+
+    </string>
+
+    <string name="about_condec">
+
+        \t\tWelcome to ConDec, your go-to parental control solution designed to help you manage and safeguard your child\'s digital experience right from your home. Our app provides parents with the tools needed to create a safe, secure, and balanced online environment for their children, all from the comfort of their home.
+
+        \n\n<b>Key Features:</b>
+
+        \n\n<b>Home-Based Control:</b> ConDec\'s primary connection is centered within your household, allowing you to manage your child\'s digital activities effectively from home.
+
+        \n\n<b>URL Blocking:</b> Easily block prohibited websites or add specific URLs to a safe list, ensuring harmful content stays out of reach.
+
+        \n\n<b>App Management:</b> Create a list of approved applications, restricting access to only those you deem safe. This ensures your child uses only appropriate apps.
+
+        \n\n<b>Application Protection:</b> Secure sensitive applications by password-protecting any apps not on the approved list. Only you, the parent, will know the password, adding an extra layer of security.
+
+        \n\n<b>Sleep Time Restrictions:</b> With just a tap of a button, you can activate sleep time mode.
+
+        \n\n<b>Sensitive Content Detector:</b> Our advanced content warning detector monitors social media platforms for inappropriate material, automatically refreshing the feed to keep your child safe.
+
+        \n\n\t\tAt ConDec, we believe in empowering parents with robust tools to create a safe and positive digital space for their children, with the main control anchored in your home. Whether you need to block harmful websites, restrict app usage, or monitor social media content, ConDec is here to support you every step of the way.
+
+        \n\n<b>Thank you for choosing ConDec. Together, let\'s make the digital world a safer place for our children.</b>
 
     </string>
 

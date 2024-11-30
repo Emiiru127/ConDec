@@ -20,6 +20,26 @@
         <item name="colorButtonNormal">@color/black_main_background</item>
     </style>
 
+
+    <!-- Custom TimePickerDialog theme
+    <style name="CustomTimePickerDialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">@android:color/white</item>
+        <item name="android:buttonStyle">@style/CustomButtonStyle</item>
+        <item name="android:timePickerStyle">@style/CustomTimePickerStyle</item>
+    </style>
+
+    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="CustomTimePickerStyle" parent="android:Widget.Holo.TimePicker">
+        <item name="android:headerTimeTextColor">@android:color/white</item>
+        <item name="android:headerBackground">@android:color/black</item>
+        <item name="android:timePickerMode">spinner</item>
+    </style>
+-->
     <style name="CustomSwitchStyle" parent="Widget.AppCompat.CompoundButton.Switch">
         <item name="android:thumb">@drawable/custom_switch_thumb</item>
         <item name="android:track">@drawable/custom_switch_track</item>

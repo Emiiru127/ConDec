@@ -4,7 +4,6 @@ import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.net.VpnService;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -176,7 +175,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip("Blocked Websites", "Restrict access to certain websites on your device. Blocked sites are automatically inaccessible.");
+        TipDialog dialog = new TipDialog("Blocked Websites", "Restrict access to certain websites on your device. Blocked sites are automatically inaccessible.");
         dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
 
     }

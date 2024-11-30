@@ -33,6 +33,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
     private Button btnReadTermsConditions;
     private Button btnChangePin;
+    private Button btnChangeBackup;
     private Button btnAboutCondec;
     private Button btnParentMode;
 
@@ -90,6 +91,11 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_settings);
 
+        this.btnReadTermsConditions = findViewById(R.id.btnReadTermsConditions);
+        this.btnChangePin = findViewById(R.id.btnChangePin);
+        this.btnChangeBackup = findViewById(R.id.btnChangeBackup);
+        this.btnAboutCondec = findViewById(R.id.btnAboutCondec);
+
         switchParentMode = findViewById(R.id.switchParentMode);
         btnParentMode = findViewById(R.id.btnParentMode);
         txtviewAvailableDevices = findViewById(R.id.txtviewAvailableDevices);
@@ -112,6 +118,11 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         // Set up click listener for the back button
         ImageButton btnBack = findViewById(R.id.btnSettingsBack);
         btnBack.setOnClickListener(this);
+
+        btnReadTermsConditions.setOnClickListener(this);
+        btnChangePin.setOnClickListener(this);
+        btnChangeBackup.setOnClickListener(this);
+        btnAboutCondec.setOnClickListener(this);
 
         // Set the switch listener
         switchParentMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -198,12 +209,54 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    private void goBack(){
+        Intent intent = new Intent(SettingsActivity.this, MainMenuActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToTermsConditions(){
+        Intent intent = new Intent(SettingsActivity.this, ReadTermsConditionsActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToChangePin(){
+        Intent intent = new Intent(SettingsActivity.this, CreatePinActivity.class);
+        intent.putExtra("forChanging", true);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToChangeQuestion(){
+        Intent intent = new Intent(SettingsActivity.this, CreateQuestionActivity.class);
+        intent.putExtra("forChanging", true);
+        startActivity(intent);
+        finish();
+    }
+
+    private void goToAboutCondec(){
+        Intent intent = new Intent(SettingsActivity.this, AboutCondecActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.btnSettingsBack) {
-            Intent intent = new Intent(SettingsActivity.this, MainMenuActivity.class);
-            startActivity(intent);
-            finish();
+            goBack();
+        }
+        if (view.getId() == R.id.btnReadTermsConditions) {
+            goToTermsConditions();
+        }
+        if (view.getId() == R.id.btnChangePin) {
+            goToChangePin();
+        }
+        if (view.getId() == R.id.btnChangeBackup) {
+            goToChangeQuestion();
+        }
+        if (view.getId() == R.id.btnAboutCondec) {
+            goToAboutCondec();
         }
     }
 
@@ -245,6 +298,15 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
                 Log.d("CondecSender", device);
 
             }
+        }
+    }
+
+    public void onBackPressed() {
+
+        if (false){
+
+            super.onBackPressed();
+
         }
     }
 

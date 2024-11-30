@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.condec.R;
 
 public class WebsiteBlocked extends RecyclerView.ViewHolder {
-    TextView urlTextView;
-    Button removeButton;
+    private TextView urlTextView;
+    private Button removeButton;
 
     public WebsiteBlocked(View itemView) {
         super(itemView);

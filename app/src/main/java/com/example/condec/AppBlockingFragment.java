@@ -24,7 +24,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.appcompat.widget.SwitchCompat;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -220,7 +219,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip("Blocked Apps", "Manage which apps can be accessed on your device. Blocked apps require a password or authentication to open.");
+        TipDialog dialog = new TipDialog("Blocked Apps", "Manage which apps can be accessed on your device. Blocked apps require a password or authentication to open.");
         dialog.show(requireActivity().getSupportFragmentManager(), "BlockedAppsInfoDialog");
 
     }

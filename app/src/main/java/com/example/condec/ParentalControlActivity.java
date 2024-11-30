@@ -7,18 +7,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParentalControlActivity extends AppCompatActivity implements View .OnClickListener{
 
@@ -30,6 +29,8 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
     private Switch switchWebsiteBlocking;
     private CardView cardViewSleepMode;
     private CondecParentalService parentalService;
+
+    private ParentalControlActivity parentalControlActivity;
     private boolean isBound = false;
 
     String deviceName;
@@ -50,6 +51,12 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         }
     };
 
+    public ParentalControlActivity(){
+
+        this.parentalControlActivity = this;
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,7 +65,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         this.btnBackParental = findViewById(R.id.btnBackParental);
         this.btnBackParental.setOnClickListener(this);
 
-        this.txtViewTargetDeviceName = findViewById(R.id.txtTargetDeviceName);
+        this.txtViewTargetDeviceName = findViewById(R.id.txtViewTerms);
 
         this.switchDetection = findViewById(R.id.switchWarning);
         this.switchAppBlocking = findViewById(R.id.switchBlockingApps);
@@ -124,10 +131,30 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
             @Override
             public void onClick(View view) {
 
-                parentalService.sendCommandToDevice(deviceInfo, "TOGGLE_SLEEP");
+                parentalService.requestSleepData(deviceInfo, parentalControlActivity);
 
             }
         });
+    }
+
+    public void showSleepSettings(List<String> sleepData){
+
+        try {
+            SleepControlDialog sleepControlDialog = new SleepControlDialog(this, sleepData);
+            sleepControlDialog.show(getSupportFragmentManager(), "Parental Sleep Settings");
+        }
+       catch (Exception e){
+
+            Log.d("Condec Parental Control", "ERROR: " + e);
+
+       }
+
+    }
+
+    public void sendSleepCommandToDevice(String command, String input){
+
+        parentalService.sendSleepCommandToDevice(deviceInfo, command, input);
+
     }
 
     @Override

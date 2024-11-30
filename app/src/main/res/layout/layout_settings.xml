@@ -47,13 +47,14 @@
             android:layout_height="0dp"
             android:background="@color/transparent"
             android:orientation="vertical"
+            android:padding="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/txtTargetDeviceName"
+                android:id="@+id/txtViewTerms"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/transparent"
@@ -67,35 +68,62 @@
                 android:id="@+id/btnReadTermsConditions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:background="@color/transparent"
                 android:gravity="center|start"
                 android:text="Read Terms of Service"
                 android:textColor="@color/blue_main_background"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                app:icon="@drawable/icon_read"
+                app:iconGravity="textStart"
+                app:iconTint="@color/blue_main_background" />
 
             <Button
                 android:id="@+id/btnChangePin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:background="@color/transparent"
                 android:gravity="center|start"
-                android:text="Change Pin Password"
+                android:text="Change Pin"
                 android:textColor="@color/blue_main_background"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                app:icon="@drawable/icon_change_pin"
+                app:iconGravity="textStart"
+                app:iconTint="@color/blue_main_background" />
+
+            <Button
+                android:id="@+id/btnChangeBackup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@color/transparent"
+                android:gravity="center|start"
+                android:text="Change Backup Password"
+                android:textColor="@color/blue_main_background"
+                android:textSize="20sp"
+                app:icon="@drawable/icon_change_pin"
+                app:iconGravity="textStart"
+                app:iconTint="@color/blue_main_background" />
 
             <Button
                 android:id="@+id/btnAboutCondec"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:background="@color/transparent"
                 android:gravity="center|start"
                 android:text="About Condec"
                 android:textColor="@color/blue_main_background"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                app:icon="@drawable/icon_about"
+                app:iconGravity="textStart"
+                app:iconTint="@color/blue_main_background" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:background="@color/transparent"
                 android:orientation="horizontal">
 
@@ -107,7 +135,10 @@
                     android:gravity="center|start"
                     android:text="Parent Mode"
                     android:textColor="@color/blue_main_background"
-                    android:textSize="20sp" />
+                    android:textSize="20sp"
+                    app:icon="@drawable/icon_parent"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/blue_main_background" />
 
                 <Switch
                     android:id="@+id/switchParentMode"
@@ -128,7 +159,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@color/transparent"
                 android:padding="10dp"
-                android:text="Available Devices"
+                android:text="Available Devices:"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:visibility="gone" />

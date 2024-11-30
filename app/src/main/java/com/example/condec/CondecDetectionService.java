@@ -5,15 +5,15 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
@@ -26,16 +26,12 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-
-import com.google.android.material.snackbar.Snackbar;
 
 import org.tensorflow.lite.Interpreter;
 
@@ -45,6 +41,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -68,6 +67,17 @@ public class CondecDetectionService extends Service {
     private Intent data;
     private Image latestImage;
 
+    private CondecAccessibilityService condecAccessibilityService;
+
+    private Map<String, Integer> appThresholds = new HashMap<String, Integer>() {{
+        put("com.facebook.katana", 10); // Facebook: 80% threshold
+        put("com.google.android.youtube", 85); // YouTube: 85% threshold
+        put("com.zhiliaoapp.musically", 90); // TikTok: 90% threshold
+        put("com.android.chrome", 10);
+    }};
+
+    private int screenHeight;
+    private int screenWidth;
 
     public class LocalBinder extends Binder {
         CondecDetectionService getService() {
@@ -92,6 +102,20 @@ public class CondecDetectionService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
+        this.screenWidth = displayMetrics.widthPixels;
+        this.screenHeight = displayMetrics.heightPixels;
+
+        this.condecAccessibilityService = new CondecAccessibilityService();
+        try {
+            this.condecAccessibilityService.setScreenDimensions(this.screenWidth, this.screenHeight);
+        }catch (Exception e){
+
+            Log.d("CondecAccessibilityService", "ERROR: " + e);
+        }
+
+
 
         HandlerThread handlerThread = new HandlerThread("InferenceThread");
         handlerThread.start();
@@ -206,7 +230,23 @@ public class CondecDetectionService extends Service {
                         if (latestImage != null) {
                             System.out.println("TESTING AI");
                             try {
-                                processImage(latestImage);
+
+                                String currentApp = getForegroundAppPackageName();
+                                Log.d("CondecDetectionService", "Retrived App: " + currentApp);
+
+                                if (currentApp != null && appThresholds.containsKey(currentApp) || true) {
+
+                                    processImage(latestImage, currentApp);
+
+                                }
+                                else {
+                                    // Skip AI detection if the current app is not in the monitored list
+                                    Log.d("CondecDetectionService", "Skipping AI detection for unmonitored app: " + currentApp);
+                                    notifyUser("AI RESULTS: NOT LISTED TO DETECT Current App: " + currentApp);
+
+                                }
+
+
 
                             } catch (Exception e) {
 
@@ -231,9 +271,9 @@ public class CondecDetectionService extends Service {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-    private void processImage(Image image) {
+    private void processImage(Image image, String currentApp) {
         Bitmap bitmap = convertImageToBitmap(image);
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 320, 320, true);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 640, 640, true);
         ByteBuffer inputBuffer = convertBitmapToByteBuffer(resizedBitmap);
 
         float[][] output = new float[1][10]; // Adjust based on your model's output
@@ -242,11 +282,11 @@ public class CondecDetectionService extends Service {
         tflite.run(inputBuffer, output);
 
         // Process the model output
-        processModelOutput(output);
+        processModelOutput(output, currentApp);
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap) {
-        int INPUT_SIZE = 320; // Model's expected input size
+        int INPUT_SIZE = 640; // Model's expected input size
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * INPUT_SIZE * INPUT_SIZE * 3);
         byteBuffer.order(ByteOrder.nativeOrder());
         int[] intValues = new int[INPUT_SIZE * INPUT_SIZE];
@@ -276,7 +316,31 @@ public class CondecDetectionService extends Service {
         return bitmap;
     }
 
-    private void processModelOutput(float[][] output) {
+    private String getForegroundAppPackageName() {
+        UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+        long time = System.currentTimeMillis();
+        List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
+
+        if (appList != null && !appList.isEmpty()) {
+            UsageStats recentStats = null;
+            for (UsageStats stats : appList) {
+                if (recentStats == null || stats.getLastTimeUsed() > recentStats.getLastTimeUsed()) {
+                    recentStats = stats;
+                }
+            }
+            if (recentStats != null) {
+
+                String currentPackageName = recentStats.getPackageName();
+                return currentPackageName;
+
+            }
+        }
+
+        return null;
+    }
+
+
+    private void processModelOutput(float[][] output, String currentApp) {
 
         System.out.println("AI RESULTS: ");
 
@@ -288,23 +352,49 @@ public class CondecDetectionService extends Service {
             }
         }
 
-        //System.out.println("FINAL AI RESULTS: " + output[0][9]);
+        // Check if the current app is monitored
+        if (currentApp != null && appThresholds.containsKey(currentApp)  || true) {
+            float[] probabilities = output[0];
+            float maxProbability = 0.0f;
 
-        float[] probabilities = output[0]; // Assuming output is a 2D array
-
-        // Find the highest probability
-        float maxProbability = 0.0f;
-        for (float probability : probabilities) {
-            if (probability > maxProbability) {
-                maxProbability = probability;
+            // Find the highest probability (max probability)
+            for (float probability : probabilities) {
+                if (probability > maxProbability) {
+                    maxProbability = probability;
+                }
             }
+
+            int percentage = Math.round(maxProbability * 100);
+            System.out.println("FINAL AI RESULTS (Percentage): " + percentage + "%, Current App: " + currentApp);
+            notifyUser("AI RESULTS: " + percentage + "%");
+            //notifyUser("AI RESULTS: " + percentage + "%, Current App: " + currentApp);
+
+            // Get the threshold for the current app
+            if (appThresholds.containsKey(currentApp)  || true) {
+                /*Log.d("CondecDetectionService", "Current App: " + currentApp);
+                int threshold = appThresholds.get(currentApp);
+
+                Log.d("CondecDetectionService", "Current App AI Result: " + percentage);
+                Log.d("CondecDetectionService", "Current App AI Threshold: " + threshold);
+
+                Log.d("CondecDetectionService", "AI Judgement Result: " + (percentage > threshold));
+                // Trigger action if the threshold is exceeded
+                if (percentage > threshold) {
+                    Log.d("CondecDetectionService", "AI Perform Swipe And Back");
+                    this.condecAccessibilityService.performSwipeAndBack();
+                }*/
+            }
+        } else {
+            // Do not run AI detection if the app is not in the monitored list
+            Log.d("CondecDetectionService", "Current app is not monitored: " + currentApp);
         }
 
-        // Convert to percentage
-        int percentage = Math.round(maxProbability * 100);
-        System.out.println("FINAL AI RESULTS (Percentage): " + percentage + "%");
 
         //Toast.makeText(CondecDetectionService.this, ("AI RESULTS: " + percentage + "%"), Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void notifyUser(String message){
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -317,7 +407,8 @@ public class CondecDetectionService extends Service {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        notificationManager.notify(1, createNotification("AI RESULTS: " + percentage + "%"));
+        notificationManager.notify(1, createNotification(message));
+
 
     }
 

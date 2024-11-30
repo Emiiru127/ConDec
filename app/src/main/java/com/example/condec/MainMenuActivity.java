@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.AppOpsManager;
@@ -16,18 +17,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
-import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
-import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -36,6 +36,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
+
+import java.util.List;
 
 public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -107,8 +109,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         updateFrameFeatures("Warning Detection");
 
         checkAdminPermission();
+        checkBatteryPermission();
         checkAndRequestPermissions();
         checkSleepService();
+
 
     }
 
@@ -141,6 +145,49 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
+    private void checkBatteryPermission(){
+
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        String packageName = getPackageName();
+        if (pm.isIgnoringBatteryOptimizations(packageName)) {
+            // Battery optimizations are disabled for this app
+        } else {
+            // Battery optimizations are enabled, prompt the user to disable it
+            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        }
+
+    }
+
+    private void requestAccessibilityPermission() {
+        new AlertDialog.Builder(this)
+                .setTitle("Accessibility Permission Required")
+                .setMessage("This app requires accessibility permissions to function properly. Please enable it in the settings.")
+                .setPositiveButton("Open Settings", (dialog, which) -> openAccessibilitySettings())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void openAccessibilitySettings() {
+        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        startActivity(intent);
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        String serviceId = getPackageName() + "/" + CondecAccessibilityService.class.getName();
+        AccessibilityManager am = (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (am != null) {
+            List<AccessibilityServiceInfo> enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+            for (AccessibilityServiceInfo enabledService : enabledServices) {
+                if (serviceId.equals(enabledService.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void startRequiredServices() {
         // Check if the device name is set
         String deviceName = condecPreferences.getString("deviceName", null);
@@ -160,7 +207,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    private void checkSleepService(){
+    public void checkSleepService(){
 
         this.isToggleSleep = isServiceRunning(CondecSleepService.class);
         update();
@@ -175,14 +222,16 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestUsageAccessPermission();
             } else if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
-            } else {
-                showMandatoryRenameDeviceDialog(); // Call the new dialog here
+            } /*else if (!isAccessibilityServiceEnabled()) {
+                requestAccessibilityPermission();  // Request accessibility permission
+            }*/ else {
+                showMandatoryRenameDeviceDialog();
             }
         } else {
             if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
             } else {
-                showMandatoryRenameDeviceDialog(); // Call the new dialog here
+                showMandatoryRenameDeviceDialog();
             }
         }
     }
@@ -455,6 +504,14 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             String userInput = input.getText().toString().trim();
             if (!userInput.isEmpty()) {
                 renameDevice(userInput);
+                boolean isInitializationDone = this.condecPreferences.getBoolean("isInitializationDone", false);
+
+                if(isInitializationDone == false){
+
+                    Intent intent = new Intent(this, AppSelectionActivity.class);
+                    startActivity(intent);
+
+                }
                 startRequiredServices(); // Start services after the name is provided
             } else {
                 Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
@@ -496,8 +553,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void showSleepSettings(){
 
-        DialogSleepControl dialogSleepControl = new DialogSleepControl();
-        dialogSleepControl.show(getSupportFragmentManager(), "Sleep Settings");
+        SleepControlDialog sleepControlDialog = new SleepControlDialog();
+        sleepControlDialog.setTrigger(this);
+        sleepControlDialog.show(getSupportFragmentManager(), "Sleep Settings");
 
     }
 

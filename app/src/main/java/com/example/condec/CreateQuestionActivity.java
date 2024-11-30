@@ -13,6 +13,8 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class CreateQuestionActivity extends AppCompatActivity implements View.OnClickListener {
@@ -22,6 +24,11 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
     private EditText editTxtReAnswer;
 
     private Button btnConfirmCreateQuestion;
+
+    private boolean forChanging = false;
+
+    private ImageButton btnCreateQuestionBack;
+    private TextView txtViewQuestionTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +41,27 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         this.btnConfirmCreateQuestion = findViewById(R.id.btnConfirmCreateQuestion);
 
         this.btnConfirmCreateQuestion.setOnClickListener(this);
+
+        this.forChanging = getIntent().getBooleanExtra("forChanging", false);
+
+        this.btnCreateQuestionBack = findViewById(R.id.btnCreateQuestionBack);
+        this.txtViewQuestionTitle = findViewById(R.id.txtViewQuestionTitle);
+
+        this.btnCreateQuestionBack.setOnClickListener(this);
+
+        if (this.forChanging){
+
+            this.btnCreateQuestionBack.setVisibility(View.VISIBLE);
+            this.txtViewQuestionTitle.setText("Change\nBackup Password");
+
+            SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+            String oldQuestion = condecPreferences.getString("savedQuestion", null);
+            String oldAnswer = condecPreferences.getString("savedBackupPassword", null);
+
+            this.editTxtQuestion.setText(oldQuestion);
+            this.editTxtAnswer.setText(oldAnswer);
+
+        }
 
         this.editTxtQuestion.addTextChangedListener(new TextWatcher() {
             private Handler handler = new Handler(Looper.getMainLooper());
@@ -140,10 +168,21 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         editor.putString("savedBackupPassword", enteredPassword);
         editor.apply();
 
-        Intent intent = new Intent(CreateQuestionActivity.this, MainActivity.class);
-        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
-        startActivity(intent);
-        finish();
+        if (this.forChanging == false){
+
+            Intent intent = new Intent(CreateQuestionActivity.this, MainActivity.class);
+            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+            startActivity(intent);
+            finish();
+
+        }
+        else {
+
+            Intent intent = new Intent(CreateQuestionActivity.this, SettingsActivity.class);
+            startActivity(intent);
+            finish();
+
+        }
 
     }
 
@@ -226,6 +265,12 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
     }
 
+    private void goToSettings(){
+        Intent intent = new Intent(CreateQuestionActivity.this, SettingsActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     private boolean checkString(String data){
 
         boolean check = false;
@@ -245,8 +290,29 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
     }
 
+    private boolean shouldAllowBack(){
+
+        return  false;
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (shouldAllowBack()) { // true for allow back
+            super.onBackPressed();
+        } else {
+
+        }
+    }
+
     @Override
     public void onClick(View view) {
+
+        if (view == this.btnCreateQuestionBack){
+
+            goToSettings();
+
+        }
 
         if (view == this.btnConfirmCreateQuestion){
 

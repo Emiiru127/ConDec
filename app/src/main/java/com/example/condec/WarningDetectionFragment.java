@@ -14,10 +14,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
 
 import android.os.IBinder;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,12 +23,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.example.condec.Database.BlockedURLRepository;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -287,7 +279,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip("Warning Detection", "This feature allows you to enable or disable the detection of sensitive content warnings on your child’s social media.");
+        TipDialog dialog = new TipDialog("Warning Detection", "This feature allows you to enable or disable the detection of sensitive content warnings on your child’s social media.");
         dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
 
     }

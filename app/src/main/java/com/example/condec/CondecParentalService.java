@@ -1,9 +1,12 @@
 package com.example.condec;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +33,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -296,10 +300,25 @@ public class CondecParentalService extends Service {
                     Log.d("Condec Parental", "Getting Service Statuses");
                     // Call the first handleClient method for data exchange
                     handleClientData(clientSocket, parts);
-                } else if (parts.length == 3) {
+                } else if (parts.length >= 3) {
                     Log.d("Condec Parental", "Command Recieved");
                     // Call the second handleClientCommand method for command handling
-                    handleClientCommand(clientSocket, parts);
+
+                    if (!parts[2].equals("SLEEP_CONTROL") && parts.length == 3){
+
+                        handleClientCommand(clientSocket, parts);
+
+                    }
+                    else if (parts[2].equals("SLEEP_CONTROL") && parts.length == 3){
+
+                        handleClientSleepData(clientSocket, parts);
+
+                    } else if (parts.length == 4) {
+
+                        handleClientSleepCommand(clientSocket, parts);
+
+                    }
+
                 }
             }
 
@@ -351,6 +370,66 @@ public class CondecParentalService extends Service {
         }
     }
 
+    private void handleClientSleepData(Socket clientSocket, String[] parts) {
+        try {
+            String senderDeviceName = parts[0];
+            String targetDeviceName = parts[1];
+
+            if (localDeviceName.equals(targetDeviceName)) {
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+
+                String deviceName = sharedPreferences.getString("deviceName", null);
+                boolean isTimeBased = sharedPreferences.getBoolean("sleepUseTimeOn", false);
+                boolean isOverride = sharedPreferences.getBoolean("sleepManualOn", false);
+                Long startTime = sharedPreferences.getLong("sleepStartTime", -1);
+                Long endTime = sharedPreferences.getLong("sleepEndTime", -1);
+
+                Log.d("Condec Parental", "Received Request from: " + senderDeviceName);
+
+                Log.d("Condec Parental", "sending deviceName: " + deviceName);
+                Log.d("Condec Parental", "sending Time Based: " + isTimeBased);
+                Log.d("Condec Parental", "sending Override: " + isOverride);
+                Log.d("Condec Parental", "sending Start Time: " + startTime);
+                Log.d("Condec Parental", "sending End Time: " + endTime);
+
+                String[] dataToSend = {
+                        "DeviceName:" + deviceName,
+                        "TimeBased:" + isTimeBased,
+                        "Override:" + isOverride,
+                        "StartTime:" + startTime,
+                        "EndTime:" + endTime,
+                };  // Example array of strings
+                for (String data : dataToSend) {
+                    out.println(data);  // Send each data item
+                }
+                out.println("END_OF_SLEEP_DATA");  // Send a marker to indicate the end of the data
+                out.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleClientSleepCommand(Socket clientSocket, String[] parts) {
+
+        Log.d("Condec Parental", "Command Recieved in Method");
+
+        try {
+            String senderDeviceName = parts[0];
+            String targetDeviceName = parts[1];
+            String command = parts[2];
+            Log.d("Condec Parental", "Authentication: between " + senderDeviceName + " and " + targetDeviceName);
+            if (localDeviceName.equals(targetDeviceName)) {
+                Log.d("Condec Parental", "Authentication: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
+                handleSleepCommand(command, parts[3]); // Handle the received command
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void handleClientCommand(Socket clientSocket, String[] parts) {
 
         Log.d("Condec Parental", "Command Recieved in Method");
@@ -368,6 +447,214 @@ public class CondecParentalService extends Service {
             e.printStackTrace();
         }
     }
+
+    private void handleSleepCommand(String command, String input) {
+
+        Log.d("Condec Parental", "Sleep Command Received: " + command);
+        Log.d("Condec Parental", "Input Received: " + input);
+
+        switch (command) {
+            case "TIMED_BASED":
+                setTimedBasedSleep(Boolean.parseBoolean(input));
+                break;
+            case "SLEEP_OVERRIDE":
+                setOverriddenSleep(Boolean.parseBoolean(input));
+                break;
+            case "SET_SLEEP_START_TIME":
+                setStartTimeSleep(Long.parseLong(input));
+                break;
+            case "SET_SLEEP_END_TIME":
+                setEndTimeSleep(Long.parseLong(input));
+                break;
+            case "CANCEL_SCHEDULED_SLEEP":
+                cancelScheduledSleepTime();
+                break;
+            case "RESCHEDULED_SLEEP":
+                reScheduleSleepTime();
+                break;
+            default:
+                showToast("Unknown Sleep Command: " + command);
+                break;
+        }
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private void reScheduleSleepTime(){
+
+        Calendar startTimeCalendar = Calendar.getInstance();
+        Calendar endTimeCalendar = Calendar.getInstance();
+
+        PendingIntent startPendingIntent;
+        PendingIntent stopPendingIntent;
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        // Load stored times or set defaults
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        long startMillis = sharedPreferences.getLong("sleepStartTime", -1);
+        long endMillis = sharedPreferences.getLong("sleepEndTime", -1);
+
+        boolean useTimeOn = sharedPreferences.getBoolean("sleepUseTimeOn", false);
+        boolean manualOn = sharedPreferences.getBoolean("sleepManualOn", false);
+
+        long currentTime = System.currentTimeMillis();
+        long startTime = startTimeCalendar.getTimeInMillis();
+        long endTime = endTimeCalendar.getTimeInMillis();
+
+        startTimeCalendar.setTimeInMillis(startMillis);
+        endTimeCalendar.setTimeInMillis(endMillis);
+
+        Intent startIntent = new Intent(this, CondecSleepService.class);
+        startIntent.setAction("START_SERVICE");
+        startPendingIntent = PendingIntent.getForegroundService(
+                this, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Intent stopIntent = new Intent(this, CondecSleepService.class);
+        stopIntent.setAction("STOP_SERVICE");
+        stopPendingIntent = PendingIntent.getForegroundService(
+                this, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        // Cancel existing alarms before rescheduling
+        if (alarmManager != null) {
+            alarmManager.cancel(startPendingIntent);
+            alarmManager.cancel(stopPendingIntent);
+        }
+
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeCalendar.getTimeInMillis(), startPendingIntent);
+
+        // Schedule the service stop
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTimeCalendar.getTimeInMillis(), stopPendingIntent);
+
+        // Handle current state: should we start or stop the service now?
+        if (currentTime >= startTime && currentTime < endTime) {
+            startForegroundService(new Intent(this, CondecSleepService.class));
+        } else {
+            stopService(new Intent(this, CondecSleepService.class));
+        }
+
+    }
+
+    private void cancelScheduledSleepTime(){
+
+        PendingIntent startPendingIntent;
+        PendingIntent stopPendingIntent;
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        // Schedule the service to start at the same time every day
+        Intent startIntent = new Intent(this, CondecSleepService.class);
+        startPendingIntent = PendingIntent.getService(this, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        // Schedule the service to stop at the same time every day
+        Intent stopIntent = new Intent(this, CondecSleepService.class);
+        stopIntent.setAction("STOP_SERVICE");
+        stopPendingIntent = PendingIntent.getService(this, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+
+        // Cancel the scheduled service
+        if (alarmManager != null) {
+            if (startPendingIntent != null) {
+
+                alarmManager.cancel(startPendingIntent);
+            }
+            if (stopPendingIntent != null) {
+
+                alarmManager.cancel(stopPendingIntent);
+            }
+        }
+
+    }
+
+    private void setTimedBasedSleep(boolean isTimedBased){
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putBoolean("sleepUseTimeOn", isTimedBased);
+        editor.apply();
+
+        boolean isOverride = sharedPreferences.getBoolean("sleepManualOn", false);
+        boolean isSleepServiceActive = isServiceRunning(CondecSleepService.class);
+
+        if (isOverride == true || isSleepServiceActive == true){
+
+            editor.putBoolean("sleepManualOn", false);
+            stopService(new Intent(this, CondecSleepService.class));
+
+        }
+
+        reScheduleSleepTime();
+
+    }
+
+    private void setOverriddenSleep(boolean isOverridden){
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putBoolean("sleepManualOn", isOverridden);
+        editor.apply();
+
+        boolean isTimedBased = sharedPreferences.getBoolean("sleepUseTimeOn", false);
+        boolean isSleepServiceActive = isServiceRunning(CondecSleepService.class);
+
+        if (isTimedBased == true){
+
+            editor.putBoolean("sleepUseTimeOn", false);
+
+        }
+
+        cancelScheduledSleepTime();
+
+        if (isOverridden == true && isSleepServiceActive == false){
+
+            startForegroundService(new Intent(this, CondecSleepService.class));
+
+        }
+        else {
+
+            stopService(new Intent(this, CondecSleepService.class));
+
+        }
+
+    }
+
+    private void setStartTimeSleep(long milliseconds){
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putLong("sleepStartTime", milliseconds);
+        editor.apply();
+
+        boolean isTimedBased = sharedPreferences.getBoolean("sleepUseTimeOn", false);
+
+        if(isTimedBased == true){
+
+            reScheduleSleepTime();
+
+        }
+    }
+
+    private void setEndTimeSleep(long milliseconds){
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putLong("sleepEndTime", milliseconds);
+        editor.apply();
+
+        boolean isTimedBased = sharedPreferences.getBoolean("sleepUseTimeOn", false);
+
+        if(isTimedBased == true){
+
+            reScheduleSleepTime();
+
+        }
+
+    }
+
 
     private void handleCommand(String command) {
 
@@ -465,6 +752,22 @@ public class CondecParentalService extends Service {
         });
     }
 
+    public void sendSleepCommandToDevice(NsdServiceInfo deviceInfo, String command, String input) {
+        executorService.execute(() -> {
+            try {
+                Log.d("Condec Parental", "deviceInfo: " + deviceInfo);
+                Log.d("Condec Parental", "host: " + deviceInfo.getHost());
+                Log.d("Condec Parental", "port: " + deviceInfo.getPort());
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + command + ":" + input);
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     public void sendCallToDevice(NsdServiceInfo deviceInfo) {
         executorService.execute(() -> {
             try {
@@ -501,12 +804,54 @@ public class CondecParentalService extends Service {
         });
     }
 
+    public void requestSleepData(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+        executorService.execute(() -> {
+            try {
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "SLEEP_CONTROL");
+
+                // Now listen for data from Device B
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                List<String> receivedData = new ArrayList<>();
+                String line;
+                while ((line = in.readLine()) != null) {
+                    if (line.equals("END_OF_SLEEP_DATA")) {
+                        break;  // End of data marker
+                    }
+                    receivedData.add(line);
+                }
+
+                Log.d("Condec Parental", "DATA RECEIVED From : " + (receivedData.get(0)).split(":")[1]);
+
+                for (String data : receivedData){
+
+                    Log.d("Condec Parental", data);
+
+                }
+
+                // Handle the received data (e.g., start a new activity)
+                handleReceivedSleepData(receivedData, parentalControlActivity);
+
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     private void handleReceivedData(List<String> data) {
         // Example: Start a new activity and pass the data
         Intent intent = new Intent(this, ParentalControlActivity.class);
         intent.putStringArrayListExtra("receivedData", new ArrayList<>(data));
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+    }
+
+    private void handleReceivedSleepData(List<String> data, ParentalControlActivity parentalControlActivity) {
+
+        parentalControlActivity.showSleepSettings(data);
+
     }
 
     private void showToast(String message) {

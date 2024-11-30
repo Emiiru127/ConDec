@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +31,11 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
     private LinearLayout pinViewBackground2;
     private Button[] numpadButtons;
     private Button btnConfirmCreatePin;
+
+    private boolean forChanging = false;
+
+    private ImageButton btnCreatePinBack;
+    private TextView txtViewTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +88,20 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         this.numpadView = new NumpadView(numpadButtons);
         this.dualPinController = new DualPinController(this, this.pinView1, this.pinView2, this.numpadView);
 
+        this.forChanging = getIntent().getBooleanExtra("forChanging", false);
+
+        this.btnCreatePinBack = findViewById(R.id.btnCreatePinBack);
+        this.txtViewTitle = findViewById(R.id.txtViewPinTitle);
+
+        this.btnCreatePinBack.setOnClickListener(this);
+
+        if (this.forChanging){
+
+            this.btnCreatePinBack.setVisibility(View.VISIBLE);
+            this.txtViewTitle.setText("Change PIN");
+
+        }
+
     }
 
     private void savePassword(){
@@ -95,11 +115,21 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         editor.putString("savedPin", enteredPin);
         editor.apply();
 
-        Intent intent = new Intent(CreatePinActivity.this, MainActivity.class);
-        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
-        startActivity(intent);
-        finish();
+        if (this.forChanging == false){
 
+            Intent intent = new Intent(CreatePinActivity.this, MainActivity.class);
+            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+            startActivity(intent);
+            finish();
+
+        }
+        else {
+
+            Intent intent = new Intent(CreatePinActivity.this, SettingsActivity.class);
+            startActivity(intent);
+            finish();
+
+        }
     }
 
     private void checkPassword(){
@@ -140,9 +170,20 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private void goBackToSettings(){
+        Intent intent = new Intent(CreatePinActivity.this, SettingsActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public void onClick(View view) {
 
+        if (this.btnCreatePinBack == view){
+
+            goBackToSettings();
+
+        }
         if (this.btnConfirmCreatePin == view){
 
             checkPassword();

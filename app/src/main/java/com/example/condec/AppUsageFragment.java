@@ -11,7 +11,6 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,10 +28,8 @@ import com.example.condec.Classes.AppUsageInfo;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -214,7 +211,7 @@ public class AppUsageFragment extends Fragment implements View.OnClickListener {
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip("App Usage", "This feature displays the list of apps your child has recently used, along with the amount of time spent on each app.");
+        TipDialog dialog = new TipDialog("App Usage", "This feature displays the list of apps your child has recently used, along with the amount of time spent on each app.");
         dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
 
     }
