@@ -101,7 +101,7 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
 
     private void forgotPassword(){
 
-        Intent intent = new Intent(EnterPinActivity.this, ForgotPinAcitivity.class);
+        Intent intent = new Intent(EnterPinActivity.this, ForgotPinActivity.class);
         startActivity(intent);
         finish();
 

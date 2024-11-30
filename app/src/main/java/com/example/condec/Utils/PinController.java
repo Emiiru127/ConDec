@@ -2,10 +2,12 @@ package com.example.condec.Utils;
 
 import com.example.condec.CreatePinActivity;
 import com.example.condec.EnterPinActivity;
+import com.example.condec.PasswordPromptActivity;
 import com.example.condec.R;
 
 public class PinController {
 
+    private PasswordPromptActivity passwordPromptActivity;
     private EnterPinActivity enterPinActivity;
 
     private PinView pinView;
@@ -17,6 +19,16 @@ public class PinController {
     public PinController(EnterPinActivity enterPinActivity, PinView pinView, NumpadView numpadView){
 
         this.enterPinActivity = enterPinActivity;
+        this.pinView = pinView;
+        this.numpadView = numpadView;
+
+        this.numpadView.setController(this);
+
+    }
+
+    public PinController(PasswordPromptActivity passwordPromptActivity, PinView pinView, NumpadView numpadView){
+
+        this.passwordPromptActivity = passwordPromptActivity;
         this.pinView = pinView;
         this.numpadView = numpadView;
 
@@ -58,13 +70,16 @@ public class PinController {
         if (pinView.isFull()){
 
             this.isDone = true;
-            this.enterPinActivity.update();
+            if (!(this.enterPinActivity == null)) this.enterPinActivity.update();
+            if (!(this.passwordPromptActivity == null)) this.passwordPromptActivity.update();
+
 
         }
         else {
 
             this.isDone = false;
-            this.enterPinActivity.update();
+            if (!(this.enterPinActivity == null)) this.enterPinActivity.update();
+            if (!(this.passwordPromptActivity == null)) this.passwordPromptActivity.update();
 
         }
 

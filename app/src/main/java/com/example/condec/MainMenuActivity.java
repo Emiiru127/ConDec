@@ -1,10 +1,13 @@
 package com.example.condec;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.app.AppOpsManager;
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -14,14 +17,19 @@ import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,24 +37,18 @@ import com.google.android.material.button.MaterialButton;
 
 public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
 
-    private static final int REQUEST_CAPTURE_CODE = 1;
-    private MediaProjectionManager mediaProjectionManager;
-    private CondecService condecService;
-
+    private static final int REQUEST_CODE_DRAW_OVERLAY = 5469;
+    private static final int REQUEST_CODE_USAGE_ACCESS = 5470;
 
     private SharedPreferences condecPreferences;
-    private ImageView imgViewServiceStatus;
-    private Button btnServiceStatus;
-    private TextView txtServiceStatus;
 
-    private boolean isServiceActive = false;
-
-    private SurfaceView surfaceView;
-    private Surface surface;
-    boolean isBinded = false;
-    boolean hasAllowedScreenCapture = false;
+    //Device admin
+    private DevicePolicyManager mDPM;
+    private ComponentName mAdminName;
 
     //UI
+
+    private ImageButton btnSettings;
 
     private FrameLayout frameFeatures;
     private MaterialButton btnFeatureWarningDetection;
@@ -56,24 +58,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private MaterialButton[] btnFeatures;
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            CondecService.LocalBinder binder = (CondecService.LocalBinder) service;
-            condecService = binder.getService();
-
-            condecService.setSurface(surface);
-            isBinded = true;
-
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-
-            isBinded = false;
-
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,14 +66,97 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         this.condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
 
-        this.imgViewServiceStatus = findViewById(R.id.imgViewStatus);
-        this.btnServiceStatus = findViewById(R.id.btnSystemStatus);
-        this.txtServiceStatus = findViewById(R.id.txtSystemStatus);
+        initializeUI();
 
-        this.imgViewServiceStatus.setOnClickListener(this);
-        this.btnServiceStatus.setOnClickListener(this);
+        updateFrameFeatures("Warning Detection");
 
-        this.isServiceActive = false;//this.condecPreferences.getBoolean("isSystemActive", false);
+        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        mAdminName = new ComponentName(this, AdminReceiver.class);
+
+        if (!mDPM.isAdminActive(mAdminName)) {
+
+            Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
+            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+            startActivity(intent);
+            finish();
+
+        }
+
+       /* AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.noteOpNoThrow(AppOpsManager.OPSTR_WRITE_SETTINGS, .(), context.getPackageName());
+        if (mode == AppOpsManager.MODE_ALLOWED) {
+            // Permission is granted
+        } else {
+            // Permission is denied
+            throw new SecurityException("App does not have the required permissions");
+        }*/
+
+        //checkAndRequestPermissions();
+        //checkPermissions();
+    }
+
+   /* private void requestPermissions() {
+        if (!Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
+        }
+
+        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), getPackageName());
+        if (mode != AppOpsManager.MODE_ALLOWED) {
+            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
+        }
+    }*/
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkOverlayPermission();
+            checkUsageAccessPermission();
+        }
+    }
+
+    private void checkOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
+        }
+    }
+
+    private void checkUsageAccessPermission() {
+        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
+        if (mode != AppOpsManager.MODE_ALLOWED) {
+            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_DRAW_OVERLAY) {
+            if (Settings.canDrawOverlays(this)) {
+                Log.d("OverlayPermission", "Permission granted");
+            } else {
+                Log.e("OverlayPermission", "Permission denied");
+            }
+        } else if (requestCode == REQUEST_CODE_USAGE_ACCESS) {
+            AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
+            if (mode == AppOpsManager.MODE_ALLOWED) {
+                Log.d("UsageAccessPermission", "Permission granted");
+            } else {
+                Log.e("UsageAccessPermission", "Permission denied");
+            }
+        }
+    }
+
+    private void initializeUI(){
+
+        this.btnSettings = findViewById(R.id.btnSettings);
 
         this.frameFeatures = findViewById(R.id.frameFeatures);
 
@@ -104,63 +171,13 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatures[2] = this.btnFeatureWebsiteBlocking;
         this.btnFeatures[3] = this.btnFeatureAppUsage;
 
+        this.btnSettings.setOnClickListener(this);
+
         this.btnFeatureWarningDetection.setOnClickListener(this);
         this.btnFeatureAppBlocking.setOnClickListener(this);
         this.btnFeatureWebsiteBlocking.setOnClickListener(this);
         this.btnFeatureAppUsage.setOnClickListener(this);
 
-        this.surfaceView = findViewById(R.id.screenView);
-        this.surfaceView.setZOrderOnTop(true);
-        this.surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                surface = holder.getSurface();
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                surface = null;
-            }
-        });
-
-        update();
-        updateFrameFeatures("Warning Detection");
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (condecService != null){
-
-            //this.condecService.setSurface(this.surface);
-
-        }
-
-    }
-
-    private void update(){
-
-        if (this.isServiceActive){
-
-            this.imgViewServiceStatus.setImageResource(R.drawable.power_on_button_icon);
-            this.btnServiceStatus.setText("On");
-            this.btnServiceStatus.setBackgroundColor(getColor(R.color.green));
-            this.txtServiceStatus.setText("Click to Off");
-
-        }
-        else {
-
-            this.imgViewServiceStatus.setImageResource(R.drawable.power_off_button_icon);
-            this.btnServiceStatus.setText("Off");
-            this.btnServiceStatus.setBackgroundColor(getColor(R.color.red));
-            this.txtServiceStatus.setText("Click to On");
-
-        }
 
     }
 
@@ -220,110 +237,28 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    private void toggleService(){
-
-        if (this.isServiceActive == false){
-
-            requestCapturePermission();
-
-        }
-        else if(this.isServiceActive == true){
-
-            stopCondecService();
-            this.isServiceActive = false;
-            clearSurface();
-
-        }
 /*
-        SharedPreferences.Editor editor = this.condecPreferences.edit();
-        editor.putBoolean("isSystemActive", this.isSystemActive);
-        editor.apply();*/
-
-    }
-
-    private void clearSurface() {
-
-        SurfaceHolder surfaceHolder = this.surfaceView.getHolder();
-        Surface surface = this.surfaceView.getHolder().getSurface();
-
-        if (surface != null && surface.isValid()) {
-            Canvas canvas = null;
-            try {
-                canvas = surfaceHolder.lockCanvas();
-                if (canvas != null) {
-                    canvas.drawColor(Color.BLACK);
-                }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_DRAW_OVERLAY) {
+            if (Settings.canDrawOverlays(this)) {
+                // Overlay permission granted
+            } else {
+                // Overlay permission denied
             }
-            catch (IllegalArgumentException exception){
-
-                System.out.println("Ilegal Argument Error");
-
-            }
-            finally {
-                if (canvas != null) {
-                    surfaceHolder.unlockCanvasAndPost(canvas);
-                }
+        } else if (requestCode == REQUEST_CODE_USAGE_ACCESS) {
+            AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), getPackageName());
+            if (mode == AppOpsManager.MODE_ALLOWED) {
+                // Usage access permission granted
+            } else {
+                // Usage access permission denied
             }
         }
-    }
+    }*/
 
-    private void requestCapturePermission(){
-
-        //hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
-        //hasAllowedScreenCapture = false;
-        if (hasAllowedScreenCapture == false){
-
-            System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
-            mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-            Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
-            startActivityForResult(permissionIntent, REQUEST_CAPTURE_CODE);
-
-
-        }
-
-    }
-
-    private void startService(int screenCaptureResultCode, Intent screenCaptureIntent)  {
-
-        //boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
-
-        if (hasAllowedScreenCapture == true){
-
-            this.isServiceActive = true;
-            update();
-
-           // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
-            //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
-
-            Intent serviceIntent = CondecService.newIntent(this, screenCaptureResultCode, screenCaptureIntent);
-            startForegroundService(serviceIntent);
-            bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-        }
-        else {
-
-            System.out.println("NO PERMISSION");
-
-        }
-
-    }
-
-    private void stopCondecService()  {
-
-        if (isBinded == true){
-
-            unbindService(this.serviceConnection);
-            this.hasAllowedScreenCapture = false;
-            this.isServiceActive = false;
-            this.isBinded = false;
-
-            Intent serviceIntent = new Intent(this, CondecService.class);
-            stopService(serviceIntent);
-
-        }
-
-    }
-
+/*
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CAPTURE_CODE) {
@@ -350,14 +285,26 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             }
         }
     }
+*/
+
+    @Override
+    public void onBackPressed() {
+
+        if (false){
+
+            super.onBackPressed();
+
+        }
+    }
 
     @Override
     public void onClick(View view) {
 
-        if (this.btnServiceStatus == view || this.imgViewServiceStatus == view){
+        if (this.btnSettings == view){
 
-            toggleService();
-            update();
+            Intent intent = new Intent(MainMenuActivity.this, SettingsActivity.class);
+            startActivity(intent);
+            finish();
 
         }
         if (this.btnFeatureWarningDetection == view){

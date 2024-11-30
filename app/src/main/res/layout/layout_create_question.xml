@@ -47,7 +47,6 @@
             android:id="@+id/btnConfirmCreateQuestion"
             android:layout_width="250dp"
             android:layout_height="60dp"
-            android:layout_marginTop="50dp"
             android:backgroundTint="@color/dark_blue_button"
             android:enabled="false"
             android:text="Confirm"
@@ -67,6 +66,7 @@
             android:textColor="@color/blue_main_background"
             android:textSize="16sp"
             android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/editTxtCreateQuestion"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

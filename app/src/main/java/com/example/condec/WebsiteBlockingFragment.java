@@ -1,19 +1,33 @@
 package com.example.condec;
 
+import static android.app.Activity.RESULT_OK;
+
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.room.RoomDatabase;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+
+import com.example.condec.Database.DefaultBlockedUrl;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link WebsiteBlockingFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class WebsiteBlockingFragment extends Fragment {
+public class WebsiteBlockingFragment extends Fragment implements View.OnClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -23,6 +37,10 @@ public class WebsiteBlockingFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private Button btnStartVpn;
+
+    private static final int VPN_REQUEST_CODE = 0x0F;
 
     public WebsiteBlockingFragment() {
         // Required empty public constructor
@@ -60,5 +78,46 @@ public class WebsiteBlockingFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_website_blocking, container, false);
+
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        this.btnStartVpn = getView().findViewById(R.id.btnStartVpnService);
+        this.btnStartVpn.setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == VPN_REQUEST_CODE && resultCode == getActivity().RESULT_OK) {
+            Intent intent = new Intent(getActivity(), CondecVPNService.class);
+            getActivity().startService(intent);
+        }
+    }
+
+    private void startVpnService(){
+
+        Intent intent = CondecVPNService.prepare(getActivity());
+        if (intent != null) {
+            startActivityForResult(intent, VPN_REQUEST_CODE);
+        } else {
+            onActivityResult(VPN_REQUEST_CODE, getActivity().RESULT_OK, null);
+        }
+
+    }
+
+    @Override
+    public void onClick(View view) {
+
+        if (this.btnStartVpn == view){
+
+            startVpnService();
+
+        }
+
     }
 }
