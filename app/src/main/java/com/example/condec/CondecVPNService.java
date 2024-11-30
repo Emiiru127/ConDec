@@ -115,11 +115,19 @@ public class CondecVPNService extends VpnService {
 
                     for (InetAddress ip : blockedIps) {
                         String ipAddress = ip.getHostAddress();
-                        if (isValidIPv4Address(ipAddress)) {
-                            Log.i(TAG, "Blocking IP: " + ipAddress);
-                            builder.addRoute(ipAddress, 32);
-                        } else {
-                            Log.w(TAG, "Invalid IP address format: " + ipAddress);
+                        try {
+
+                            if (isValidIPv4Address(ipAddress)) {
+                                Log.i(TAG, "Blocking IP: " + ipAddress);
+                                builder.addRoute(ipAddress, 32);
+                            } else {
+                                Log.w(TAG, "Invalid IP address format: " + ipAddress);
+                            }
+
+                        }catch (Exception e){
+
+                            Log.w(TAG, "ERROR: Invalid IP address format: " + ipAddress);
+
                         }
                     }
 
