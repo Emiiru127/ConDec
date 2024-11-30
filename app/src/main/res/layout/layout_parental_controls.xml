@@ -348,7 +348,6 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:visibility="gone"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
@@ -391,7 +390,6 @@
                     android:layout_height="match_parent"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:visibility="gone"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
@@ -434,7 +432,6 @@
                     android:layout_height="match_parent"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:visibility="gone"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 

@@ -298,8 +298,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
 
     public void requestViewScreen(){
 
-        TipDialog dialog = new TipDialog("View Screen", "This feature is under development");
-        dialog.show(getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
+        parentalService.requestViewScreen(deviceInfo, parentalControlActivity);
 
     }
 
@@ -375,6 +374,13 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         });
 
         dialog.show();
+    }
+
+    public void showMessageDialog(String title, String message){
+
+        TipDialog dialog = new TipDialog(title, message);
+        dialog.show(getSupportFragmentManager(), "ParentalDialog");
+
     }
 
     @Override

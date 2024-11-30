@@ -17,6 +17,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
@@ -38,6 +40,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import org.tensorflow.lite.Interpreter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -73,7 +76,17 @@ public class CondecDetectionService extends Service {
     private long serviceStartTime;
     private Handler handlerTimeCheck;
     private HandlerThread handlerThreadTimeCheck;
+    private HandlerThread inferenceThread;
+    private Handler inferenceHandler;
+
+    private HandlerThread imageProcessingThread;
+    private Handler imageProcessingHandler;
     private static final long TWO_HOURS_IN_MILLIS = 2 * 60 * 60 * 1000;
+
+    private boolean isImageReaderActive = false;  // Flag for ImageReader state
+    private boolean isMediaProjectionActive = false;  // Flag for MediaProjection state
+
+    private ByteArrayOutputStream latestImageStream;
 
     private Map<String, Integer> appThresholds = new HashMap<String, Integer>() {{
         put("com.google.android.youtube", 85);
@@ -104,6 +117,15 @@ public class CondecDetectionService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        // Notify Parental Service that Detection Service has started
+        Intent intent = new Intent("com.example.condec.ACTION_DETECTION_STARTED");
+        sendBroadcast(intent);
+
+        isImageReaderActive = true;
+        isMediaProjectionActive = true;
+
+        Log.d("CondecDetectionService", "Detection Service started.");
+
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("condecDetectionServiceStatus", true);
@@ -125,6 +147,11 @@ public class CondecDetectionService extends Service {
         registerReceiver(stopServiceReceiver, filter);
 
         serviceStartTime = System.currentTimeMillis();
+
+        // Start the inference thread
+        inferenceThread = new HandlerThread("InferenceThread");
+        inferenceThread.start();
+        inferenceHandler = new Handler(inferenceThread.getLooper());
 
         handlerThreadTimeCheck= new HandlerThread("CondecBackgroundThread");
         handlerThreadTimeCheck.start();
@@ -204,7 +231,14 @@ public class CondecDetectionService extends Service {
         System.out.println("MediaProjector: " + mediaProjection);
         System.out.println("MediaProjector Initialized: " + (mediaProjection != null));
         if (mediaProjection != null) {
-            createVirtualDisplay();
+
+            try {
+                createVirtualDisplay();
+            } catch (Exception e) {
+                Log.e("YourService", "Error in service", e);
+                // Optionally notify the user or handle the error
+            }
+
             Toast.makeText(CondecDetectionService.this, "Media Projection Initialized", Toast.LENGTH_SHORT).show();
             System.out.println("MediaProjection Initialized: " + (this.mediaProjection != null));
         }
@@ -238,20 +272,44 @@ public class CondecDetectionService extends Service {
             return;
         }
 
+        // Initialize HandlerThread
+        if (imageProcessingThread == null) {
+            imageProcessingThread = new HandlerThread("ImageProcessingThread");
+            imageProcessingThread.start();
+            imageProcessingHandler = new Handler(imageProcessingThread.getLooper());
+        }
+
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Image image = reader.acquireLatestImage();
-                if (image != null) {
-                    if (latestImage != null) {
-                        latestImage.close();
+                Image image = null;
+                synchronized (CondecDetectionService.this) {
+                    try {
+                        // Close the previous image if it exists
+                        if (latestImage != null) {
+                            latestImage.close();
+                        }
+
+                        // Acquire the latest image
+                        image = reader.acquireLatestImage();
+                        if (image != null) {
+                            Bitmap bitmap = convertImageToBitmapFull(image);
+                            storeLatestImage(bitmap);
+                            latestImage = image; // Assign the latest image
+                        } else {
+                            Log.d("CondecDetectionService", "Image from ImageReader is null");
+                        }
+                    } catch (Exception e) {
+                        Log.e("CondecDetectionService", "Error acquiring image", e);
+                    } finally {
+                        // Ensure the acquired image is closed if not already closed
+                        if (image != null && image != latestImage) {
+                            image.close();
+                        }
                     }
-                    latestImage = image;
-                } else {
-                    System.out.println("Image from ImageReader is null");
                 }
             }
-        }, handler);
+        }, imageProcessingHandler);
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -260,33 +318,41 @@ public class CondecDetectionService extends Service {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (latestImage != null) {
-                            System.out.println("TESTING AI");
-                            try {
+                        try{
 
-                                String currentApp = getForegroundAppPackageName();
-                                Log.d("CondecDetectionService", "Retrived App: " + currentApp);
+                            if (latestImage != null && isImageReaderActive && isMediaProjectionActive) {
+                                System.out.println("TESTING AI");
+                                try {
 
-                                if (currentApp != null && appThresholds.containsKey(currentApp) || bypassThreshold) {
+                                    String currentApp = getForegroundAppPackageName();
+                                    Log.d("CondecDetectionService", "Retrived App: " + currentApp);
 
-                                    processImage(latestImage, currentApp);
+                                    if (currentApp != null && appThresholds.containsKey(currentApp) || bypassThreshold) {
 
+                                        processImage(latestImage, currentApp);
+
+                                    }
+                                    else {
+
+                                        Log.d("CondecDetectionService", "Skipping AI detection for unmonitored app: " + currentApp);
+                                        //if (bypassThreshold == true) notifyUser("AI RESULTS: NOT LISTED TO DETECT Current App: " + currentApp);
+
+                                    }
+
+
+
+                                } catch (Exception e) {
+
+                                    System.out.println("TESTING AI ERROR: " + e);
                                 }
-                                else {
-
-                                    Log.d("CondecDetectionService", "Skipping AI detection for unmonitored app: " + currentApp);
-                                    //if (bypassThreshold == true) notifyUser("AI RESULTS: NOT LISTED TO DETECT Current App: " + currentApp);
-
-                                }
-
-
-
-                            } catch (Exception e) {
-
-                                System.out.println("TESTING AI ERROR: " + e);
+                            } else {
+                                System.out.println("Latest image is null");
                             }
-                        } else {
-                            System.out.println("Latest image is null");
+
+                        }catch (Exception e){
+
+                            System.out.println("TESTING AI ERROR: " + e);
+
                         }
                     }
                 });
@@ -310,9 +376,25 @@ public class CondecDetectionService extends Service {
         ByteBuffer inputBuffer = convertBitmapToByteBuffer(resizedBitmap);
 
         float[][] output = new float[1][10];
+        runInference(inputBuffer, output, currentApp);
 
-        tflite.run(inputBuffer, output);
-        processModelOutput(output, currentApp);
+    }
+
+    private void runInference(ByteBuffer inputData, float[][] outputData, String currentApp) {
+        inferenceHandler.post(() -> {
+            synchronized (this) {
+                if (tflite != null && isImageReaderActive && isMediaProjectionActive) {
+                    try {
+                        tflite.run(inputData, outputData);
+                        processModelOutput(outputData, currentApp);
+                    } catch (Exception e) {
+                        Log.e("CondecDetectionService", "Error during inference", e);
+                    }
+                } else {
+                    Log.w("CondecDetectionService", "tflite is null, skipping inference");
+                }
+            }
+        });
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap) {
@@ -423,6 +505,52 @@ public class CondecDetectionService extends Service {
 
     }
 
+    // Convert Image to Bitmap
+    private Bitmap convertImageToBitmapFull(Image image) {
+        if (image == null) {
+            Log.e("CondecDetectionService", "Image is null, cannot convert to bitmap.");
+            return null;
+        }
+
+        // Check if the Image format is compatible with direct Bitmap creation
+        if (image.getFormat() == PixelFormat.RGBA_8888 || image.getFormat() == ImageFormat.YUV_420_888) {
+            int width = image.getWidth();
+            int height = image.getHeight();
+
+            // Get the pixel data from the image planes
+            Image.Plane[] planes = image.getPlanes();
+            ByteBuffer buffer = planes[0].getBuffer();
+            int pixelStride = planes[0].getPixelStride();
+            int rowStride = planes[0].getRowStride();
+            int rowPadding = rowStride - pixelStride * width;
+
+            // Create a Bitmap with the pixel data
+            Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
+            bitmap.copyPixelsFromBuffer(buffer);
+            return bitmap;
+        } else {
+            Log.e("CondecDetectionService", "Unsupported image format: " + image.getFormat());
+            return null;
+        }
+    }
+
+    // Store the latest image as a byte array for easy access by ParentalService
+    private void storeLatestImage(Bitmap bitmap) {
+        if (bitmap == null) {
+            Log.e("CondecDetectionService", "Bitmap is null, cannot store image.");
+            return;
+        }
+
+        latestImageStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, latestImageStream); // Compress for efficient transmission
+        Log.d("CondecDetectionService", "Bitmap is not null, storing image.");
+    }
+
+    // Public method for ParentalService to retrieve the latest image data
+    public byte[] getLatestImageData() {
+        return (latestImageStream != null) ? latestImageStream.toByteArray() : null;
+    }
+
     private void notifyUser(String message){
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
@@ -441,9 +569,10 @@ public class CondecDetectionService extends Service {
             virtualDisplay = null;
         }
 
-        if (mediaProjection != null) {
+        if (mediaProjection != null && isMediaProjectionActive) {
             mediaProjection.stop();
             mediaProjection = null;
+            isMediaProjectionActive = false;
         }
 
     }
@@ -466,7 +595,8 @@ public class CondecDetectionService extends Service {
         System.out.println("MediaProjection Initialized: " + (this.mediaProjection != null));
         startProjection(this.resultCode, this.data);
 
-        return super.onStartCommand(intent, flags, startId);
+
+        return START_STICKY;
     }
 
     @Override
@@ -483,81 +613,164 @@ public class CondecDetectionService extends Service {
         return super.onUnbind(intent);
     }
 
-    private void stopService() {
+    private synchronized void stopService() {
         Log.d("CondecDetectionService", "Stopping CondecDetectionService");
 
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
+        // Notify the Parental Service to unbind
+        Intent unbindIntent = new Intent("com.example.condec.ACTION_UNBIND_DETECTION");
+        sendBroadcast(unbindIntent);
 
-        if (imageReader != null) {
-            imageReader.close();
-            imageReader = null;
-        }
-
-        if (virtualDisplay != null) {
-            virtualDisplay.release();
-            virtualDisplay = null;
-        }
-
-        if (mediaProjection != null) {
-            mediaProjection.stop();
-            mediaProjection = null;
-        }
-
-        stopForeground(true);
-        stopSelf();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-        handlerTimeCheck.removeCallbacks(timeCheckRunnable);
-
-        if (latestImage != null) {
-            latestImage.close();
-            latestImage = null;
-        }
-
-        if (imageReader != null) {
-            imageReader.close();
-            imageReader = null;
-        }
-
+        // Stop the screen projection
         stopProjection();
+
+        // Synchronize access to latestImage to avoid concurrent modification
+        synchronized (this) {
+
+            if (latestImage != null) {
+                latestImage.close();
+                latestImage = null;
+            }
+
+            if (imageReader != null) {
+                imageReader.close();
+                isImageReaderActive = false;
+                imageReader = null;
+            }
+
+            if (imageProcessingThread != null) {
+                imageProcessingThread.quitSafely();
+                imageProcessingThread = null;
+                imageProcessingHandler = null;
+            }
+
+        }
+
+        // Cancel any existing timer tasks
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+
+        // Remove any scheduled time checks
+        if (handlerTimeCheck != null) {
+            handlerTimeCheck.removeCallbacks(timeCheckRunnable);
+        }
+
+        // Clean up the inference thread and interpreter safely
+        if (inferenceThread != null) {
+            try {
+                inferenceThread.join(1000); // Add timeout for join to avoid blocking indefinitely
+            } catch (InterruptedException e) {
+                Log.e("CondecDetectionService", "Error joining inference thread", e);
+            }
+            inferenceThread.quitSafely();
+            inferenceThread = null;
+        }
 
         if (tflite != null) {
             tflite.close();
             tflite = null;
         }
 
+        // Clean up the handler and its looper
+        if (handler != null) {
+            try {
+                handler.getLooper().quitSafely();
+            } catch (Exception e) {
+                Log.e("CondecDetectionService", "Error quitting handler looper", e);
+            }
+            handler = null;
+        }
+
+        // Clean up the handler thread used for time checks
+        if (handlerThreadTimeCheck != null) {
+            try {
+                handlerThreadTimeCheck.quitSafely();
+                handlerThreadTimeCheck.join(1000); // Timeout for joining thread
+            } catch (InterruptedException e) {
+                Log.e("CondecDetectionService", "Error joining time check thread", e);
+            }
+            handlerThreadTimeCheck = null;
+        }
+
+        // Stop the foreground service
+        stopForeground(true);
+
+        // Delay stopping the service to allow for unbinding
+        new Handler().postDelayed(this::stopSelf, 1000);  // 1 second delay
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Unregister the stop service receiver
+        unregisterReceiver(stopServiceReceiver);
+
+        // Update service status in SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("condecDetectionServiceStatus", false);
+        editor.apply();
+
+        stopService();
+/*
+        // Cancel the timer if it's running
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+
+        // Remove scheduled time check callbacks
+        handlerTimeCheck.removeCallbacks(timeCheckRunnable);
+
+        // Clean up the image resources
+        if (latestImage != null) {
+            latestImage.close();
+            latestImage = null;
+        }
+
+        if (imageReader != null && isImageReaderActive) {
+            imageReader.close();
+            imageReader = null;
+            isImageReaderActive = false;
+        }
+
+        // Stop the screen projection
+        stopProjection();
+
+        // Clean up the TensorFlow Lite interpreter
+        if (tflite != null) {
+            tflite.close();
+            tflite = null;
+        }
+
+        // Clean up the inference thread and interpreter in onDestroy as well
+        if (inferenceThread != null) {
+            try {
+                inferenceThread.join();
+            } catch (InterruptedException e) {
+                Log.e("CondecDetectionService", "Error joining inference thread", e);
+            }
+            inferenceThread.quitSafely();
+            inferenceThread = null;
+        }
+
+        // Stop and clean up the handler and thread
         if (handler != null) {
             handler.getLooper().quitSafely();
             handler = null;
         }
 
         if (handlerThreadTimeCheck != null) {
-            handlerThreadTimeCheck.quitSafely();
             try {
+                handlerThreadTimeCheck.quitSafely();
                 handlerThreadTimeCheck.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e("CondecDetectionService", "Error joining time check thread", e);
             }
-        }
-
-        unregisterReceiver(stopServiceReceiver);
-
-
-        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean("condecDetectionServiceStatus", false);
-        editor.apply();
+            handlerThreadTimeCheck = null;
+        }*/
 
     }
 }

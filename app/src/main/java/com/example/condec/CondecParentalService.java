@@ -10,8 +10,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -48,12 +52,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -78,6 +85,10 @@ public class CondecParentalService extends Service {
     private WindowManager windowManager;
     private View dialogView;
 
+    private Bitmap latestImage; // Store the latest image for ViewScreenActivity
+
+    private ParentalControlActivity parentalControlActivity;
+
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
@@ -89,10 +100,61 @@ public class CondecParentalService extends Service {
         }
     }
 
+    private CondecDetectionService condecDetectionService;
+    private boolean isBound;
+
+    // BroadcastReceiver to bind when Detection Service starts
+    private BroadcastReceiver detectionStartedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Bind to the Detection Service only when it's started
+            Intent bindIntent = new Intent(CondecParentalService.this, CondecDetectionService.class);
+            bindService(bindIntent, connection, Context.BIND_AUTO_CREATE);
+            Log.d("CondecParentalService", "Binding to Detection Service.");
+        }
+    };
+
+    // Receiver to handle unbind requests
+    private BroadcastReceiver unbindReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Unbind from the Detection Service if bound
+            if (isBound) {
+                unbindService(connection);
+                isBound = false;
+                Log.d("CondecParentalService", "Unbound from Detection Service on stop request.");
+            }
+        }
+    };
+
+    // Handle the binding connection with Detection Service
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            CondecDetectionService.LocalBinder binder = (CondecDetectionService.LocalBinder) service;
+            condecDetectionService = binder.getService();
+            isBound = true;
+            Log.d("CondecParentalService", "Successfully bound to Detection Service.");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+            Log.d("CondecParentalService", "Unbound from Detection Service.");
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
         startForeground(1, createNotification());
+
+        // Register the receiver to listen for Detection Service start event
+        IntentFilter filter = new IntentFilter("com.example.condec.ACTION_DETECTION_STARTED");
+        registerReceiver(detectionStartedReceiver, filter);
+        // Register the receiver to listen for unbind requests
+        IntentFilter unbindFilter = new IntentFilter("com.example.condec.ACTION_UNBIND_DETECTION");
+        registerReceiver(unbindReceiver, unbindFilter);
 
         SharedPreferences sharedPref = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         localDeviceName = sharedPref.getString("deviceName", "My Device");
@@ -129,6 +191,13 @@ public class CondecParentalService extends Service {
             e.printStackTrace();
         }
         stopDiscovery();
+
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
+        }
+        unregisterReceiver(detectionStartedReceiver);  // Cleanup receiver when service is destroyed
+        unregisterReceiver(unbindReceiver);  // Cleanup receiver when service is destroyed
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -657,6 +726,23 @@ public class CondecParentalService extends Service {
             String command = parts[2];
             Log.d("Condec Parental", "Authentication: between " + senderDeviceName + " and " + targetDeviceName);
             if (localDeviceName.equals(targetDeviceName)) {
+                if ("CHECK_DETECTION_STATUS".equals(command)) {
+                    // Check if Detection Service is active
+                    boolean isDetectionActive = isServiceRunning(CondecDetectionService.class);
+                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                    if (isDetectionActive) {
+                        Log.d("CondecParentalService", "Detection service is active, granting access.");
+                        out.println("DETECTION_ACTIVE"); // Reply to Device A
+                    } else {
+                        out.println("DETECTION_INACTIVE");
+                    }
+                    out.flush();
+                }
+                else if ("START_IMAGE_STREAM".equals(command) && isServiceRunning(CondecDetectionService.class)) {
+                    Log.d("CondecParentalService", "Starting image stream to " + senderDeviceName);
+                    startImageStream(clientSocket, senderDeviceName);
+                }
                 Log.d("Condec Parental", "Authentication: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
                 handleCommand(command);
             }
@@ -941,6 +1027,9 @@ public class CondecParentalService extends Service {
                     stopService(new Intent(this, CondecSleepService.class));
                     showToast("Remotely Stopped Sleep Service");
                 }
+                break;
+            case "REQUEST_SCREEN_CAPTURE":
+
                 break;
             case "DISPLAY_MESSAGE":
 
@@ -1231,4 +1320,223 @@ public class CondecParentalService extends Service {
             }
         });
     }
+/*
+    public void checkDetectionStatus(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+        executorService.execute(() -> {
+            try {
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
+                // Send request with authentication (e.g., device name)
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "CHECK_DETECTION_STATUS");
+                Log.d("CondecParentalService", "Requesting detection status from " + deviceInfo.getServiceName());
+
+                // Receive response
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = in.readLine();
+
+                if ("DETECTION_ACTIVE".equals(response)) {
+                    Log.d("CondecParentalService", "Detection service is active on target device.");
+                    // Proceed to request image streaming if desired
+                    requestImageStream(deviceInfo);
+                } else {
+                    parentalControlActivity.showMessageDialog("Detection Not Active", "The Warning Detection must be active to use this feature.");
+                    Log.d("CondecParentalService", "Detection service is not active on target device.");
+                }
+
+                socket.close();
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error checking detection status", e);
+            }
+        });
+    }*/
+
+    private void requestImageStreaming(NsdServiceInfo deviceInfo) {
+        sendCommandToDevice(deviceInfo, "START_IMAGE_STREAM");
+    }
+
+    private void startImageStream(Socket clientSocket, String senderDeviceName) {
+        try {
+            if (condecDetectionService == null) {
+                Log.e("CondecParentalService", "Detection service is not bound, cannot start image stream.");
+                return;
+            }
+
+            Log.d("CondecParentalService", "Requesting latest image from Detection Service...");
+            byte[] imageData = condecDetectionService.getLatestImageData();
+
+            if (imageData != null) {
+                Log.d("CondecParentalService", "Image data retrieved, sending to " + senderDeviceName);
+                OutputStream outputStream = clientSocket.getOutputStream();
+                outputStream.write(imageData);
+                outputStream.flush();
+                Log.d("CondecParentalService", "Image data sent successfully to " + senderDeviceName);
+            } else {
+                Log.w("CondecParentalService", "No image data available from Detection Service.");
+            }
+        } catch (IOException e) {
+            Log.e("CondecParentalService", "Error streaming image to " + senderDeviceName, e);
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error closing client socket after image stream", e);
+            }
+        }
+    }
+
+    public void requestViewScreen(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+        executorService.execute(() -> {
+            try {
+                Log.d("CondecParentalService", "Requesting screen view from device: " + deviceInfo.getServiceName());
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":START_IMAGE_STREAM");
+                Log.d("CondecParentalService", "Sent START_IMAGE_STREAM command to device: " + deviceInfo.getServiceName());
+
+                // Adding code to receive the image
+                InputStream inputStream = socket.getInputStream();
+                ByteArrayOutputStream imageBuffer = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    imageBuffer.write(buffer, 0, bytesRead);
+                }
+
+                byte[] imageData = imageBuffer.toByteArray();
+                if (imageData.length > 0) {
+                    Log.d("CondecParentalService", "Image data received, size: " + imageData.length + " bytes.");
+                    latestImage = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+                    Intent intent = new Intent(this, ParentalViewScreenActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+
+                } else {
+                    Log.w("CondecParentalService", "No image data received from " + deviceInfo.getServiceName());
+                }
+
+                socket.close();
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error requesting screen view", e);
+            }
+        });
+    }
+
+    private void closeSocketAndStream(Socket socket, OutputStream outputStream) {
+        if (outputStream != null) {
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error closing output stream", e);
+            }
+        }
+        if (socket != null && !socket.isClosed()) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error closing socket", e);
+            }
+        }
+    }
+/*
+    public void requestImageStream(NsdServiceInfo deviceInfo) {
+        executorService.execute(() -> {
+            try (Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort())) {
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "START_IMAGE_STREAM"); // Request image stream
+
+                InputStream inputStream = socket.getInputStream();
+                receiveAndStoreImages(inputStream); // Start receiving images
+
+                // Launch the activity with FLAG_ACTIVITY_NEW_TASK
+                Intent intent = new Intent(this, ParentalViewScreenActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "Error requesting image stream", e);
+            }
+        });
+    }*/
+/*
+    // Method to handle receiving images from the socket
+    public void receiveAndStoreImages(String targetDeviceName) {
+        Log.d("CondecParentalService", "Starting receiveAndStoreImages for device: " + targetDeviceName);
+        Socket socket = null;
+        InputStream inputStream = null;
+        ByteArrayOutputStream imageBuffer = new ByteArrayOutputStream();
+
+        try {
+            // Initialize socket and connect to the target device
+            NsdServiceInfo deviceInfo = getDeviceInfoByName(targetDeviceName);
+            if (deviceInfo == null) {
+                Log.e("CondecParentalService", "Device " + targetDeviceName + " not found in discovered devices.");
+                return;
+            }
+
+            socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+            inputStream = socket.getInputStream();
+            Log.d("CondecParentalService", "Connected to " + targetDeviceName + " at " + deviceInfo.getHost() + ":" + deviceInfo.getPort());
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                Log.d("CondecParentalService", "Read " + bytesRead + " bytes from " + targetDeviceName);
+                imageBuffer.write(buffer, 0, bytesRead);
+            }
+
+            // Ensure image is directed correctly to ViewScreenActivity
+            Log.d("CondecParentalService", "Image received for " + targetDeviceName + ", total size: " + imageBuffer.size() + " bytes.");
+            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBuffer.toByteArray(), 0, imageBuffer.size());
+
+            // Sending the bitmap to the designated ViewScreenActivity
+            if (targetDeviceName.equals(getCurrentDeviceTarget())) {
+                Log.d("CondecParentalService", "Displaying image on ViewScreenActivity for " + targetDeviceName);
+                showImageOnViewScreen(bitmap);  // Adjust to your method that displays image on UI
+            } else {
+                Log.w("CondecParentalService", "Received image is not for the current view target: " + targetDeviceName);
+            }
+
+        } catch (SocketException e) {
+            Log.e("CondecParentalService", "SocketException in receiveAndStoreImages for " + targetDeviceName + ": " + e.getMessage(), e);
+
+        } catch (IOException e) {
+            Log.e("CondecParentalService", "IOException in receiveAndStoreImages for " + targetDeviceName + ": " + e.getMessage(), e);
+
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                    Log.d("CondecParentalService", "Input stream closed for " + targetDeviceName);
+                }
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                    Log.d("CondecParentalService", "Socket closed for " + targetDeviceName);
+                }
+            } catch (IOException e) {
+                Log.e("CondecParentalService", "IOException while closing resources for " + targetDeviceName + ": " + e.getMessage(), e);
+            }
+        }
+
+        Log.d("CondecParentalService", "Finished receiveAndStoreImages for device: " + targetDeviceName);
+    }
+    // Checks if we have a complete JPEG image (ends with FF D9)
+    private boolean isCompleteImage(ByteArrayOutputStream imageBuffer) {
+        byte[] data = imageBuffer.toByteArray();
+        return data.length > 2 && data[data.length - 2] == (byte) 0xFF && data[data.length - 1] == (byte) 0xD9;
+    }
+*/
+    // Getter for the latest image
+    public Bitmap getLatestImage() {
+        return latestImage;
+    }
+/*
+    public void requestViewScreen(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+
+        checkDetectionStatus(deviceInfo, parentalControlActivity);
+        this.parentalControlActivity = parentalControlActivity;
+
+    }*/
+
 }

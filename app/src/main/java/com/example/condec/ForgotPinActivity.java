@@ -76,7 +76,8 @@ public class ForgotPinActivity extends AppCompatActivity implements View.OnClick
 
     private void login(){
 
-        Intent intent = new Intent(ForgotPinActivity.this, MainMenuActivity.class);
+        Intent intent = new Intent(ForgotPinActivity.this, CreatePinActivity.class);
+        intent.putExtra("forChanging", true);
         startActivity(intent);
         finish();
 

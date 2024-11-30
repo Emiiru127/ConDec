@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -200,6 +201,10 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void stopCondecService()  {
 
+        // Notify the Parental Service to unbind before stopping
+        Intent intentUnbindDetection = new Intent("com.example.condec.ACTION_UNBIND_DETECTION");
+        getActivity().sendBroadcast(intentUnbindDetection);
+
         Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY TURNED OFF");
 
         SharedPreferences.Editor editor =  this.condecPreferences.edit();
@@ -219,6 +224,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
             Intent serviceIntent = new Intent(getActivity(), CondecDetectionService.class);
             getActivity().stopService(serviceIntent);
+            new Handler().postDelayed(this::update, 1000);
 
         }catch (Exception e){
 

@@ -46,6 +46,15 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
 
     }
 
+    private void decline(){
+
+        Intent intent = new Intent(this, StartingPageActivity.class);
+        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+        startActivity(intent);
+        finish();
+
+    }
+
     @Override
     public void onClick(View view) {
 
@@ -55,7 +64,7 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
 
         } else if (this.btnDecline == view) {
 
-            return;
+            decline();
 
         }
 
