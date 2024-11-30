@@ -32,12 +32,22 @@ public class CondecBlockingService extends Service {
     private Handler handler = new Handler();
     private SharedPreferences sharedPreferences;
     private Set<String> blockedApps;
-    private Map<String, Boolean> authenticatedApps = new HashMap<>(); // Add this map to track authenticated apps
+    private Map<String, Long> appLastSeenTime = new HashMap<>();
+    private Map<String, Boolean> authenticatedApps = new HashMap<>();
+    private String lastAuthenticatedApp = null;
+    private String lastForegroundPackage = null;
 
     private BroadcastReceiver unlockReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            resetLockState();
+            if ("com.example.condec.UNLOCK_APP".equals(intent.getAction())) {
+                String packageName = intent.getStringExtra("PACKAGE_NAME");
+                if (packageName != null) {
+                    onPasswordCorrect(packageName);
+                }
+            } else if ("com.example.condec.RESET_LOCK_STATE".equals(intent.getAction())) {
+                resetLockState();
+            }
         }
     };
 
@@ -47,13 +57,14 @@ public class CondecBlockingService extends Service {
         sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         blockedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
 
+        authenticatedApps.clear();
+
         IntentFilter filter = new IntentFilter("com.example.condec.UNLOCK_APP");
+        filter.addAction("com.example.condec.RESET_LOCK_STATE");
         registerReceiver(unlockReceiver, filter);
 
-        // Start the service as a foreground service
         startForegroundService();
-
-        handler.postDelayed(runnable, 1000);
+        handler.postDelayed(runnable, 500); // Delay to start checking
     }
 
     private void startForegroundService() {
@@ -71,7 +82,7 @@ public class CondecBlockingService extends Service {
         Notification notification = new NotificationCompat.Builder(this, channelId)
                 .setContentTitle("Condec App Lock")
                 .setContentText("Monitoring blocked apps.")
-                .setSmallIcon(R.mipmap.ic_launcher) // Use your own app icon here
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .build();
 
         startForeground(1, notification);
@@ -81,7 +92,7 @@ public class CondecBlockingService extends Service {
         @Override
         public void run() {
             checkRunningApps();
-            handler.postDelayed(this, 1000);
+            handler.postDelayed(this, 500);
         }
     };
 
@@ -97,40 +108,56 @@ public class CondecBlockingService extends Service {
                     recentStats = stats;
                 }
             }
-
             if (recentStats != null) {
                 String currentPackageName = recentStats.getPackageName();
-                System.out.println("CHECKING RUNNING APPS: " + currentPackageName);
 
-                // Avoid locking the app itself
-                if (currentPackageName.equals("com.example.condec")) {
-                    System.out.println("Skipping lock for self.");
-                    return;
+                if (currentPackageName.equals(getPackageName())) {
+                    return; // Skip self
                 }
 
-                // Check if the detected app is in the blocked list
+                // Update the last seen time for the current app
+                appLastSeenTime.put(currentPackageName, time);
+                System.out.println("appLastSeenTime: " + appLastSeenTime);
+                System.out.println("lastForegroundPackage: " + lastForegroundPackage);
+                System.out.println("currentPackageName: " + currentPackageName);
+                // Check if the previously foreground app has been exited
+                if (lastForegroundPackage != null && !lastForegroundPackage.equals(currentPackageName)) {
+                    if (blockedApps.contains(lastForegroundPackage)) {
+                        // Reset authentication for the previous foreground app
+                        System.out.println("Removed: " + lastForegroundPackage);
+                        authenticatedApps.remove(lastForegroundPackage);
+                    }
+                }
+
+                // Update last foreground package
+                lastForegroundPackage = currentPackageName;
+
                 if (blockedApps.contains(currentPackageName)) {
-                    if (!isLockActivityRunning) {
-                        // Check if the app is already authenticated
-                        Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
-                        if (isAuthenticated == null || !isAuthenticated) {
+                    Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
+
+                    if (isAuthenticated == null || !isAuthenticated) {
+                        if (!isLockActivityRunning) {
                             isLockActivityRunning = true;
                             Intent lockIntent = new Intent(this, PasswordPromptActivity.class);
                             lockIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            lockIntent.putExtra("packageName", currentPackageName); // Pass the package name to the prompt activity
+                            lockIntent.putExtra("PACKAGE_NAME", currentPackageName);
                             startActivity(lockIntent);
                         }
                     }
-                } else {
-                    isLockActivityRunning = false;
                 }
+
             }
         }
     }
 
     public void onPasswordCorrect(String packageName) {
-        authenticatedApps.put(packageName, true); // Mark the app as authenticated
-        resetLockState(); // Reset the lock state to allow the app to open without showing the prompt
+        if (packageName != null && blockedApps.contains(packageName)) {
+            authenticatedApps.put(packageName, true);
+            lastAuthenticatedApp = packageName;
+            resetLockState();
+        } else {
+            System.out.println("Package name is null or not blocked. Authentication failed.");
+        }
     }
 
     public void resetLockState() {
@@ -140,15 +167,10 @@ public class CondecBlockingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        // Unregister the broadcast receiver
         unregisterReceiver(unlockReceiver);
-
-        // Stop the handler and its runnable
         handler.removeCallbacks(runnable);
-
-        // Stop the foreground service
         stopForeground(true);
+        authenticatedApps.clear();
     }
 
     @Override

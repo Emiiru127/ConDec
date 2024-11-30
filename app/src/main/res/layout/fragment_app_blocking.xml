@@ -18,7 +18,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
-            app:layout_constraintBottom_toTopOf="@+id/constraintLayout4"
+
+            app:layout_constraintBottom_toTopOf="@+id/constraintLayout7"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -43,6 +44,7 @@
                     android:background="@color/transparent"
                     android:gravity="center|left"
                     android:maxLines="1"
+                    android:padding="5dp"
                     android:text="Blocked Apps"
                     android:textColor="@color/blue_main_background"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -63,9 +65,14 @@
 
             <Button
                 android:id="@+id/button6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="\?"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:backgroundTint="@color/blue_main_background"
+                android:gravity="center"
+                android:text="/?"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                app:cornerRadius="24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/constraintLayout6"
@@ -74,6 +81,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout7"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:background="@color/transparent"
@@ -83,10 +91,11 @@
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
 
             <Button
-                android:id="@+id/btnAddBlockApp"
+                android:id="@+id/btnManageBlockApp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add"
+                android:backgroundTint="@color/blue_main_background"
+                android:text="Manage"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -100,12 +109,13 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btnAddBlockApp">
+                app:layout_constraintTop_toBottomOf="@+id/btnManageBlockApp">
 
                 <LinearLayout
                     android:id="@+id/blockedAppsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@color/transparent"
                     android:orientation="vertical"></LinearLayout>
             </ScrollView>
         </androidx.constraintlayout.widget.ConstraintLayout>

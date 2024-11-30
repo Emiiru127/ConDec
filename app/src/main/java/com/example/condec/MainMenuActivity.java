@@ -6,32 +6,28 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.provider.Settings;
+import android.text.InputType;
 import android.util.Log;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 
@@ -48,6 +44,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     //UI
 
+    private ImageView imgViewRename;
+    private TextView txtViewRename;
+
     private ImageButton btnSettings;
 
     private FrameLayout frameFeatures;
@@ -57,6 +56,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private MaterialButton btnFeatureAppUsage;
 
     private MaterialButton[] btnFeatures;
+
+    private CondecMainService condecMainService;
 
 
     @Override
@@ -74,25 +75,17 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         mAdminName = new ComponentName(this, AdminReceiver.class);
 
         if (!mDPM.isAdminActive(mAdminName)) {
-
             Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
             intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
             startActivity(intent);
             finish();
-
         }
 
-       /* AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.noteOpNoThrow(AppOpsManager.OPSTR_WRITE_SETTINGS, .(), context.getPackageName());
-        if (mode == AppOpsManager.MODE_ALLOWED) {
-            // Permission is granted
-        } else {
-            // Permission is denied
-            throw new SecurityException("App does not have the required permissions");
-        }*/
-
-        //checkAndRequestPermissions();
-        //checkPermissions();
+        // Start the service only if it's not already running
+        if (!isServiceRunning(CondecMainService.class)) {
+            Intent serviceIntent = new Intent(this, CondecMainService.class);
+            startForegroundService(serviceIntent);
+        }
     }
 
    /* private void requestPermissions() {
@@ -109,6 +102,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
         }
     }*/
+
+
 
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -156,6 +151,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void initializeUI(){
 
+        this.imgViewRename = findViewById(R.id.imgViewRename);
+        this.txtViewRename = findViewById(R.id.txtViewRename);
+
         this.btnSettings = findViewById(R.id.btnSettings);
 
         this.frameFeatures = findViewById(R.id.frameFeatures);
@@ -171,6 +169,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatures[2] = this.btnFeatureWebsiteBlocking;
         this.btnFeatures[3] = this.btnFeatureAppUsage;
 
+        this.imgViewRename.setOnClickListener(this);
+        this.txtViewRename.setOnClickListener(this);
+
         this.btnSettings.setOnClickListener(this);
 
         this.btnFeatureWarningDetection.setOnClickListener(this);
@@ -178,6 +179,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatureWebsiteBlocking.setOnClickListener(this);
         this.btnFeatureAppUsage.setOnClickListener(this);
 
+        refreshDeviceName();
 
     }
 
@@ -287,6 +289,63 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     }
 */
 
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void showRenameDeviceDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter your name of this Device");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String userInput = input.getText().toString();
+            // Handle the user input here
+            renameDevice(userInput);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void renameDevice(String name) {
+        SharedPreferences.Editor editor = this.condecPreferences.edit();
+        editor.putString("deviceName", name);
+        editor.apply();
+        Toast.makeText(MainMenuActivity.this, "Device Renamed: " + name, Toast.LENGTH_SHORT).show();
+        refreshDeviceName();
+
+        // Notify discovery process or UI to update the device list
+        refreshDeviceListWithNewName();
+    }
+
+    private void refreshDeviceListWithNewName() {
+        // If the discovery process is ongoing, re-run or update the list
+        if (condecMainService != null) {
+            condecMainService.refreshDiscoveredDevices();
+        }
+
+        // Optionally, directly update the UI here if necessary
+        // updateDeviceListInUI();
+    }
+
+    private void refreshDeviceName(){
+
+        String name = this.condecPreferences.getString("deviceName", "My Device");
+        this.txtViewRename.setText(name);
+
+    }
+
     @Override
     public void onBackPressed() {
 
@@ -305,6 +364,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             Intent intent = new Intent(MainMenuActivity.this, SettingsActivity.class);
             startActivity(intent);
             finish();
+
+        }
+        if (this.imgViewRename == view || this.txtViewRename == view){
+
+            showRenameDeviceDialog();
 
         }
         if (this.btnFeatureWarningDetection == view){

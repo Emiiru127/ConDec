@@ -82,7 +82,7 @@ public class CondecDetectionService extends Service {
         this.mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         try {
-            tflite = new Interpreter(loadModelFile(this, "ai models/detect6.tflite"));
+            tflite = new Interpreter(loadModelFile(this, "ai models/detect.tflite"));
         } catch (IOException e) {
             e.printStackTrace();
         }

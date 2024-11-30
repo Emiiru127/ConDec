@@ -53,6 +53,7 @@ public class CondecVPNService extends VpnService {
         vpnThread = new Thread(() -> {
             try {
                 setupVpn();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -60,6 +61,7 @@ public class CondecVPNService extends VpnService {
         vpnThread.start();
         return START_STICKY;
     }
+
 
     @Override
     public void onDestroy() {

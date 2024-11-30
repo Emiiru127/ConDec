@@ -1,7 +1,5 @@
 package com.example.condec;
 
-import static android.app.Activity.RESULT_OK;
-
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -101,7 +99,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        this.btnAddBlockApp = view.findViewById(R.id.btnAddBlockApp);
+        this.btnAddBlockApp = view.findViewById(R.id.btnManageBlockApp);
 
         this.btnAddBlockApp.setOnClickListener(this);
 
@@ -116,6 +114,9 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
             }
         }
 
+        boolean isServiceRunning = isMyServiceRunning(CondecBlockingService.class);
+        switchAppBlock.setChecked(isServiceRunning);
+
         switchAppBlock.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Save the switch state
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -125,7 +126,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
             if (isChecked) {
                 // Start the service
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
-                getActivity().startService(serviceIntent);
+                getActivity().startForegroundService(serviceIntent);
             } else {
                 // Stop the service
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
@@ -171,6 +172,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         boolean isLocked = sharedPreferences.getBoolean(app.packageName, false);
         appToggle.setChecked(isLocked);
+        appToggle.setVisibility(View.INVISIBLE);
 
         appToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
             saveLockedAppState(app.packageName, isChecked);

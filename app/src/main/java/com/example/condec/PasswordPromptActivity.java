@@ -95,10 +95,12 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
         if (correctPassword.equals(enteredPassword)) {
             // Correct password, allow access and finish the activity
             String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
+            System.out.println("starting to Broadcast: " + currentPackageName);
             if (currentPackageName != null) {
                 Intent intent = new Intent("com.example.condec.UNLOCK_APP");
                 intent.putExtra("PACKAGE_NAME", currentPackageName);
                 sendBroadcast(intent); // Broadcast the unlock event
+                System.out.println("Sent Broadcast.");
             }
 
             finish();
@@ -110,26 +112,19 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onPause() {
+        super.onPause();
 
-        // Check if the app should still be locked
-        String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
-        SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
-        Set<String> blockedApps = condecPreferences.getStringSet("blockedApps", new HashSet<>());
+        // Send a broadcast to reset the lock state
+        Intent resetIntent = new Intent("com.example.condec.RESET_LOCK_STATE");
+        sendBroadcast(resetIntent);
+    }
 
-        if (blockedApps.contains(currentPackageName)) {
-            // Show the password prompt again
-            if (!isFinishing()) {
-                // Activity is still active, do nothing
-            } else {
-                // Re-launch the password prompt
-                finish();
-                Intent intent = new Intent(this, PasswordPromptActivity.class);
-                intent.putExtra("PACKAGE_NAME", currentPackageName);
-                startActivity(intent);
-            }
-        }
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Update the intent
+        onResume(); // Call onResume to handle the new intent
     }
 
 

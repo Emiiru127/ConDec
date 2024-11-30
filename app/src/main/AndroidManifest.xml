@@ -16,6 +16,10 @@
     <uses-permission
         android:name="android.permission.BIND_VPN_SERVICE"
         tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -116,6 +120,13 @@
         <service
             android:name=".CondecBlockingService"
             android:enabled="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false" />
+
+        <service
+            android:name=".CondecMainService"
+            android:enabled="true"
+            android:foregroundServiceType="connectedDevice"
             android:exported="false" />
 
         <service
