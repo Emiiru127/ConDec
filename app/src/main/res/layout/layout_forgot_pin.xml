@@ -5,7 +5,8 @@
     android:id="@+id/text"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ForgotPinActivity">
+    tools:context=".ForgotPinActivity"
+    android:background="@color/blue_main_background">
 
     <ImageView
         android:id="@+id/imageView5"
@@ -96,8 +97,11 @@
             android:background="@drawable/edit_text"
             android:ems="10"
             android:gravity="start|top"
-            android:inputType="textMultiLine"
+            android:hint="Enter the answer"
+            android:inputType="text"
+            android:maxLines="1"
             android:padding="10dp"
+            android:singleLine="true"
             android:textColor="@color/black"
             app:layout_constraintBottom_toTopOf="@+id/btnConfirmForgotPin"
             app:layout_constraintEnd_toEndOf="parent"

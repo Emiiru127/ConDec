@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.system.OsConstants;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -35,9 +36,6 @@ import java.util.concurrent.Executors;
 public class CondecVPNService extends VpnService {
 
     private static final String TAG = "Condec Vpn Service";
-
-    private NetworkChangeReceiver networkChangeReceiver;
-    private boolean isReceiverRegistered = false;
     public static final String ACTION_STOP_VPN = "com.example.condec.STOP_VPN";
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
@@ -50,14 +48,6 @@ public class CondecVPNService extends VpnService {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        // Initialize the network change receiver
-        networkChangeReceiver = new NetworkChangeReceiver();
-
-        // Register the receiver and mark it as registered
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(networkChangeReceiver, filter);
-        isReceiverRegistered = true;
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -84,6 +74,7 @@ public class CondecVPNService extends VpnService {
     }
 
     private void fetchBlockedDomainsAndStartVpn() {
+        // Use AsyncTask to run the database query on a background thread
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -91,10 +82,8 @@ public class CondecVPNService extends VpnService {
                 List<String> urls = blockedURLRepository.getAllBlockedUrlsSync();
 
                 if (urls != null) {
-                    synchronized (blockedDomains) {
-                        blockedDomains.clear();
-                        blockedDomains.addAll(urls);
-                    }
+                    blockedDomains.clear();
+                    blockedDomains.addAll(urls);
 
                     Log.d(TAG, "Blocked Domains Updated:");
                     for (String url : blockedDomains) {
@@ -113,16 +102,8 @@ public class CondecVPNService extends VpnService {
             public void run() {
                 try {
                     List<InetAddress> blockedIps = new ArrayList<>();
-
-                    synchronized (blockedDomains) {
-                        for (String domain : blockedDomains) {
-                            String extractedDomain = getDomainFromUrl(domain);
-                            if (extractedDomain != null && !extractedDomain.isEmpty()) {
-                                blockedIps.addAll(resolveDomainToIps(extractedDomain));
-                            } else {
-                                Log.e(TAG, "Invalid or empty domain: " + domain);
-                            }
-                        }
+                    for (String domain : blockedDomains) {
+                        blockedIps.addAll(resolveDomainToIps(domain));
                     }
 
                     if (blockedIps.isEmpty()) {
@@ -163,6 +144,7 @@ public class CondecVPNService extends VpnService {
             }
         });
         vpnThread.start();
+
     }
 
     @Override
@@ -171,12 +153,6 @@ public class CondecVPNService extends VpnService {
         Log.d(TAG, "VPN is On Destroy");
         stopVpn();
         Log.d(TAG, "VPN is On Destroy LAst");
-
-        // Unregister the receiver only if it was registered
-        if (isReceiverRegistered) {
-            unregisterReceiver(networkChangeReceiver);
-            isReceiverRegistered = false;
-        }
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

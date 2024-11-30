@@ -1,5 +1,7 @@
 package com.example.condec;
 
+import static com.example.condec.MainMenuActivity.REQUEST_CODE_VPN;
+
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -24,6 +26,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.condec.Classes.WebsiteBlockAdapter;
 import com.example.condec.Database.BlockedURLRepository;
@@ -133,12 +136,19 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
         switchWebsiteBlock.setOnCheckedChangeListener((buttonView, isChecked) -> {
 
-            if (isChecked) {
-                startVpnService();
-            } else {
-                Log.e("Website Fragment", "Stopping VPN");
-                stopVpnService();
-            }
+           if (!isVPNPermissionGranted()){
+
+               requestVPNPermission();
+               return;
+
+           }
+
+           if (isChecked) {
+               startVpnService();
+           } else {
+               Log.e("Website Fragment", "Stopping VPN");
+               stopVpnService();
+           }
 
         });
 
@@ -177,6 +187,38 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
         getActivity().startService(intent);
     }
 
+    private boolean isVPNPermissionGranted() {
+        return CondecVPNService.prepare(getActivity()) == null;
+    }
+
+    private void requestVPNPermission() {
+        TipDialog tipDialog = new TipDialog("VPN Permission",
+                "This app requires VPN permission to secure your network connection.",
+                () -> {
+                    Intent vpnIntent = CondecVPNService.prepare(getActivity());
+                    if (vpnIntent != null) {
+                        startActivityForResult(vpnIntent, REQUEST_CODE_VPN);
+                    } else {
+
+                        requestVPNPermission();
+
+                    }
+                });
+        tipDialog.show(getActivity().getSupportFragmentManager(), "VPNPermissionDialog");
+    }
+
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode) {
+        super.startActivityForResult(intent, requestCode);
+        if (requestCode == REQUEST_CODE_VPN) {
+            if (isVPNPermissionGranted()) {
+                startVpnService();
+            } else {
+                Toast.makeText(getActivity(), "VPN permission is required.", Toast.LENGTH_SHORT).show();
+                requestVPNPermission();
+            }
+        }
+    }
 
     private boolean isServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);

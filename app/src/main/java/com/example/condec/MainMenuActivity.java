@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.AppOpsManager;
@@ -20,6 +21,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +33,7 @@ import android.provider.Settings;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
@@ -49,13 +53,13 @@ import java.util.Set;
 
 public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
 
-    private static final int REQUEST_CODE_DRAW_OVERLAY = 5469;
-    private static final int REQUEST_CODE_USAGE_ACCESS = 5470;
-    private static final int REQUEST_CODE_VPN = 5471;
+    public static final int REQUEST_CODE_DRAW_OVERLAY = 5469;
+    public static final int REQUEST_CODE_USAGE_ACCESS = 5470;
+    public static final int REQUEST_CODE_VPN = 5471;
 
-    private static final int ACCESSIBILITY_REQUEST_CODE = 5472;
+    public static final int ACCESSIBILITY_REQUEST_CODE = 5472;
 
-    private static final int REQUEST_CODE_BATTERY_OPTIMIZATION = 5473;
+    public static final int REQUEST_CODE_BATTERY_OPTIMIZATION = 5473;
     private SharedPreferences condecPreferences;
 
     //Device admin
@@ -419,7 +423,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         } else if (requestCode == REQUEST_CODE_VPN) {
             if (isVPNPermissionGranted()) {
                 Intent vpnIntent = new Intent(this, CondecVPNService.class);
-                this.startService(vpnIntent);
+                startService(vpnIntent);
                 checkAndRequestPermissions();
             } else {
                 Toast.makeText(this, "VPN permission is required.", Toast.LENGTH_SHORT).show();
@@ -608,9 +612,20 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void showRenameDeviceDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter your name of this Device");
 
-        final EditText input = new EditText(this);
+        // Create a custom TextView for the dialog title
+        TextView title = new TextView(this);
+        title.setText("Enter the name of this Device");
+        title.setPadding(10, 20, 10, 10);
+        title.setTextSize(20F);
+        title.setTextColor(getColor(R.color.blue_main_background)); // Set your desired color here
+        title.setGravity(Gravity.CENTER); // Optional: Center the title
+
+        builder.setCustomTitle(title); // Set custom title
+
+        EditText input = new EditText(this);
+        input.setHint("Enter Device Name");
+        input.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.blue_main_background)));
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
@@ -622,7 +637,13 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
-        builder.show();
+        AlertDialog dialog = builder.create();
+        dialog.show(); // Show the dialog first to access buttons
+
+        // Access the buttons and set the color
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));   // Set negative button color
+
     }
 
     private void showMandatoryRenameDeviceDialog() {
@@ -637,9 +658,19 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         // If no device name is set, show the mandatory dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter your device's name");
 
-        final EditText input = new EditText(this);
+        // Create a custom TextView for the dialog title
+        TextView title = new TextView(this);
+        title.setText("Enter the name of this Device");
+        title.setPadding(10, 20, 10, 10);
+        title.setTextSize(20F);
+        title.setTextColor(getColor(R.color.blue_main_background)); // Set your desired color here
+        title.setGravity(Gravity.CENTER); // Optional: Center the title
+        builder.setCustomTitle(title);
+
+        EditText input = new EditText(this);
+        input.setHint("Enter Device Name");
+        input.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.blue_main_background)));
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
@@ -656,7 +687,12 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             }
         });
 
-        builder.show();
+        AlertDialog dialog = builder.create();
+        dialog.show(); // Show the dialog first to access buttons
+
+        // Access the buttons and set the color
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
+
     }
 
     private void renameDevice(String name) {

@@ -31,10 +31,6 @@ public abstract class CondecDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     CondecDatabase.class, "CondecDatabase")
                             .addCallback(sRoomDatabaseCallback)
-                            .addMigrations(MIGRATION_1_2) // Add migration here
-                            .addMigrations(MIGRATION_1_3) // Add migration here
-                            .addMigrations(MIGRATION_1_4) // Add migration here
-                            .addMigrations(MIGRATION_1_5) // Add migration here
                             .build();
                 }
             }

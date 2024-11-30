@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/blue_main_background">
 
     <ImageButton
         android:id="@+id/btnCreateQuestionBack"
@@ -128,6 +129,7 @@
             android:background="@drawable/edit_text"
             android:ems="10"
             android:gravity="start|top"
+            android:hint="Create a question"
             android:inputType="text"
             android:maxLength="50"
             android:maxLines="8"
@@ -145,6 +147,7 @@
             android:background="@drawable/edit_text"
             android:ems="10"
             android:gravity="start|top"
+            android:hint="Answer"
             android:inputType="text"
             android:maxLines="1"
             android:padding="10dp"
@@ -162,6 +165,7 @@
             android:background="@drawable/edit_text"
             android:ems="10"
             android:gravity="start|top"
+            android:hint="Confirm answer"
             android:inputType="text"
             android:maxLines="1"
             android:padding="10dp"

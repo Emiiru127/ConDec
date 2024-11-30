@@ -23,14 +23,20 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
 
         Log.d("NetworkChangeReceiver", "isConnected: " + isConnected);
         Log.d("NetworkChangeReceiver", "isVpnOn: " + isVpnOn);
+
         if (isConnected && isVpnOn) {
-            // Reconnect VPN if internet is available and VPN is switched on
-            Intent vpnIntent = new Intent(context, CondecVPNService.class);
-            context.startService(vpnIntent);
-            Log.d("NetworkChangeReceiver", "Internet is back, reconnecting VPN...");
+            // Check if connection is Wi-Fi or mobile data
+            int networkType = activeNetwork.getType();
+            if (networkType == ConnectivityManager.TYPE_WIFI || networkType == ConnectivityManager.TYPE_MOBILE) {
+                // Reconnect VPN if internet is available and VPN is switched on
+                Intent vpnIntent = new Intent(context, CondecVPNService.class);
+                context.startService(vpnIntent);
+                Log.d("NetworkChangeReceiver", "Internet is back on "
+                        + (networkType == ConnectivityManager.TYPE_WIFI ? "Wi-Fi" : "Mobile Data") +
+                        ", reconnecting VPN...");
+            }
         } else {
             Log.d("NetworkChangeReceiver", "No internet connection or VPN is off.");
         }
     }
 }
-

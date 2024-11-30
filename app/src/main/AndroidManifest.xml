@@ -83,7 +83,7 @@
         <receiver android:name=".SleepTimeReceiver"
             android:enabled="true"
             android:exported="false" />
-
+<!--
         <receiver android:name=".NetworkChangeReceiver"
             android:enabled="true"
             android:exported="false">
@@ -91,7 +91,7 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
-
+-->
         <receiver
             android:name=".AppInstallationReceiver"
             android:exported="false">
