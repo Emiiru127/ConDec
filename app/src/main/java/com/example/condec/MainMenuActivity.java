@@ -54,6 +54,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private static final int REQUEST_CODE_VPN = 5471;
 
     private static final int ACCESSIBILITY_REQUEST_CODE = 5472;
+
+    private static final int REQUEST_CODE_BATTERY_OPTIMIZATION = 5473;
     private SharedPreferences condecPreferences;
 
     //Device admin
@@ -237,22 +239,17 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void startRequiredServices() {
-        // Check if the device name is set
-        String deviceName = condecPreferences.getString("deviceName", null);
-        if (deviceName == null || deviceName.isEmpty()) {
-            // If the device name is not set, prompt the user to set it
-            showRenameDeviceDialog();
-        } else {
-            // If the device name is set, start the required services
-            if (!isServiceRunning(CondecParentalService.class)) {
-                Intent serviceIntent = new Intent(this, CondecParentalService.class);
-                startForegroundService(serviceIntent);
-            }
-            if (!isServiceRunning(CondecSecurityService.class)) {
-                Intent serviceIntent = new Intent(this, CondecSecurityService.class);
-                startForegroundService(serviceIntent);
-            }
+
+        // If the device name is set, start the required services
+        if (!isServiceRunning(CondecParentalService.class)) {
+            Intent serviceIntent = new Intent(this, CondecParentalService.class);
+            startForegroundService(serviceIntent);
         }
+        if (!isServiceRunning(CondecSecurityService.class)) {
+            Intent serviceIntent = new Intent(this, CondecSecurityService.class);
+            startForegroundService(serviceIntent);
+        }
+
     }
 
     public void checkSleepService(){
@@ -266,9 +263,13 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private void checkAndRequestPermissions() {
         mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         mAdminName = new ComponentName(this, AdminReceiver.class);
+        String deviceName = condecPreferences.getString("deviceName", null);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
+            if (!mDPM.isAdminActive(mAdminName)) {
+                requestAdminPermission();
+            }
+            else if (!Settings.canDrawOverlays(this)) {
                 requestOverlayPermission();
             } else if (!isUsageAccessGranted()) {
                 requestUsageAccessPermission();
@@ -278,9 +279,17 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestAccessibilityPermission();
             } else if (!isBatteryOptimizationIgnored()) {
                 requestBatteryOptimizationPermission();
-            } else if (!mDPM.isAdminActive(mAdminName)) {
-                requestAdminPermission();
             }
+            else if (deviceName == null || deviceName.isEmpty()) {
+                // If the device name is not set, prompt the user to set it
+                showMandatoryRenameDeviceDialog();
+            }
+            else {
+
+                startRequiredServices();
+
+            }
+
         } else {
             if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
@@ -331,7 +340,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                     if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
                         Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                         intent.setData(Uri.parse("package:" + getPackageName()));
-                        startActivity(intent);
+                        startActivityForResult(intent, REQUEST_CODE_BATTERY_OPTIMIZATION);
                     }
                 });
         tipDialog.show(getSupportFragmentManager(), "BatteryOptimizationPermissionDialog");
@@ -424,13 +433,23 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 public void run() {
                     if (isAccessibilityServiceEnabled()) {
                         // Accessibility service enabled, proceed with starting services
-                        startRequiredServices();
+                        checkAndRequestPermissions();
+
                     } else {
                         // Accessibility not enabled, ask again
                         requestAccessibilityPermission();
                     }
                 }
             }, 1000); // 1 second delay
+        }
+        else if (requestCode == REQUEST_CODE_BATTERY_OPTIMIZATION) {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                checkAndRequestPermissions();
+            } else {
+                Toast.makeText(this, "Battery optimization permission is required.", Toast.LENGTH_SHORT).show();
+                requestBatteryOptimizationPermission();
+            }
         }
     }
 
