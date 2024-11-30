@@ -8,9 +8,18 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Binder;
@@ -18,13 +27,17 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.example.condec.Classes.ParentalAppUsageInfo;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -34,8 +47,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -293,15 +308,15 @@ public class CondecParentalService extends Service {
             if (message != null) {
                 String[] parts = message.split(":");
 
-                Log.d("Condec Parental", "Message length: " + parts.length);
+                Log.d("CondecParentalService", "Message length: " + parts.length);
 
                 // Decide which method to call based on the number of parts in the message
                 if (parts.length == 2) {
-                    Log.d("Condec Parental", "Getting Service Statuses");
+                    Log.d("CondecParentalService", "Getting Service Statuses");
                     // Call the first handleClient method for data exchange
                     handleClientData(clientSocket, parts);
                 } else if (parts.length >= 3) {
-                    Log.d("Condec Parental", "Command Recieved");
+                    Log.d("CondecParentalService", "Command Recieved");
                     // Call the second handleClientCommand method for command handling
 
                     if (!parts[2].equals("SLEEP_CONTROL") && parts.length == 3){
@@ -319,12 +334,217 @@ public class CondecParentalService extends Service {
 
                     }
 
+                    if (parts[2].equals("APP_USAGE_DATA")) {
+                        Log.d("CondecParentalService", "SENDING APP USAGE DATA");
+                        Log.d("CondecParentalService", "Handling App Usage Data");
+                        handleRequestAppUsageData(clientSocket);
+                    }
+
                 }
             }
 
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private List<ParentalAppUsageInfo> collectAppUsageData() {
+        UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0); // Start of the current day
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        long startTime = calendar.getTimeInMillis();
+        long endTime = System.currentTimeMillis();
+
+        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+        if (usageStatsList == null || usageStatsList.isEmpty()) {
+            Log.d("CondecParentalService", "No usage data available.");
+            return null;
+        }
+
+        List<ParentalAppUsageInfo> appUsageList = new ArrayList<>();
+        Set<String> addedPackages = new HashSet<>();
+        PackageManager pm = getPackageManager();
+
+        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
+        launcherIntent.addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolveInfo = pm.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        String defaultLauncherPackage = resolveInfo.activityInfo.packageName;
+
+        String myPackageName = getPackageName();
+
+        for (UsageStats usageStats : usageStatsList) {
+            String packageName = usageStats.getPackageName();
+            long usageTime = usageStats.getTotalTimeInForeground();
+            long lastTimeUsed = usageStats.getLastTimeUsed();
+
+            if (usageTime > 0 || lastTimeUsed > 0) {
+                try {
+                    ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+
+                    if (packageName.equals(myPackageName) || packageName.equals(defaultLauncherPackage)) {
+                        continue;
+                    }
+
+                    if (isSystemApp(appInfo) && !isAllowedSystemApp(packageName)) {
+                        continue;
+                    }
+
+                    if (!addedPackages.contains(packageName)) {
+                        String appName = pm.getApplicationLabel(appInfo).toString();
+                        Drawable appIcon = pm.getApplicationIcon(appInfo);
+                        appUsageList.add(new ParentalAppUsageInfo(packageName, appName, appIcon, usageTime, lastTimeUsed));
+                        addedPackages.add(packageName);
+                    }
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        Log.d("CondecParentalService", "Total apps found: " + appUsageList.size());
+
+        // Now send this app usage data to the target device
+        return appUsageList;
+    }
+
+    private boolean isSystemApp(ApplicationInfo appInfo) {
+        return ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) && ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0);
+    }
+
+    private boolean isAllowedSystemApp(String packageName) {
+        return packageName.equals("com.android.vending") // Play Store
+                || packageName.equals("com.google.android.youtube") // YouTube
+                || packageName.equals("com.android.chrome"); // Chrome
+    }
+
+    private void handleRequestAppUsageData(Socket clientSocket) {
+            try {
+                // Assuming you already have a socket connection to the target device
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                List<ParentalAppUsageInfo> appUsageList = collectAppUsageData();
+
+                // Send each app's data
+                for (ParentalAppUsageInfo parentalAppUsageInfo : appUsageList) {
+                    String dataToSend = String.format("%s|%d|%d|%s",
+                            parentalAppUsageInfo.getAppName(),
+                            parentalAppUsageInfo.getUsageTime(),
+                            parentalAppUsageInfo.getLastTimeUsed(),
+                            encodeIconToBase64(parentalAppUsageInfo.getAppIcon())  // Convert icon to Base64 string
+                    );
+                    Log.d("CondecParentalService", "App Data Sent: " + dataToSend);
+                    out.println(dataToSend);
+                }
+
+                out.println("END_OF_APP_USAGE_DATA");  // Mark the end of the data
+                out.flush();
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
+
+    // Helper method to convert Drawable to Base64 string
+    private String encodeIconToBase64(Drawable icon) {
+        Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
+    public void requestAppUsageData(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+        executorService.execute(() -> {
+            try {
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
+                // Send the request for app usage data
+                out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "APP_USAGE_DATA");
+                Log.d("CondecParentalService", "REQUESTING APP USAGE DATA");
+                // Listen for data from the target device
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                List<String> receivedData = new ArrayList<>();
+                String line;
+                String temp = "";
+                while ((line = in.readLine()) != null) {
+                    Log.d("CondecParentalService", "App Data Received: " + line);
+                    temp += line;
+                    if (line.equals("END_OF_APP_USAGE_DATA")) {
+                        break;  // End of data marker
+                    }
+                    if(line.isEmpty()){
+
+                        receivedData.add(temp);
+                        temp = "";
+
+                    }
+
+                }
+
+
+                for (String data : receivedData) {
+                    Log.d("CondecParentalService", data);
+                }
+
+                // Handle the received app usage data (e.g., start a new activity)
+                handleReceivedAppUsageData(receivedData, parentalControlActivity);
+
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void handleReceivedAppUsageData(List<String> receivedData, ParentalControlActivity parentalControlActivity) {
+        List<ParentalAppUsageInfo> appUsageList = new ArrayList<>();
+
+        for (String data : receivedData) {
+            if (data.equals("END_OF_APP_USAGE_DATA")) {
+                break;
+            }
+
+            String[] parts = data.split("\\|");
+
+            if (parts.length >= 4) {
+                String appName = parts[0];
+                long usageTime = Long.parseLong(parts[1]);
+                long lastTimeUsed = Long.parseLong(parts[2]);
+                Drawable appIcon = decodeBase64ToDrawable(parts[3]);
+
+                appUsageList.add(new ParentalAppUsageInfo(null, appName, appIcon, usageTime, lastTimeUsed));
+            } else {
+                Log.e("CondecParentalService", "Invalid data received: " + data);
+            }
+        }
+
+        // Sort the appUsageList by lastTimeUsed in descending order
+        appUsageList.sort((app1, app2) -> Long.compare(app2.getLastTimeUsed(), app1.getLastTimeUsed()));
+
+        // Proceed to use appUsageList, e.g., pass it to the activity or process it
+        Log.d("CondecParentalService", "App usage data processed: " + appUsageList.size() + " apps.");
+
+        // Pass the sorted list to the activity (for example)
+        Intent intent = new Intent(parentalControlActivity, ParentalAppUsageActivity.class);
+        intent.putParcelableArrayListExtra("appUsageList", (ArrayList<ParentalAppUsageInfo>) appUsageList);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
+    // Helper method to decode Base64 string to Drawable
+    private Drawable decodeBase64ToDrawable(String base64Icon) {
+        try {
+            byte[] decodedBytes = Base64.decode(base64Icon, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+            return new BitmapDrawable(getResources(), bitmap);
+        } catch (IllegalArgumentException e) {
+            Log.e("CondecParentalService", "Base64 decoding error: " + e.getMessage());
+            return null;
         }
     }
 
@@ -659,16 +879,29 @@ public class CondecParentalService extends Service {
     private void handleCommand(String command) {
 
         Log.d("Condec Parental", "Command Received:" + command);
+        SharedPreferences sharedPref = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor =  sharedPref.edit();
 
         switch (command) {
             case "START_DETECTION":
                 Intent requestIntent = new Intent(this, RequestDetectionPermission.class);
                 requestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(requestIntent);
+
+                editor.putBoolean("isDetectionServiceManuallyOff", true);
+                editor.apply();
+
+                Intent broadcastDetectionOnIntent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF");
+                sendBroadcast(broadcastDetectionOnIntent);
                 showToast("Remotely Started Detection Service");
                 break;
             case "STOP_DETECTION":
                 stopService(new Intent(this, CondecDetectionService.class));
+                editor.putBoolean("isDetectionServiceManuallyOff", true);
+                editor.apply();
+
+                Intent broadcastDetectionOffIntent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF");
+                sendBroadcast(broadcastDetectionOffIntent);
                 showToast("Remotely Stopped Detection Service");
                 break;
             case "START_APP_BLOCKING":

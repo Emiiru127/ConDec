@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -197,6 +198,16 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         if (screenCaptureResultCode == RESULT_OK){
 
             this.isServiceActive = true;
+            Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY TURNED ON");
+            SharedPreferences.Editor editor =  this.condecPreferences.edit();
+            editor.putBoolean("isDetectionServiceManuallyOff", false);
+            editor.apply();
+
+            Intent intent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_ON");
+            getActivity().sendBroadcast(intent);
+
+            boolean isDetectionServiceManuallyOff = this.condecPreferences.getBoolean("isDetectionServiceManuallyOff", true);
+            Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY: " + isDetectionServiceManuallyOff);
 
             // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
             //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
@@ -204,6 +215,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
             Intent serviceIntent = CondecDetectionService.newIntent(getActivity(), screenCaptureResultCode, screenCaptureIntent);
             getActivity().startForegroundService(serviceIntent);
             getActivity().bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
 
         }
         else {
@@ -215,6 +227,18 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     }
 
     private void stopCondecService()  {
+
+        Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY TURNED OFF");
+
+        SharedPreferences.Editor editor =  this.condecPreferences.edit();
+        editor.putBoolean("isDetectionServiceManuallyOff", true);
+        editor.apply();
+
+        Intent intent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF");
+        getActivity().sendBroadcast(intent);
+
+        boolean isDetectionServiceManuallyOff = this.condecPreferences.getBoolean("isDetectionServiceManuallyOff", true);
+        Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY: " + isDetectionServiceManuallyOff);
 
         if (isBinded == true){
 
@@ -263,6 +287,15 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
             this.isServiceActive = true;
             update();
+
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(isServiceRunning(CondecDetectionService.class) && isBinded){
+            getActivity().unbindService(serviceConnection);
 
         }
     }

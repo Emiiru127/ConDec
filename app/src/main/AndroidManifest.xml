@@ -28,8 +28,7 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE"
-        tools:ignore="ProtectedPermissions" />
+
 
     <application
         android:allowBackup="true"
@@ -45,8 +44,12 @@
             android:name=".ParentalControlActivity"
             android:exported="false" />
         <activity
-            android:name=".RequestDetectionPermission"
+            android:name=".ParentalAppUsageActivity"
             android:exported="false" />
+        <activity
+            android:name=".RequestDetectionPermission"
+            android:exported="false"
+            android:launchMode="singleTop" />/>
         <activity
             android:name=".AppSelectionActivity"
             android:exported="false" />
@@ -68,6 +71,14 @@
             <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".AppInstallationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <data android:scheme="package" />
             </intent-filter>
         </receiver>
         <receiver
@@ -122,6 +133,10 @@
             android:name=".AboutCondecActivity"
             android:exported="false" />
         <activity
+            android:name=".DetectionTimeCheckDialog"
+            android:exported="false"
+            android:launchMode="singleTop" />/>
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -171,15 +186,13 @@
             android:name=".CondecAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="specialUse"
-            android:process=":AccessibilityService">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService"/>
             </intent-filter>
             <meta-data
             android:name="android.accessibilityservice"
-            android:resource="@xml/accessibility_service"/>
+            android:resource="@xml/accessibility_service_config"/>
         </service>
 
     </application>

@@ -1,7 +1,9 @@
 package com.example.condec.Classes;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.condec.CondecVPNService;
 import com.example.condec.Database.BlockedURLRepository;
 import com.example.condec.Database.UserBlockedUrl;
 import com.example.condec.R;
@@ -59,7 +62,28 @@ public class WebsiteBlockAdapter extends RecyclerView.Adapter<WebsiteBlockAdapte
 
             // Ensure the UI update happens on the main thread
             ((Activity) context).runOnUiThread(() -> notifyItemRemoved(position));
+
+            if (isServiceRunning(CondecVPNService.class)){
+
+                Intent stopIntent = new Intent(context, CondecVPNService.class);
+                stopIntent.setAction(CondecVPNService.ACTION_STOP_VPN);
+                context.startService(stopIntent);
+                Intent startIntent = new Intent(context, CondecVPNService.class);
+                context.startService(startIntent);
+
+            }
+
         }).start();
+    }
+
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class WebsiteBlockedViewHolder extends RecyclerView.ViewHolder {

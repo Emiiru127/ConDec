@@ -47,7 +47,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/txtViewTerms"
+                android:id="@+id/txtDeviceAppUsage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -234,6 +234,48 @@
                         android:gravity="center|start"
                         android:paddingStart="16dp"
                         android:text="Sleep"
+                        android:textColor="@color/blue_main_background"
+                        android:textSize="18sp" />
+
+                    <!-- Switch -->
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewAppUsage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:background="@color/transparent"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/transparent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <!-- Icon -->
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:background="@color/transparent"
+                        android:src="@drawable/app_usage_analytics"
+                        app:tint="@color/blue_main_background" />
+
+                    <!-- Text -->
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@color/transparent"
+                        android:gravity="center|start"
+                        android:paddingStart="16dp"
+                        android:text="App Usages"
                         android:textColor="@color/blue_main_background"
                         android:textSize="18sp" />
 

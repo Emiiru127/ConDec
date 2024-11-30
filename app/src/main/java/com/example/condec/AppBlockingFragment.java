@@ -125,6 +125,8 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
                 // Start the service
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
                 getActivity().startForegroundService(serviceIntent);
+
+
             } else {
                 // Stop the service
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
@@ -189,6 +191,15 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
             if (lockedApps.contains(app.packageName)) {
                 createAppToggleView(app, blockedAppsContainer);
             }
+        }
+
+        if (isMyServiceRunning(CondecBlockingService.class)){
+
+            Intent stopServiceIntent = new Intent(getActivity(), CondecBlockingService.class);
+            getActivity().stopService(stopServiceIntent);
+            Intent startServiceIntent = new Intent(getActivity(), CondecBlockingService.class);
+            getActivity().startForegroundService(startServiceIntent);
+
         }
     }
 

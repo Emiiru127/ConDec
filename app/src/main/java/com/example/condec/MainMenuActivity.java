@@ -16,14 +16,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -37,7 +42,10 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -45,6 +53,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private static final int REQUEST_CODE_USAGE_ACCESS = 5470;
     private static final int REQUEST_CODE_VPN = 5471;
 
+    private static final int ACCESSIBILITY_REQUEST_CODE = 5472;
     private SharedPreferences condecPreferences;
 
     //Device admin
@@ -113,6 +122,56 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         checkAndRequestPermissions();
         checkSleepService();
 
+        boolean isInitializationDone = condecPreferences.getBoolean("isInitializationDone", false);
+
+        if (isInitializationDone == false){
+
+            initialization();
+
+        }
+
+    }
+
+    private void initialization(){
+
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+        List<ApplicationInfo> userApps = new ArrayList<>();
+
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        String defaultLauncher = resolveInfo.activityInfo.packageName;
+
+        // Add packages to include
+        Set<String> includePackages = new HashSet<>();
+        includePackages.add("com.android.vending"); // Play Store
+        includePackages.add("com.android.chrome");  // Chrome
+        includePackages.add("com.google.android.youtube"); // YouTube
+
+        for (ApplicationInfo app : installedApps) {
+            if (!app.packageName.equals(getPackageName())
+                    && !app.packageName.equals(defaultLauncher)
+                    && (pm.getApplicationIcon(app).getConstantState() != pm.getDefaultActivityIcon().getConstantState())
+                    && ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || includePackages.contains(app.packageName))) {
+                userApps.add(app);
+            }
+        }
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        Set<String> previouslySelectedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
+        boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
+
+        // On first launch, select all apps by default and save them as blocked apps
+        previouslySelectedApps = new HashSet<>();
+        for (ApplicationInfo app : userApps) {
+            previouslySelectedApps.add(app.packageName); // Select all user apps on first launch
+        }
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putStringSet("blockedApps", previouslySelectedApps);
+        editor.putBoolean("isInitializationDone", true); // Mark initialization as done
+        editor.apply();
+
 
     }
 
@@ -160,14 +219,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    private void requestAccessibilityPermission() {
-        new AlertDialog.Builder(this)
-                .setTitle("Accessibility Permission Required")
-                .setMessage("This app requires accessibility permissions to function properly. Please enable it in the settings.")
-                .setPositiveButton("Open Settings", (dialog, which) -> openAccessibilitySettings())
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
-    }
 
     private void openAccessibilitySettings() {
         Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
@@ -175,16 +226,33 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private boolean isAccessibilityServiceEnabled() {
-        String serviceId = getPackageName() + "/" + CondecAccessibilityService.class.getName();
-        AccessibilityManager am = (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
-        if (am != null) {
-            List<AccessibilityServiceInfo> enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-            for (AccessibilityServiceInfo enabledService : enabledServices) {
-                if (serviceId.equals(enabledService.getId())) {
-                    return true;
+        int accessibilityEnabled = 0;
+        final String service = getPackageName() + "/" + CondecAccessibilityService.class.getCanonicalName();
+
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                    getContentResolver(),
+                    Settings.Secure.ACCESSIBILITY_ENABLED);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        TextUtils.SimpleStringSplitter colonSplitter = new TextUtils.SimpleStringSplitter(':');
+        if (accessibilityEnabled == 1) {
+            String settingValue = Settings.Secure.getString(
+                    getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (settingValue != null) {
+                colonSplitter.setString(settingValue);
+                while (colonSplitter.hasNext()) {
+                    String componentName = colonSplitter.next();
+                    if (componentName.equalsIgnoreCase(service)) {
+                        return true;
+                    }
                 }
             }
         }
+
         return false;
     }
 
@@ -222,17 +290,26 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestUsageAccessPermission();
             } else if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
-            } /*else if (!isAccessibilityServiceEnabled()) {
-                requestAccessibilityPermission();  // Request accessibility permission
-            }*/ else {
-                showMandatoryRenameDeviceDialog();
+            } else if (!isAccessibilityServiceEnabled()) {
+                requestAccessibilityPermission();
+            } else {
+                startRequiredServices();
             }
         } else {
+            // For devices lower than Marshmallow, directly check VPN permission
             if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
             } else {
-                showMandatoryRenameDeviceDialog();
+                startRequiredServices();
             }
+        }
+    }
+    // Continuously request Accessibility Permission until granted
+    private void requestAccessibilityPermission() {
+        if (!isAccessibilityServiceEnabled()) {
+            // Show dialog to guide the user to accessibility settings
+            Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
         }
     }
 
@@ -299,6 +376,21 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 Toast.makeText(this, "VPN permission is required.", Toast.LENGTH_SHORT).show();
                 requestVPNPermission();
             }
+        }
+        else if (requestCode == ACCESSIBILITY_REQUEST_CODE) {
+            // Add a delay to ensure the system registers the service change
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (isAccessibilityServiceEnabled()) {
+                        // Accessibility service enabled, proceed with starting services
+                        startRequiredServices();
+                    } else {
+                        // Accessibility not enabled, ask again
+                        requestAccessibilityPermission();
+                    }
+                }
+            }, 1000); // 1 second delay
         }
     }
 
@@ -482,10 +574,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void showMandatoryRenameDeviceDialog() {
         // Check if a device name is already saved
-        String currentDeviceName = condecPreferences.getString("deviceName", null);
+        String currentDeviceName = condecPreferences.getString("deviceName", "My Device");
 
         // If a device name is already set, start the services directly
-        if (currentDeviceName != null && !currentDeviceName.isEmpty()) {
+        if (currentDeviceName != null && !currentDeviceName.isEmpty() && currentDeviceName != "My Device") {
             startRequiredServices();
             return;
         }
@@ -504,14 +596,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             String userInput = input.getText().toString().trim();
             if (!userInput.isEmpty()) {
                 renameDevice(userInput);
-                boolean isInitializationDone = this.condecPreferences.getBoolean("isInitializationDone", false);
-
-                if(isInitializationDone == false){
-
-                    Intent intent = new Intent(this, AppSelectionActivity.class);
-                    startActivity(intent);
-
-                }
                 startRequiredServices(); // Start services after the name is provided
             } else {
                 Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();

@@ -71,8 +71,6 @@ public class AppSelectionActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         Set<String> previouslySelectedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
 
-        boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
-
         appsAdapter = new AppBlockAdapter(userApps, pm, previouslySelectedApps);
         appsRecyclerView.setAdapter(appsAdapter);
 
@@ -104,11 +102,6 @@ public class AppSelectionActivity extends AppCompatActivity {
 
         });
 
-        if (isInitializationDone == false){
-
-            appsAdapter.selectAll();
-
-        }
     }
 
     private void saveListed(){
@@ -117,16 +110,8 @@ public class AppSelectionActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Set<String> selectedApps = appsAdapter.getSelectedApps();
 
-        boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
-
         // Save selected apps to SharedPreferences
         editor.putStringSet("blockedApps", selectedApps.isEmpty() ? new HashSet<>() : selectedApps);
-
-        if(isInitializationDone == false){
-
-            editor.putBoolean("isInitializationDone", true);
-
-        }
 
         editor.apply();
 
@@ -143,18 +128,6 @@ public class AppSelectionActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-
-        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
-        boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
-
-        if (isInitializationDone == false){
-
-            saveListed();
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("isInitializationDone", true);
-            editor.apply();
-
-        }
 
         // Trigger the result to notify the fragment
         Bundle result = new Bundle();

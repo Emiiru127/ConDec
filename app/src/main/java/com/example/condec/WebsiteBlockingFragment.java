@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -45,6 +46,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     private BlockedURLRepository repository;
     private WebsiteBlockAdapter adapter;
     private RecyclerView recyclerView;
+    private SharedPreferences condecPreferences;
 
     private Switch switchWebsiteBlock;
 
@@ -87,6 +89,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         repository = new BlockedURLRepository(requireActivity().getApplication());
+        this.condecPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
     }
 
     @Override
@@ -157,6 +160,17 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     }
     private void stopVpnService() {
         // Stop the VPN service if it is running
+        Log.d("Condec Security", "VPN SERVICE WAS MANUALLY TURNED OFF");
+
+        SharedPreferences.Editor editor =  this.condecPreferences.edit();
+        editor.putBoolean("isVPNServiceManuallyOff", true);
+        editor.apply();
+
+        Intent broadcastIntent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_OFF");
+        getActivity().sendBroadcast(broadcastIntent);
+
+        boolean isVPNServiceManuallyOff = this.condecPreferences.getBoolean("isVPNServiceManuallyOff", true);
+        Log.d("Condec Security", "VPN SERVICE WAS MANUALLY: " + isVPNServiceManuallyOff);
         Intent intent = new Intent(getActivity(), CondecVPNService.class);
         intent.setAction(CondecVPNService.ACTION_STOP_VPN);
         getActivity().startService(intent);
@@ -205,6 +219,14 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
             String url = editTxtInput.getText().toString().trim();
             if (!url.isEmpty()) {
                 addUrlToDatabase(url);
+
+                if (isServiceRunning(CondecVPNService.class)){
+
+                    stopVpnService();
+                    startVpnService();
+
+                }
+
                 dialog.dismiss();
             }
         });
@@ -219,6 +241,18 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     }
 
     private void startVpnService(){
+
+        Log.d("Condec Security", "VPN SERVICE WAS MANUALLY TURNED OFF");
+
+        SharedPreferences.Editor editor =  this.condecPreferences.edit();
+        editor.putBoolean("isVPNServiceManuallyOff", false);
+        editor.apply();
+
+        Intent broadcastIntent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_ON");
+        getActivity().sendBroadcast(broadcastIntent);
+
+        boolean isVPNServiceManuallyOff = this.condecPreferences.getBoolean("isVPNServiceManuallyOff", true);
+        Log.d("Condec Security", "VPN SERVICE WAS MANUALLY: " + isVPNServiceManuallyOff);
 
         Intent intent = new Intent(getActivity(), CondecVPNService.class);
         getActivity().startService(intent);

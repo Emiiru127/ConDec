@@ -8,6 +8,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.Transformations;
 
 import com.example.condec.CondecDatabase;
+import com.example.condec.CondecVPNService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class BlockedURLRepository {
     public void removeUserBlockedUrl(UserBlockedUrl userBlockedUrl) {
         // Delete URL from the database
         userBlockedUrlDao.delete(userBlockedUrl);
+
     }
 
     public void insertDefaultBlockedUrl(final DefaultBlockedUrl url) {

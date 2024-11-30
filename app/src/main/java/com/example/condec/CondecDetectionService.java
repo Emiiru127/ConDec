@@ -8,8 +8,10 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -50,6 +52,7 @@ import java.util.TimerTask;
 public class CondecDetectionService extends Service {
 
     private int requestCodeCaptureScreen = 1;
+    public static final String ACTION_STOP_DETECTION = "com.example.condec.STOP_DETECTION";
 
     public final IBinder binder = new LocalBinder();
     private MediaProjectionManager mediaProjectionManager;
@@ -63,21 +66,23 @@ public class CondecDetectionService extends Service {
     private Handler handler;
     private Timer timer;
 
+
+    private boolean bypassThreshold = true;
     private int resultCode;
     private Intent data;
     private Image latestImage;
 
-    private CondecAccessibilityService condecAccessibilityService;
+    private long serviceStartTime;
+    private Handler handlerTimeCheck;
+    private HandlerThread handlerThreadTimeCheck;
+    private static final long TWO_HOURS_IN_MILLIS = 2 * 60 * 60 * 1000; // 2 hours
 
     private Map<String, Integer> appThresholds = new HashMap<String, Integer>() {{
-        put("com.facebook.katana", 10); // Facebook: 80% threshold
+        put("com.facebook.katana", 90); // Facebook: 80% threshold
         put("com.google.android.youtube", 85); // YouTube: 85% threshold
         put("com.zhiliaoapp.musically", 90); // TikTok: 90% threshold
-        put("com.android.chrome", 10);
+        put("com.android.chrome", 50);
     }};
-
-    private int screenHeight;
-    private int screenWidth;
 
     public class LocalBinder extends Binder {
         CondecDetectionService getService() {
@@ -85,6 +90,17 @@ public class CondecDetectionService extends Service {
             return CondecDetectionService.this;
         }
     }
+
+    private BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.condec.STOP_SERVICE".equals(intent.getAction())) {
+                stopProjection();
+                stopForeground(true);
+                stopSelf(); // Stop the service if the password was correct
+            }
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -103,23 +119,43 @@ public class CondecDetectionService extends Service {
             e.printStackTrace();
         }
 
-        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
-        this.screenWidth = displayMetrics.widthPixels;
-        this.screenHeight = displayMetrics.heightPixels;
-
-        this.condecAccessibilityService = new CondecAccessibilityService();
-        try {
-            this.condecAccessibilityService.setScreenDimensions(this.screenWidth, this.screenHeight);
-        }catch (Exception e){
-
-            Log.d("CondecAccessibilityService", "ERROR: " + e);
-        }
-
-
-
         HandlerThread handlerThread = new HandlerThread("InferenceThread");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
+
+        IntentFilter filter = new IntentFilter("com.example.condec.STOP_SERVICE");
+        registerReceiver(stopServiceReceiver, filter);
+
+        // Save the service start time when the service starts
+        serviceStartTime = System.currentTimeMillis();
+
+        // Start a background thread with its own Looper
+        handlerThreadTimeCheck= new HandlerThread("CondecBackgroundThread");
+        handlerThreadTimeCheck.start();
+
+        // Attach a handler to the background thread's Looper
+        handlerTimeCheck = new Handler(handlerThreadTimeCheck.getLooper());
+        handlerTimeCheck.postDelayed(timeCheckRunnable, TWO_HOURS_IN_MILLIS); // Check after 2 hours
+    }
+
+    // Time check to see if 2 hours have passed
+    private Runnable timeCheckRunnable = new Runnable() {
+        @Override
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            if ((currentTime - serviceStartTime) >= TWO_HOURS_IN_MILLIS) {
+                showTimeCheckDialog(); // Show dialog after 2 hours
+            }
+            // If you want to check every minute, repeat the handler
+            handlerTimeCheck.postDelayed(this, TWO_HOURS_IN_MILLIS); // Set up the next check after 2 more hours
+        }
+    };
+
+    // Method to show the time check dialog
+    private void showTimeCheckDialog() {
+        Intent intent = new Intent(this, DetectionTimeCheckDialog.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     public static Intent newIntent(Context context, int resultCode, Intent data) {
@@ -164,6 +200,14 @@ public class CondecDetectionService extends Service {
         System.out.println("data: " + data);
         System.out.println("mediaProjectionManager: " + (mediaProjectionManager != null));
         mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+        mediaProjection.registerCallback(new MediaProjection.Callback() {
+            @Override
+            public void onStop() {
+                super.onStop();
+                Log.d("CondecDetectionService", "MediaProjection has stopped");
+                stopService();
+            }
+        }, handler);
         System.out.println("MediaProjector: " + mediaProjection);
         System.out.println("MediaProjector Initialized: " + (mediaProjection != null));
         if (mediaProjection != null) {
@@ -204,6 +248,10 @@ public class CondecDetectionService extends Service {
             System.out.println("Virtual Display Created: " + (this.virtualDisplay != null));
 
         }
+        if (virtualDisplay == null || imageReader == null) {
+            Log.d("CondecDetectionService", "Virtual Display or Image Reader is not initialized");
+            return;
+        }
 
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
@@ -234,7 +282,7 @@ public class CondecDetectionService extends Service {
                                 String currentApp = getForegroundAppPackageName();
                                 Log.d("CondecDetectionService", "Retrived App: " + currentApp);
 
-                                if (currentApp != null && appThresholds.containsKey(currentApp) || true) {
+                                if (currentApp != null && appThresholds.containsKey(currentApp) || bypassThreshold) {
 
                                     processImage(latestImage, currentApp);
 
@@ -258,7 +306,7 @@ public class CondecDetectionService extends Service {
                     }
                 });
             }
-        }, 0, 1000); // Run every 1 seconds
+        }, 0, 750); // Run every 1 seconds
 
     }
 
@@ -316,24 +364,24 @@ public class CondecDetectionService extends Service {
         return bitmap;
     }
 
-    private String getForegroundAppPackageName() {
+    public String getForegroundAppPackageName() {
         UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
-        long time = System.currentTimeMillis();
-        List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
+        long currentTime = System.currentTimeMillis();
+        List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, currentTime - 1000 * 10, currentTime);
 
-        if (appList != null && !appList.isEmpty()) {
-            UsageStats recentStats = null;
-            for (UsageStats stats : appList) {
-                if (recentStats == null || stats.getLastTimeUsed() > recentStats.getLastTimeUsed()) {
-                    recentStats = stats;
-                }
+        if (appList == null || appList.isEmpty()) {
+            return null;
+        }
+
+        UsageStats recentStats = null;
+        for (UsageStats usageStats : appList) {
+            if (recentStats == null || usageStats.getLastTimeUsed() > recentStats.getLastTimeUsed()) {
+                recentStats = usageStats;
             }
-            if (recentStats != null) {
+        }
 
-                String currentPackageName = recentStats.getPackageName();
-                return currentPackageName;
-
-            }
+        if (recentStats != null) {
+            return recentStats.getPackageName();
         }
 
         return null;
@@ -353,7 +401,7 @@ public class CondecDetectionService extends Service {
         }
 
         // Check if the current app is monitored
-        if (currentApp != null && appThresholds.containsKey(currentApp)  || true) {
+        if (currentApp != null && appThresholds.containsKey(currentApp)  || bypassThreshold) {
             float[] probabilities = output[0];
             float maxProbability = 0.0f;
 
@@ -370,19 +418,22 @@ public class CondecDetectionService extends Service {
             //notifyUser("AI RESULTS: " + percentage + "%, Current App: " + currentApp);
 
             // Get the threshold for the current app
-            if (appThresholds.containsKey(currentApp)  || true) {
-                /*Log.d("CondecDetectionService", "Current App: " + currentApp);
+            if (appThresholds.containsKey(currentApp)  || bypassThreshold) {
+                Log.d("CondecDetectionService", "Current App: " + currentApp);
                 int threshold = appThresholds.get(currentApp);
 
                 Log.d("CondecDetectionService", "Current App AI Result: " + percentage);
                 Log.d("CondecDetectionService", "Current App AI Threshold: " + threshold);
 
                 Log.d("CondecDetectionService", "AI Judgement Result: " + (percentage > threshold));
-                // Trigger action if the threshold is exceeded
+                // Trigger action if the threshold is exceeded*/
+
+                if (bypassThreshold) threshold = 90;
                 if (percentage > threshold) {
-                    Log.d("CondecDetectionService", "AI Perform Swipe And Back");
-                    this.condecAccessibilityService.performSwipeAndBack();
-                }*/
+                    Log.d("CondecAccessabilityService", "AI Perform Swipe And Back");
+                    Intent intent = new Intent("com.example.ACTION_SWIPE_AND_BACK");
+                    sendBroadcast(intent);
+                }
             }
         } else {
             // Do not run AI detection if the app is not in the monitored list
@@ -392,6 +443,13 @@ public class CondecDetectionService extends Service {
 
         //Toast.makeText(CondecDetectionService.this, ("AI RESULTS: " + percentage + "%"), Toast.LENGTH_SHORT).show();
 
+    }
+
+    private void showPasswordPrompt() {
+        // Start PasswordPromptActivity using FLAG_ACTIVITY_NEW_TASK to start from the service
+        Intent intent = new Intent(this, PasswordPromptActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     private void notifyUser(String message){
@@ -429,6 +487,11 @@ public class CondecDetectionService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        if (intent == null) {
+            Log.e("CondecDetectionService", "Received null Intent. Stopping service.");
+            return START_NOT_STICKY; // You can choose to stop the service or handle it differently
+        }
+
         this.notification = createNotification(null);
         startForeground(1, notification);
 
@@ -458,6 +521,33 @@ public class CondecDetectionService extends Service {
         return super.onUnbind(intent);
     }
 
+    private void stopService() {
+        Log.d("CondecDetectionService", "Stopping CondecDetectionService");
+
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+
+        if (imageReader != null) {
+            imageReader.close();
+            imageReader = null;
+        }
+
+        if (virtualDisplay != null) {
+            virtualDisplay.release();
+            virtualDisplay = null;
+        }
+
+        if (mediaProjection != null) {
+            mediaProjection.stop();
+            mediaProjection = null;
+        }
+
+        stopForeground(true);
+        stopSelf();
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -466,7 +556,7 @@ public class CondecDetectionService extends Service {
             timer.cancel();
             timer = null;
         }
-
+        handlerTimeCheck.removeCallbacks(timeCheckRunnable); // Remove callbacks when service is destroyed
         // Release the latest image if it exists
         if (latestImage != null) {
             latestImage.close();
@@ -493,6 +583,19 @@ public class CondecDetectionService extends Service {
             handler.getLooper().quitSafely();
             handler = null;
         }
+
+        // Optionally, stop the handler thread if it was created just for AI processing
+        if (handlerThreadTimeCheck != null) {
+            handlerThreadTimeCheck.quitSafely();
+            try {
+                handlerThreadTimeCheck.join();  // Wait for the thread to finish
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        unregisterReceiver(stopServiceReceiver);
+
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

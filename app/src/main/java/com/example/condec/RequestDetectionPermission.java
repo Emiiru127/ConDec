@@ -48,13 +48,23 @@ public class RequestDetectionPermission extends AppCompatActivity {
                 // Start your service with the granted permission
                 Intent serviceIntent = CondecDetectionService.newIntent(this, resultCode, data);
                 startForegroundService(serviceIntent);
-
+                Intent backIntent = new Intent(this, EnterPinActivity.class);
+                startActivity(backIntent);
+                Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
+                sendBroadcast(homeIntent);
                 finish(); // Close the activity
             } else {
                 // User denied the permission, prompt again
                 requestMediaProjectionPermission();
             }
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        CondecSecurityService.isRequestPermissionActivityRunning = false;
     }
 
     @Override

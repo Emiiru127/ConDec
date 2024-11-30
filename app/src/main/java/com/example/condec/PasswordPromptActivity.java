@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -39,6 +40,8 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     private ComponentName mAdminName;
     private SharedPreferences condecPreferences;
     private String correctPassword;
+
+    private Boolean isForResult = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +89,10 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
         mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         mAdminName = new ComponentName(this, AdminReceiver.class);
 
+        this.isForResult = getIntent().getBooleanExtra("isForResult", false);
+
+        Log.d("CondecPassword", "isForResult: " + this.isForResult);
+
     }
 
     private void checkPassword(){
@@ -97,15 +104,38 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
             String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
             System.out.println("starting to Broadcast: " + currentPackageName);
             if (currentPackageName != null) {
-                Intent intent = new Intent("com.example.condec.UNLOCK_APP");
-                intent.putExtra("PACKAGE_NAME", currentPackageName);
-                sendBroadcast(intent); // Broadcast the unlock event
-                System.out.println("Sent Broadcast.");
-            }
 
+                    Intent intent = new Intent("com.example.condec.UNLOCK_APP");
+                    intent.putExtra("PACKAGE_NAME", currentPackageName);
+                    sendBroadcast(intent); // Broadcast the unlock event
+                    System.out.println("Sent Broadcast.");
+
+            }
+            else if (isForResult){
+                Log.d("CondecPassword", "isForResult: " + this.isForResult + " PASSWORD CORRECT");
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("password_correct", true);
+                Intent intent = new Intent("com.example.condec.STOP_SERVICE");
+                sendBroadcast(intent);
+                setResult(RESULT_OK, resultIntent);
+                Intent backIntent = new Intent(this, EnterPinActivity.class);
+                startActivity(backIntent);
+                Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
+                sendBroadcast(homeIntent);
+                finish();
+
+            }
             finish();
         } else {
             // Incorrect password, show a message
+
+            if (isForResult){
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("password_correct", false);
+                setResult(RESULT_OK, resultIntent);
+                Log.d("CondecPassword", "isForResult: " + this.isForResult + " PASSWORD INCORRECT");
+
+            }
             Toast.makeText(PasswordPromptActivity.this, "Incorrect password. Try again.", Toast.LENGTH_SHORT).show();
         }
 

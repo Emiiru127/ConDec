@@ -28,6 +28,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
     private Switch switchAppBlocking;
     private Switch switchWebsiteBlocking;
     private CardView cardViewSleepMode;
+    private CardView cardViewAppUsage;
     private CondecParentalService parentalService;
 
     private ParentalControlActivity parentalControlActivity;
@@ -65,12 +66,13 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         this.btnBackParental = findViewById(R.id.btnBackParental);
         this.btnBackParental.setOnClickListener(this);
 
-        this.txtViewTargetDeviceName = findViewById(R.id.txtViewTerms);
+        this.txtViewTargetDeviceName = findViewById(R.id.txtDeviceAppUsage);
 
         this.switchDetection = findViewById(R.id.switchWarning);
         this.switchAppBlocking = findViewById(R.id.switchBlockingApps);
         this.switchWebsiteBlocking = findViewById(R.id.switchBlockingWebsites);
         this.cardViewSleepMode = findViewById(R.id.cardViewSleepMode);
+        this.cardViewAppUsage = findViewById(R.id.cardViewAppUsage);
 
         ArrayList<String> receivedData = getIntent().getStringArrayListExtra("receivedData");
 
@@ -90,8 +92,6 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         boolean isAppBlocking = Boolean.parseBoolean((receivedData.get(2)).split(":")[1]);
         boolean isWebsiteBlocking = Boolean.parseBoolean((receivedData.get(3)).split(":")[1]);
         boolean isSleeping = Boolean.parseBoolean((receivedData.get(4)).split(":")[1]);
-
-
 
         this.txtViewTargetDeviceName.setText(deviceName);
 
@@ -132,6 +132,14 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
             public void onClick(View view) {
 
                 parentalService.requestSleepData(deviceInfo, parentalControlActivity);
+
+            }
+        });
+        cardViewAppUsage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                parentalService.requestAppUsageData(deviceInfo, parentalControlActivity);
 
             }
         });
