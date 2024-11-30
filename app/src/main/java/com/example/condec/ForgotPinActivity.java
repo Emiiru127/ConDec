@@ -74,6 +74,13 @@ public class ForgotPinActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private void showMessageDialog(String title, String message, String buttonText){
+
+        TipDialog dialog = new TipDialog(title, message, buttonText);
+        dialog.show(getSupportFragmentManager(), "EnterPinDialog");
+
+    }
+
     private void login(){
 
         Intent intent = new Intent(ForgotPinActivity.this, CreatePinActivity.class);
@@ -98,7 +105,7 @@ public class ForgotPinActivity extends AppCompatActivity implements View.OnClick
         }
         else {
 
-            Toast.makeText(ForgotPinActivity.this, "INVALID BACKUP PASSWORD", Toast.LENGTH_SHORT).show();
+            showMessageDialog("INVALID BACKUP PASSWORD", "Your answer is incorrect.", "Ok");
 
         }
 

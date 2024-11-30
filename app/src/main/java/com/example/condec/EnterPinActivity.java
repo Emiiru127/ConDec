@@ -128,6 +128,13 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    private void showMessageDialog(String title, String message, String buttonText){
+
+        TipDialog dialog = new TipDialog(title, message, buttonText);
+        dialog.show(getSupportFragmentManager(), "EnterPinDialog");
+
+    }
+
     private void login(){
 
         SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
@@ -144,7 +151,7 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
         }
         else{
 
-            Toast.makeText(EnterPinActivity.this, "INVALID PIN", Toast.LENGTH_SHORT).show();
+            showMessageDialog("INVALID PIN", "Your PIN is incorrect.", "Ok");
 
         }
 

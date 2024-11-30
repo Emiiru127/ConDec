@@ -44,6 +44,7 @@ public class SleepControlDialog extends DialogFragment {
     private MainMenuActivity mainMenuActivity;
 
     private ParentalControlActivity parentalControlActivity;
+    private ParentalViewScreenActivity parentalViewScreenActivity;
 
     private List<String> sleepData;
 
@@ -84,7 +85,8 @@ public class SleepControlDialog extends DialogFragment {
 
         if (this.isParentalControl) {
             initializeParentalUI();
-        } else {
+        }
+        else {
             initializeStandardUI();
         }
 

@@ -17,6 +17,7 @@ public class TipDialog extends DialogFragment {
 
     private String title;
     private String message;
+    private String buttonText;
     private PermissionDialogListener listener;
 
     private MainMenuActivity mainMenuActivity;
@@ -25,9 +26,19 @@ public class TipDialog extends DialogFragment {
 
     private boolean isPermitting;
 
+    public TipDialog(String title, String message, String buttonText) {
+        this.title = title;
+        this.message = message;
+        this.buttonText = buttonText;
+        this.listener = null;
+        this.isPermission = false;
+        this.isPermitting = false;
+    }
+
     public TipDialog(String title, String message) {
         this.title = title;
         this.message = message;
+        this.buttonText = null;
         this.listener = null;
         this.isPermission = false;
         this.isPermitting = false;
@@ -36,6 +47,7 @@ public class TipDialog extends DialogFragment {
     public TipDialog(String title, String message, PermissionDialogListener listener) {
         this.title = title;
         this.message = message;
+        this.buttonText = null;
         this.listener = listener;
         this.isPermission = true;
         this.isPermitting = false;
@@ -44,6 +56,7 @@ public class TipDialog extends DialogFragment {
     public TipDialog(String title, String message, PermissionDialogListener listener, MainMenuActivity mainMenuActivity) {
         this.title = title;
         this.message = message;
+        this.buttonText = null;
         this.listener = listener;
         this.mainMenuActivity = mainMenuActivity;
         this.isPermission = true;
@@ -71,6 +84,11 @@ public class TipDialog extends DialogFragment {
         if (isPermission == true){
 
             backButton.setText("OK");
+
+        }
+        else if (this.buttonText != null){
+
+            backButton.setText(buttonText);
 
         }
 

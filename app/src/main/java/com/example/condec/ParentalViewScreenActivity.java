@@ -1,32 +1,50 @@
 package com.example.condec;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.material.button.MaterialButton;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
 
 public class ParentalViewScreenActivity extends AppCompatActivity implements View.OnClickListener{
 
     private ImageButton btnBackViewScreen;
     private ImageView imgViewScreen;
+
+
+    private NsdServiceInfo deviceInfo;
     private CondecParentalService parentalService;
 
     private BroadcastReceiver imageUpdateReceiver;
+
+    private ParentalViewScreenActivity parentalViewScreenActivity;
 
     private boolean isBound = false;
 
@@ -49,9 +67,29 @@ public class ParentalViewScreenActivity extends AppCompatActivity implements Vie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_parental_view_screen);
 
+        this.parentalViewScreenActivity = this;
+
+        // Retrieve host and port from Intent extras
+        Intent intent = getIntent();
+        String hostAddress = intent.getStringExtra("HOST_ADDRESS");
+        int port = intent.getIntExtra("PORT", -1);
+
+        if (hostAddress != null && port != -1) {
+            try {
+                InetAddress host = InetAddress.getByName(hostAddress);
+                this.deviceInfo = new NsdServiceInfo();
+                this.deviceInfo.setHost(host);
+                this.deviceInfo.setPort(port);
+
+                // Use deviceInfo as needed
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        }
+
         imgViewScreen = findViewById(R.id.imgViewScreen);
-        Intent intent = new Intent(this, CondecParentalService.class);
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        Intent intentBind = new Intent(this, CondecParentalService.class);
+        bindService(intentBind, serviceConnection, Context.BIND_AUTO_CREATE);
 
         this.btnBackViewScreen = findViewById(R.id.btnBackViewScreen);
         this.btnBackViewScreen.setOnClickListener(this);
@@ -93,9 +131,10 @@ public class ParentalViewScreenActivity extends AppCompatActivity implements Vie
 
     }
 
+
     @Override
     public void onClick(View view) {
-        if (view == this.btnBackViewScreen) {
+        if (this.btnBackViewScreen == view) {
             finish();
         }
     }

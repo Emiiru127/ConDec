@@ -13,6 +13,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
@@ -48,6 +49,10 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
     private SharedPreferences condecPreferences;
 
     private Map<String, String> deviceNameMap = new HashMap<>();
+
+    private Handler discoveryHandler = new Handler();
+    private Runnable discoveryRunnable;
+    private static final int REFRESH_INTERVAL = 5000; // 5 seconds
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -128,6 +133,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         btnParentMode.setOnClickListener(view -> {
             boolean isChecked = !switchParentMode.isChecked();
             switchParentMode.setChecked(isChecked);
+
         });
     }
 
@@ -158,23 +164,6 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         startService(startServiceIntent);
 
         bindService(startServiceIntent, connection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        IntentFilter filter = new IntentFilter("com.example.condec.DEVICE_DISCOVERED");
-        registerReceiver(deviceDiscoveryReceiver, filter);
-
-        IntentFilter listChangeFilter = new IntentFilter("com.example.condec.DEVICE_LIST_CHANGED");
-        registerReceiver(deviceListChangedReceiver, listChangeFilter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(deviceDiscoveryReceiver);
-        unregisterReceiver(deviceListChangedReceiver);
     }
 
     @Override
@@ -281,6 +270,47 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
             }
         }
+    }
+
+    private void startDiscoveryRefresh() {
+        discoveryRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (condecParentalService != null) {
+                    Log.d("SettingsActivity", "Refreshing device discovery...");
+                    condecParentalService.refreshDiscoveredDevices(); // This triggers discovery
+                }
+                discoveryHandler.postDelayed(this, REFRESH_INTERVAL);
+            }
+        };
+        discoveryHandler.post(discoveryRunnable);
+    }
+
+    private void stopDiscoveryRefresh() {
+        if (discoveryRunnable != null) {
+            discoveryHandler.removeCallbacks(discoveryRunnable);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter("com.example.condec.DEVICE_DISCOVERED");
+        registerReceiver(deviceDiscoveryReceiver, filter);
+
+        IntentFilter listChangeFilter = new IntentFilter("com.example.condec.DEVICE_LIST_CHANGED");
+        registerReceiver(deviceListChangedReceiver, listChangeFilter);
+
+        startDiscoveryRefresh();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(deviceDiscoveryReceiver);
+        unregisterReceiver(deviceListChangedReceiver);
+
+        stopDiscoveryRefresh();
     }
 
     public void onBackPressed() {

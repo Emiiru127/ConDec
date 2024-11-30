@@ -494,8 +494,11 @@ public class CondecDetectionService extends Service {
 
                 if (percentage > threshold) {
                     Log.d("CondecAccessabilityService", "AI Perform Swipe And Back");
+                    Intent warningIntent = new Intent("com.example.condec.SENSITIVE_WARNING_DETECTED");
+                    sendBroadcast(warningIntent);
                     Intent intent = new Intent("com.example.ACTION_SWIPE_AND_BACK");
                     sendBroadcast(intent);
+
                 }
             }
         } else {
@@ -541,11 +544,28 @@ public class CondecDetectionService extends Service {
             return;
         }
 
-        latestImageStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, latestImageStream); // Compress for efficient transmission
-        Log.d("CondecDetectionService", "Bitmap is not null, storing image.");
-    }
+        // Determine if the image is in portrait or landscape orientation
+        int targetWidth;
+        int targetHeight;
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            // Landscape orientation
+            targetWidth = 1280;
+            targetHeight = 720;
+        } else {
+            // Portrait orientation
+            targetWidth = 720;
+            targetHeight = 1280;
+        }
 
+        // Resize while maintaining aspect ratio
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true);
+
+        // Compress the resized bitmap to JPEG with low quality for efficient transmission
+        latestImageStream = new ByteArrayOutputStream();
+        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 20, latestImageStream);
+
+        Log.d("CondecDetectionService", "Resized and stored image at 720p resolution based on orientation for transmission.");
+    }
     // Public method for ParentalService to retrieve the latest image data
     public byte[] getLatestImageData() {
         return (latestImageStream != null) ? latestImageStream.toByteArray() : null;

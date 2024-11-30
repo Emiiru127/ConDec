@@ -65,6 +65,19 @@
 
     </string>
 
+    <string name="tip_view_screen">
+
+        This feature allows you see the screen of the other device but it requires the warning detection to be active to use.
+
+        \n\n<b>Available Controls:</b>
+
+        \n\n<b>Back:</b> Sending a go back command of the device.
+        \n\n<b>Home:</b> Sending a go Home command of the device.
+        \n\n<b>Message:</b> Sending a message to display on the screen of the device.
+        \n\n<b>Sleep:</b> Opening the sleep control of the device.
+
+    </string>
+
     <string name="forgot_password"><u>Forgot Password</u></string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

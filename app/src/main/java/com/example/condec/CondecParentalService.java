@@ -120,6 +120,17 @@ public class CondecParentalService extends Service {
         }
     };
 
+    private BroadcastReceiver warningDetectedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("Condec Parental", "Received Warning Detection");
+            if ("com.example.condec.SENSITIVE_WARNING_DETECTED".equals(intent.getAction())) {
+                Log.d("Condec Parental", "SENSITIVE_WARNING_DETECTED");
+                informWarningDetection();
+            }
+        }
+    };
+
     // Receiver to handle unbind requests
     private BroadcastReceiver unbindReceiver = new BroadcastReceiver() {
         @Override
@@ -158,6 +169,9 @@ public class CondecParentalService extends Service {
         // Register the receiver to listen for Detection Service start event
         IntentFilter filter = new IntentFilter("com.example.condec.ACTION_DETECTION_STARTED");
         registerReceiver(detectionStartedReceiver, filter);
+
+        IntentFilter detectionFilter = new IntentFilter("com.example.condec.SENSITIVE_WARNING_DETECTED");
+        registerReceiver(warningDetectedReceiver, detectionFilter);
         // Register the receiver to listen for unbind requests
         IntentFilter unbindFilter = new IntentFilter("com.example.condec.ACTION_UNBIND_DETECTION");
         registerReceiver(unbindReceiver, unbindFilter);
@@ -214,6 +228,7 @@ public class CondecParentalService extends Service {
             isBound = false;
         }
         unregisterReceiver(detectionStartedReceiver);  // Cleanup receiver when service is destroyed
+        unregisterReceiver(warningDetectedReceiver);
         unregisterReceiver(unbindReceiver);  // Cleanup receiver when service is destroyed
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
@@ -742,7 +757,7 @@ public class CondecParentalService extends Service {
             String targetDeviceName = parts[1];
             String command = parts[2];
             Log.d("Condec Parental", "Authentication: between " + senderDeviceName + " and " + targetDeviceName);
-            if (localDeviceName.equals(targetDeviceName)) {
+            if (localDeviceName.equals(targetDeviceName) && (targetDeviceName.equals("%PARENT%") == false)) {
                 if ("CHECK_DETECTION_STATUS".equals(command)) {
                     // Check if Detection Service is active
                     boolean isDetectionActive = isServiceRunning(CondecDetectionService.class);
@@ -762,6 +777,18 @@ public class CondecParentalService extends Service {
                 }
                 Log.d("Condec Parental", "Authentication: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
                 handleCommand(command);
+            } else if ((localDeviceName.equals(senderDeviceName) == false) && targetDeviceName.equals("%PARENT%")) {
+
+                Log.d("Condec Parental", "Authentication To All Parents: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
+                SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+                boolean isParentModeActive = condecPreferences.getBoolean("parentModeState", false);
+
+                if (isParentModeActive){
+
+                    handleCommand(command);
+
+                }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -978,7 +1005,7 @@ public class CondecParentalService extends Service {
             Log.d("Condec Parental", "Formatted Command:" + formattedCommand);
             Log.d("Condec Parental", "Formatted Data:" + formattedData);
 
-            if(formattedCommand.equals("DISPLAY_MESSAGE")){
+            if(formattedCommand.equals("DISPLAY_MESSAGE") || formattedCommand.equals("WARNING_DETECTED")){
 
                 command = formattedCommand;
                 data = formattedData;
@@ -1058,7 +1085,7 @@ public class CondecParentalService extends Service {
 
                 int indexOfColonParent = data.indexOf("|");
                 String parent = "";
-                String message = "";
+                String parentMessage = "";
 
                 if (indexOfColonParent != -1){
 
@@ -1069,8 +1096,8 @@ public class CondecParentalService extends Service {
                     Log.d("Condec Parental", "Formatted Message:" + formattedMessage);
 
                     parent = formattedParent;
-                    message = formattedMessage;
-                    displayMessageFromParent(parent, message);
+                    parentMessage = formattedMessage;
+                    displayMessageFromParent(parent, parentMessage);
 
                 }
 
@@ -1091,11 +1118,40 @@ public class CondecParentalService extends Service {
                 stopService(new Intent(this, CondecSecurityService.class));
                 showToast("Remotely Stopped Security Service");
                 break;
+            case "WARNING_DETECTED":
+                Log.d("Condec Parental", "WARNING_DETECTED: from: " + data);
+                displayDetectedMessage(data);
+                break;
+
             default:
                 Log.d("Condec Parental", "Unknown Command: " + command);
                 //showToast("Unknown Command: " + command);
                 break;
         }
+    }
+
+    private void informWarningDetection(){
+
+        Log.d("Condec Parental", "informing Parents about " + localDeviceName);
+        sendCommandToParent("WARNING_DETECTED|" + localDeviceName);
+
+    }
+
+    public void sendCommandToParent(String command) {
+        executorService.execute(() -> {
+            try {
+                Log.d("Condec Parental", "Sending command to parents");
+                Log.d("Condec Parental", "Command: " + command);
+                for (NsdServiceInfo deviceInfo : discoveredDevices) {
+                    Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                    PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+                    out.println(localDeviceName + ":" + "%PARENT%" + ":" + command);
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void sendCommandToDevice(NsdServiceInfo deviceInfo, String command) {
@@ -1296,53 +1352,74 @@ public class CondecParentalService extends Service {
         }
     }
 
+    private void displayDetectedMessage(String device) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (dialogView != null) {
+                // Remove any existing dialog before creating a new one
+                windowManager.removeView(dialogView);
+                dialogView = null;
+            }
+
+            // Create a new dialog
+            createAndShowDialog(
+                    "Sensitive Warning Detected",
+                    "A sensitive warning was detected from " + device
+            );
+        });
+    }
+
     private void displayMessageFromParent(String parent, String message) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (dialogView != null) {
+                // Remove any existing dialog before creating a new one
+                windowManager.removeView(dialogView);
+                dialogView = null;
+            }
 
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+            // Create a new dialog
+            createAndShowDialog(
+                    "Message from " + parent + " (Parent)",
+                    message
+            );
+        });
+    }
 
-                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                dialogView = inflater.inflate(R.layout.layout_dialog_info, null);
+    private void createAndShowDialog(String title, String message) {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-                TextView txtViewTitle = dialogView.findViewById(R.id.dialog_title);
-                TextView txtViewMessage = dialogView.findViewById(R.id.dialog_message);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        dialogView = inflater.inflate(R.layout.layout_dialog_info, null);
 
-                Button okButton = dialogView.findViewById(R.id.btnDialogBack);
+        TextView txtViewTitle = dialogView.findViewById(R.id.dialog_title);
+        TextView txtViewMessage = dialogView.findViewById(R.id.dialog_message);
 
-                txtViewTitle.setText("Message from " + parent + " (Parent)");
-                txtViewMessage.setText(message);
-                okButton.setText("Ok");
-                okButton.setTextColor(getColor(R.color.white));
-                okButton.setBackgroundColor(getColor(R.color.blue_main_background));
+        Button okButton = dialogView.findViewById(R.id.btnDialogBack);
 
-                okButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+        txtViewTitle.setText(title);
+        txtViewMessage.setText(message);
+        okButton.setText("Ok");
+        okButton.setTextColor(getColor(R.color.white));
+        okButton.setBackgroundColor(getColor(R.color.blue_main_background));
 
-                        if (dialogView != null) {
-                            windowManager.removeView(dialogView);
-                            dialogView = null;
-                        }
-                    }
-                });
-
-                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                        WindowManager.LayoutParams.WRAP_CONTENT,
-                        WindowManager.LayoutParams.WRAP_CONTENT,
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_DIM_BEHIND |
-                                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                        PixelFormat.TRANSLUCENT);
-
-                params.dimAmount = 0.6f;
-
-                params.gravity = Gravity.CENTER;
-
-                windowManager.addView(dialogView, params);
+        okButton.setOnClickListener(v -> {
+            if (dialogView != null) {
+                windowManager.removeView(dialogView);
+                dialogView = null;
             }
         });
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT);
+
+        params.dimAmount = 0.6f;
+        params.gravity = Gravity.CENTER;
+
+        windowManager.addView(dialogView, params);
     }
 /*
     public void checkDetectionStatus(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
@@ -1572,8 +1649,8 @@ public class CondecParentalService extends Service {
             @Override
             public void run() {
                 if (isImageRequestActive) {
-                    requestImageStream(deviceInfo, parentalControlActivity);
-                    imageRequestHandler.postDelayed(this, 500); // Repeat every 500 ms
+                    requestImageStream(deviceInfo); // No need to pass ParentalControlActivity directly
+                    imageRequestHandler.postDelayed(this, 200); // Repeat every 200 ms
                 }
             }
         };
@@ -1590,11 +1667,15 @@ public class CondecParentalService extends Service {
         }
     }
 
-    private void requestImageStream(NsdServiceInfo deviceInfo, ParentalControlActivity parentalControlActivity) {
+    private void requestImageStream(NsdServiceInfo deviceInfo) {
         executorService.execute(() -> {
             try (Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
                  OutputStream out = socket.getOutputStream();
                  InputStream in = socket.getInputStream()) {
+
+                // Set buffer sizes for improved performance
+                socket.setReceiveBufferSize(64 * 1024); // 64 KB buffer
+                socket.setSendBufferSize(64 * 1024);    // 64 KB buffer
 
                 // Send the request command
                 PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(out)), true);

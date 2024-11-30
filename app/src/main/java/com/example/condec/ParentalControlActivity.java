@@ -321,10 +321,18 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
                     Log.d("ParentalControlActivity", "Detection service is active on target device.");
 
                     runOnUiThread(() -> {
+
+                        // Extract necessary data from deviceInfo
+                        String hostAddress = deviceInfo.getHost().getHostAddress();
+                        int port = deviceInfo.getPort();
                         // Launch the activity only once
                         Intent intent = new Intent(this, ParentalViewScreenActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.putExtra("HOST_ADDRESS", hostAddress);
+                        intent.putExtra("PORT", port);
                         startActivity(intent);
+
+
 
                         // Start scheduled image requests
                         parentalService.startImageRequestLoop(deviceInfo, this);
@@ -332,7 +340,9 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
                 } else {
                     Log.d("ParentalControlActivity", "Detection service is not active on target device.");
                     runOnUiThread(() -> showMessageDialog("Detection Not Active",
-                            "The Warning Detection must be active on the target device to use this feature."));
+                            "The Warning Detection must be active on the target device to use this feature. If it's active on the control, the user of the phone is not yet allowing the service to be active.",
+                            "Ok"
+                            ));
                 }
 
                 socket.close();
@@ -422,10 +432,11 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         dialog.show();
     }
 
-    public void showMessageDialog(String title, String message){
+    public void showMessageDialog(String title, String message, String buttonText){
 
-        TipDialog dialog = new TipDialog(title, message);
+        TipDialog dialog = new TipDialog(title, message, buttonText);
         dialog.show(getSupportFragmentManager(), "ParentalDialog");
+
 
     }
 

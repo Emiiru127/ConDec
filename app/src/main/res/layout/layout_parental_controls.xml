@@ -392,6 +392,7 @@
                     android:layout_height="match_parent"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
+                    android:visibility="visible"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
@@ -419,7 +420,7 @@
                             android:background="@color/transparent"
                             android:gravity="center|start"
                             android:paddingStart="16dp"
-                            android:text="Force Go Back"
+                            android:text="Go Back"
                             android:textColor="@color/blue_main_background"
                             android:textSize="18sp" />
 
@@ -434,6 +435,7 @@
                     android:layout_height="match_parent"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
+                    android:visibility="visible"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
@@ -461,7 +463,7 @@
                             android:background="@color/transparent"
                             android:gravity="center|start"
                             android:paddingStart="16dp"
-                            android:text="Force Go Home"
+                            android:text="Go Home"
                             android:textColor="@color/blue_main_background"
                             android:textSize="18sp" />
 
