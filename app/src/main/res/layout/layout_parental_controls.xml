@@ -62,8 +62,10 @@
             android:translationY="60dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtDeviceAppUsage">
+            app:layout_constraintTop_toBottomOf="@+id/txtDeviceAppUsage"
+            app:layout_constraintVertical_bias="0.0">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -474,6 +476,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="8dp"
                     android:background="@color/transparent"
+                    android:visibility="visible"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="4dp">
 
@@ -515,6 +518,47 @@
                             android:gravity="center"
                             android:paddingStart="16dp"
                             android:text="STATUS"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    android:visibility="invisible"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/transparent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
                             android:textColor="@color/blue_main_background"
                             android:textSize="18sp" />
 

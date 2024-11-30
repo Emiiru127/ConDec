@@ -1,8 +1,10 @@
 package com.example.condec;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,44 +18,29 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class ParentalViewScreenActivity extends AppCompatActivity implements View.OnClickListener{
 
+    private ImageButton btnBackViewScreen;
     private ImageView imgViewScreen;
     private CondecParentalService parentalService;
-    private ImageButton btnBackViewScreen;
+
+    private BroadcastReceiver imageUpdateReceiver;
+
     private boolean isBound = false;
-    private final Handler handler = new Handler(Looper.getMainLooper());
 
-    private final Runnable updateImageTask = new Runnable() {
-        @Override
-        public void run() {
-            if (isBound && parentalService != null) {
-                Bitmap latestImage = parentalService.getLatestImage(); // Directly get Bitmap
-                if (latestImage != null) {
-                    imgViewScreen.setImageBitmap(latestImage); // Display the Bitmap
-                    Log.d("ParentalViewScreen", "Image updated successfully.");
-                } else {
-                    Log.d("ParentalViewScreen", "No image available from parental service.");
-                }
-            }
-            handler.postDelayed(this, 1000); // Refresh every second
-        }
-    };
-
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
+    private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             CondecParentalService.LocalBinder binder = (CondecParentalService.LocalBinder) service;
             parentalService = binder.getService();
             isBound = true;
-            handler.post(updateImageTask); // Start updating the image
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
-            handler.removeCallbacks(updateImageTask); // Stop updates
         }
     };
 
@@ -63,11 +50,29 @@ public class ParentalViewScreenActivity extends AppCompatActivity implements Vie
         setContentView(R.layout.layout_parental_view_screen);
 
         imgViewScreen = findViewById(R.id.imgViewScreen);
-        btnBackViewScreen = findViewById(R.id.btnBackViewScreen);
-        btnBackViewScreen.setOnClickListener(this);
-
         Intent intent = new Intent(this, CondecParentalService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        this.btnBackViewScreen = findViewById(R.id.btnBackViewScreen);
+        this.btnBackViewScreen.setOnClickListener(this);
+
+        // Register BroadcastReceiver to update image
+        imageUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                byte[] imageData = intent.getByteArrayExtra("image_data");
+                if (imageData != null && imageData.length > 0) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+                    if (!bitmap.equals(imgViewScreen.getDrawable())) { // Avoid unnecessary re-renders
+                        imgViewScreen.setImageBitmap(bitmap);
+                    }
+                }
+            }
+        };
+
+        // Register the receiver for image updates
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                imageUpdateReceiver, new IntentFilter("com.example.condec.IMAGE_UPDATE"));
     }
 
     @Override
@@ -75,14 +80,22 @@ public class ParentalViewScreenActivity extends AppCompatActivity implements Vie
         super.onDestroy();
         if (isBound) {
             unbindService(serviceConnection);
-            isBound = false;
         }
-        handler.removeCallbacks(updateImageTask);
+
+        // Notify CondecParentalService to stop image requests
+        Intent stopRequestIntent = new Intent("com.example.condec.STOP_IMAGE_REQUESTS");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(stopRequestIntent);
+
+        // Unregister the receiver to prevent memory leaks
+        if (imageUpdateReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(imageUpdateReceiver);
+        }
+
     }
 
     @Override
     public void onClick(View view) {
-        if (view == btnBackViewScreen) {
+        if (view == this.btnBackViewScreen) {
             finish();
         }
     }

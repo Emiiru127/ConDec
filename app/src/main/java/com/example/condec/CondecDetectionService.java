@@ -542,7 +542,7 @@ public class CondecDetectionService extends Service {
         }
 
         latestImageStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, latestImageStream); // Compress for efficient transmission
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, latestImageStream); // Compress for efficient transmission
         Log.d("CondecDetectionService", "Bitmap is not null, storing image.");
     }
 

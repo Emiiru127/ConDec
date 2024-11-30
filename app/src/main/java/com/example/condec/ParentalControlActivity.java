@@ -21,6 +21,13 @@ import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -165,7 +172,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
             @Override
             public void onClick(View view) {
 
-                requestViewScreen();
+                checkDetectionStatusAndStartImageRequests(deviceInfo);
 
             }
         });
@@ -296,10 +303,49 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
 
     }
 
-    public void requestViewScreen(){
+    private void checkDetectionStatusAndStartImageRequests(NsdServiceInfo deviceInfo) {
+        parentalService.executorService.execute(() -> {
+            try {
+                Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 
-        parentalService.requestViewScreen(deviceInfo, parentalControlActivity);
+                // Send request to check detection status
+                out.println(parentalService.localDeviceName + ":" + deviceInfo.getServiceName() + ":CHECK_DETECTION_STATUS");
+                Log.d("ParentalControlActivity", "Checking detection status on " + deviceInfo.getServiceName());
 
+                // Receive response
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = in.readLine();
+
+                if ("DETECTION_ACTIVE".equals(response)) {
+                    Log.d("ParentalControlActivity", "Detection service is active on target device.");
+
+                    runOnUiThread(() -> {
+                        // Launch the activity only once
+                        Intent intent = new Intent(this, ParentalViewScreenActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+
+                        // Start scheduled image requests
+                        parentalService.startImageRequestLoop(deviceInfo, this);
+                    });
+                } else {
+                    Log.d("ParentalControlActivity", "Detection service is not active on target device.");
+                    runOnUiThread(() -> showMessageDialog("Detection Not Active",
+                            "The Warning Detection must be active on the target device to use this feature."));
+                }
+
+                socket.close();
+            } catch (IOException e) {
+                Log.e("ParentalControlActivity", "Error checking detection status", e);
+            }
+        });
+    }
+
+    private void openParentalViewScreenActivity() {
+        Intent intent = new Intent(this, ParentalViewScreenActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     public void requestDisplayMessage(String message){
