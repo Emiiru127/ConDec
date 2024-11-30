@@ -427,20 +427,14 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             }
         }
         else if (requestCode == ACCESSIBILITY_REQUEST_CODE) {
-            // Add a delay to ensure the system registers the service change
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (isAccessibilityServiceEnabled()) {
-                        // Accessibility service enabled, proceed with starting services
-                        checkAndRequestPermissions();
+            if (isAccessibilityServiceEnabled()) {
+                // Accessibility service enabled, proceed with starting services
+                checkAndRequestPermissions();
 
-                    } else {
-                        // Accessibility not enabled, ask again
-                        requestAccessibilityPermission();
-                    }
-                }
-            }, 1000); // 1 second delay
+            } else {
+                // Accessibility not enabled, ask again
+                checkAndRequestPermissions();
+            }
         }
         else if (requestCode == REQUEST_CODE_BATTERY_OPTIMIZATION) {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);

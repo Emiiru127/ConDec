@@ -2,7 +2,9 @@ package com.example.condec;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.net.VpnService;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -33,6 +35,9 @@ import java.util.concurrent.Executors;
 public class CondecVPNService extends VpnService {
 
     private static final String TAG = "Condec Vpn Service";
+
+    private NetworkChangeReceiver networkChangeReceiver;
+    private boolean isReceiverRegistered = false;
     public static final String ACTION_STOP_VPN = "com.example.condec.STOP_VPN";
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
@@ -45,6 +50,14 @@ public class CondecVPNService extends VpnService {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // Initialize the network change receiver
+        networkChangeReceiver = new NetworkChangeReceiver();
+
+        // Register the receiver and mark it as registered
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, filter);
+        isReceiverRegistered = true;
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -158,6 +171,12 @@ public class CondecVPNService extends VpnService {
         Log.d(TAG, "VPN is On Destroy");
         stopVpn();
         Log.d(TAG, "VPN is On Destroy LAst");
+
+        // Unregister the receiver only if it was registered
+        if (isReceiverRegistered) {
+            unregisterReceiver(networkChangeReceiver);
+            isReceiverRegistered = false;
+        }
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

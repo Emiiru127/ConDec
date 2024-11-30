@@ -84,6 +84,14 @@
             android:enabled="true"
             android:exported="false" />
 
+        <receiver android:name=".NetworkChangeReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".AppInstallationReceiver"
             android:exported="false">
@@ -203,6 +211,7 @@
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
         </service>
         <service

@@ -220,14 +220,6 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
             String url = editTxtInput.getText().toString().trim();
             if (!url.isEmpty()) {
                 addUrlToDatabase(url);
-
-                if (isServiceRunning(CondecVPNService.class)){
-
-                    stopVpnService();
-                    startVpnService();
-
-                }
-
                 dialog.dismiss();
             }
         });
