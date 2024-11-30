@@ -14,7 +14,7 @@ import android.widget.CompoundButton;
 public class TermsAndConditionsActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     private CheckBox chkAgreed;
-    private Button btnSubmit;
+    private Button confirmAgreement;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +22,10 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
         setContentView(R.layout.activity_terms_and_conditions);
 
         this.chkAgreed = findViewById(R.id.chkAgreed);
-        this.btnSubmit = findViewById(R.id.btnSubmit);
+        this.confirmAgreement = findViewById(R.id.btnConfirmAgreement);
 
         this.chkAgreed.setOnCheckedChangeListener(this);
-        this.btnSubmit.setOnClickListener(this);
+        this.confirmAgreement.setOnClickListener(this);
 
         update();
 
@@ -53,12 +53,16 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
 
         if (this.chkAgreed.isChecked() == true){
 
-            this.btnSubmit.setEnabled(true);
+            this.confirmAgreement.setEnabled(true);
+            this.confirmAgreement.setBackgroundColor(getColor(R.color.green));
+            this.confirmAgreement.setTextColor(getColor(R.color.white));
 
         }
         else {
 
-            this.btnSubmit.setEnabled(false);
+            this.confirmAgreement.setEnabled(false);
+            this.confirmAgreement.setBackgroundColor(getColor(R.color.gray));
+            this.confirmAgreement.setTextColor(getColor(R.color.black_main_background));
 
         }
 
@@ -67,7 +71,7 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
     @Override
     public void onClick(View view) {
 
-        if (this.btnSubmit == view){
+        if (this.confirmAgreement == view){
 
             submit();
 

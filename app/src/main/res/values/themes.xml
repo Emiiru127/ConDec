@@ -1,9 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.ConDec" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:windowBackground">@color/white</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:colorBackground">@color/black_main_background</item>
+        <item name="android:background">@color/black_main_background</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="checkboxStyle">@style/MyCheckboxStyle</item>
+        <item name="android:checkboxStyle">@style/MyCheckboxStyle</item>
     </style>
+
+    <style name="MyCheckboxStyle" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="colorAccent">@color/green</item>
+        <item name="buttonTint">@color/white</item>
+        <item name="color">@color/black_main_background</item>
+        <item name="colorButtonNormal">@color/black_main_background</item>
+    </style>
+
+
 
     <style name="Theme.ConDec" parent="Base.Theme.ConDec" />
 </resources>
