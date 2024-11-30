@@ -8,4 +8,22 @@
     <color name="gray_text">#FF8d8f95</color>
     <color name="dark_blue">#FF112e37</color>
     <color name="red">#FFcb2129</color>
+
+
+
+    <!--NEW UI-->
+    <color name="blue_main_background">#FF4a75b1</color>
+    <color name="dark_blue_button">#FF263b5a</color>
+    <color name="new_color_textgray">#626262</color>
+    <color name="new_color_textlightgray">#b7c8e0</color>
+    <color name="pin_highlight">#7999c5</color>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="icon_selected">#FFFFFFFF</color>
+    <color name="icon_not_selected">#32507a</color>
+    <color name="app_usage_layout">#ccdef6</color>
+    <color name="app_usage_time">#2b4c79</color>
+    <color name="app_usage_last_time">#7e7e7e</color>
+
+
+
 </resources>

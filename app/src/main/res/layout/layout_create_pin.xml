@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="3dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.97"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/condec_new_image" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="324dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView">
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="151dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="@font/arialbd"
+            android:gravity="center"
+            android:text="Set Up PIN"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView17"
+        android:layout_width="177dp"
+        android:layout_height="27dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center|left"
+        android:text="Enter new PIN"
+        android:textColor="@color/new_color_textlightgray"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.183"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+    <LinearLayout
+        android:id="@+id/pinView1CreateBackground"
+        android:layout_width="328dp"
+        android:layout_height="65dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/layout_round_main_background"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView17">
+
+        <TextView
+            android:id="@+id/pinView1Create1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView1Create2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView1Create3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView1Create4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView18"
+        android:layout_width="177dp"
+        android:layout_height="27dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center|left"
+        android:text="Re-enter new PIN"
+        android:textColor="@color/new_color_textlightgray"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.179"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pinView1CreateBackground" />
+
+    <LinearLayout
+        android:id="@+id/pinView2CreateBackground"
+        android:layout_width="326dp"
+        android:layout_height="65dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/layout_round_main_background"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView18">
+
+        <TextView
+            android:id="@+id/pinView2Create1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView2Create2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView2Create3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+        <TextView
+            android:id="@+id/pinView2Create4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="44sp" />
+
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/layout_white_top_corners"
+        android:padding="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pinView2CreateBackground"
+        app:layout_constraintVertical_bias="1.0">
+
+        <Button
+            android:id="@+id/btnConfirmCreatePin"
+            android:layout_width="201dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="9dp"
+            android:backgroundTint="@color/dark_blue_button"
+            android:enabled="false"
+            android:text="Confirm"
+            android:textColor="@color/black_main_background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tableLayout" />
+
+        <TableLayout
+            android:id="@+id/tableLayout"
+            android:layout_width="289dp"
+            android:layout_height="234dp"
+            android:background="@color/white"
+            android:collapseColumns="3"
+            android:stretchColumns="0,1,2"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+
+                    android:id="@+id/btnCreateNum1"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="1"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum2"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="2"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum3"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="3"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnCreateNum4"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="4"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum5"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="5"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum6"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="6"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnCreateNum7"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="7"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum8"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="8"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNum9"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="9"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white">
+
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:background="@color/white" />
+
+                <Button
+                    android:id="@+id/btnCreateNum0"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="0"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnCreateNumBack"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="X"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+        </TableLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

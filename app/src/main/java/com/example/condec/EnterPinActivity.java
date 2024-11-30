@@ -8,12 +8,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.condec.Utils.DualPinController;
 import com.example.condec.Utils.NumpadView;
 import com.example.condec.Utils.PinController;
 import com.example.condec.Utils.PinView;
@@ -38,7 +36,7 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_enter_pin);
+        setContentView(R.layout.layout_enter_pin);
 
         this.pinViewPins = new TextView[4];
 
@@ -114,14 +112,14 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
         if (this.pinController.isDone() == true){
 
             this.btnEnterLogin.setEnabled(true);
-            this.btnEnterLogin.setBackgroundColor(getColor(R.color.green));
+            this.btnEnterLogin.setBackgroundColor(getColor(R.color.blue_main_background));
             this.btnEnterLogin.setTextColor(getColor(R.color.white));
 
         }
         else {
 
             this.btnEnterLogin.setEnabled(false);
-            this.btnEnterLogin.setBackgroundColor(getColor(R.color.gray));
+            this.btnEnterLogin.setBackgroundColor(getColor(R.color.dark_blue_button));
             this.btnEnterLogin.setTextColor(getColor(R.color.black_main_background));
 
         }

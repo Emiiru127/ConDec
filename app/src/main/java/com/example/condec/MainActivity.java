@@ -6,10 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 
 public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences condecPreferences;
+
+    private boolean hasLoaded = false;
 
     private boolean hasAgreed;
     private boolean hasPassword;
@@ -19,11 +22,34 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.layout_loading_screen);
 
         this.condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
 
         getPrefData();
-        initialize();
+        hasLoaded = getIntent().getBooleanExtra("hasLoaded", false);
+
+        if (hasLoaded == false){
+
+            hasLoaded = true;
+
+            final Handler handler = new Handler();
+            final Runnable r = new Runnable() {
+                public void run() {
+
+                    initialize();
+
+                }
+            };
+
+            handler.postDelayed(r, 3000);
+
+        }
+        else {
+
+            initialize();
+
+        }
 
     }
 
@@ -31,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (this.hasAgreed == false){
 
-            Intent intent = new Intent(MainActivity.this, TermsAndConditionsActivity.class);
+            Intent intent = new Intent(MainActivity.this, StartingPageActivity.class);
+            intent.putExtra("hasLoaded", hasLoaded);
             startActivity(intent);
             finish();
 
@@ -41,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
             if (this.hasPassword == false){
 
                 Intent intent = new Intent(MainActivity.this, CreatePinActivity.class);
+                intent.putExtra("hasLoaded", hasLoaded);
                 startActivity(intent);
                 finish();
 
@@ -48,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
             else if (this.hasBackupPassword == false){
 
                 Intent intent = new Intent(MainActivity.this, CreateQuestionActivity.class);
+                intent.putExtra("hasLoaded", hasLoaded);
                 startActivity(intent);
                 finish();
 
@@ -62,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
             else {
 
                 Intent intent = new Intent(MainActivity.this, EnterPinActivity.class);
+                intent.putExtra("hasLoaded", hasLoaded);
                 startActivity(intent);
                 finish();
 

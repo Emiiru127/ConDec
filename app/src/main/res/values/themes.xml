@@ -6,8 +6,8 @@
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:colorBackground">@color/black_main_background</item>
-        <item name="android:background">@color/black_main_background</item>
+        <item name="android:colorBackground">@color/blue_main_background</item>
+        <item name="android:background">@color/blue_main_background</item>
         <item name="android:textColor">@color/white</item>
         <item name="checkboxStyle">@style/MyCheckboxStyle</item>
         <item name="android:checkboxStyle">@style/MyCheckboxStyle</item>

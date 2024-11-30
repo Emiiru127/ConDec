@@ -26,7 +26,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_question);
+        setContentView(R.layout.layout_create_question);
 
         this.editTxtQuestion = findViewById(R.id.editTxtCreateQuestion);
         this.editTxtAnswer = findViewById(R.id.editTxtCreateAnswer);
@@ -141,6 +141,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         editor.apply();
 
         Intent intent = new Intent(CreateQuestionActivity.this, MainActivity.class);
+        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
         startActivity(intent);
         finish();
 
@@ -212,7 +213,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
     private void enableConfirm(){
 
         this.btnConfirmCreateQuestion.setEnabled(true);
-        this.btnConfirmCreateQuestion.setBackgroundColor(getColor(R.color.green));
+        this.btnConfirmCreateQuestion.setBackgroundColor(getColor(R.color.blue_main_background));
         this.btnConfirmCreateQuestion.setTextColor(getColor(R.color.white));
 
     }
@@ -220,7 +221,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
     private void disableConfirm(){
 
         this.btnConfirmCreateQuestion.setEnabled(false);
-        this.btnConfirmCreateQuestion.setBackgroundColor(getColor(R.color.gray));
+        this.btnConfirmCreateQuestion.setBackgroundColor(getColor(R.color.dark_blue_button));
         this.btnConfirmCreateQuestion.setTextColor(getColor(R.color.black_main_background));
 
     }

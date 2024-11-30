@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/imageView4"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="3dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.97"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/condec_new_image" />
+
+    <LinearLayout
+        android:id="@+id/pinViewEnterBackground"
+        android:layout_width="328dp"
+        android:layout_height="75dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/layout_round_main_background"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.493"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView13">
+
+        <TextView
+            android:id="@+id/pinViewEnter1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="48sp" />
+
+        <TextView
+            android:id="@+id/pinViewEnter2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="48sp" />
+
+        <TextView
+            android:id="@+id/pinViewEnter3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="48sp" />
+
+        <TextView
+            android:id="@+id/pinViewEnter4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/round_pin_style"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:text="*"
+            android:textColor="@color/black"
+            android:textSize="48sp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView13"
+        android:layout_width="177dp"
+        android:layout_height="27dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="5dp"
+        android:gravity="center|left"
+        android:text="Enter PIN"
+        android:textColor="@color/new_color_textlightgray"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/pinViewEnterBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.23"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView6" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="303dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="100dp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center"
+        android:text="Log in"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:fontFamily="arialbd"
+        app:layout_constraintBottom_toTopOf="@+id/textView13"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.75" />
+
+    <Button
+        android:id="@+id/btnForgotPassword"
+        android:layout_width="213dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="75dp"
+        android:width="75dp"
+        android:height="75dp"
+        android:autoSizeTextType="uniform"
+        android:backgroundTint="@color/transparent"
+        android:text="@string/forgot_password"
+        android:textColor="@color/new_color_textlightgray"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pinViewEnterBackground"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/layout_white_top_corners"
+        android:padding="25dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnForgotPassword"
+        app:layout_constraintVertical_bias="1.0">
+
+        <TableLayout
+            android:id="@+id/tableLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:collapseColumns="3"
+            android:stretchColumns="0,1,2"
+            app:layout_constraintBottom_toTopOf="@+id/btnEnterLogin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+
+                    android:id="@+id/btnEnterNum1"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="1"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum2"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="2"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum3"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="3"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnEnterNum4"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="4"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum5"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="5"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum6"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="6"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:paddingBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnEnterNum7"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="7"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum8"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="8"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNum9"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="9"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white">
+
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@color/white" />
+
+                <Button
+                    android:id="@+id/btnEnterNum0"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="0"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+
+                <Button
+                    android:id="@+id/btnEnterNumBack"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:width="75dp"
+                    android:height="75dp"
+                    android:autoSizeTextType="uniform"
+                    android:backgroundTint="@color/transparent"
+                    android:text="X"
+                    android:textColor="@color/blue_main_background"
+                    android:textSize="24sp" />
+            </TableRow>
+
+        </TableLayout>
+
+        <Button
+            android:id="@+id/btnEnterLogin"
+            android:layout_width="243dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="83dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="83dp"
+            android:backgroundTint="@color/dark_blue_button"
+            android:enabled="false"
+            android:text="Log In"
+            android:textColor="@color/black_main_background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tableLayout" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

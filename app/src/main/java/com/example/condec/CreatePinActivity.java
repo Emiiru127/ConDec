@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +35,7 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_create_pin);
+        setContentView(R.layout.layout_create_pin);
 
         this.pinView1Pins = new TextView[4];
 
@@ -97,6 +96,7 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         editor.apply();
 
         Intent intent = new Intent(CreatePinActivity.this, MainActivity.class);
+        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
         startActivity(intent);
         finish();
 
@@ -126,15 +126,15 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         if (this.dualPinController.isDone() == true){
 
             this.btnConfirmCreatePin.setEnabled(true);
-            this.btnConfirmCreatePin.setBackgroundColor(getColor(R.color.green));
+            this.btnConfirmCreatePin.setBackgroundColor(getColor(R.color.blue_main_background));
             this.btnConfirmCreatePin.setTextColor(getColor(R.color.white));
 
         }
         else {
 
             this.btnConfirmCreatePin.setEnabled(false);
-            this.btnConfirmCreatePin.setBackgroundColor(getColor(R.color.gray));
-            this.btnConfirmCreatePin.setTextColor(getColor(R.color.black_main_background));
+            this.btnConfirmCreatePin.setBackgroundColor(getColor(R.color.dark_blue_button));
+            this.btnConfirmCreatePin.setTextColor(getColor(R.color.dark_blue_button));
 
         }
 

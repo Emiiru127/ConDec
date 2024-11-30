@@ -1,7 +1,5 @@
 package com.example.condec;
 
-import static androidx.core.widget.TextViewKt.addTextChangedListener;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -30,7 +28,7 @@ public class ForgotPinAcitivity extends AppCompatActivity implements View.OnClic
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_forgot_pin);
+        setContentView(R.layout.layout_forgot_pin);
 
         SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
 
@@ -131,7 +129,7 @@ public class ForgotPinAcitivity extends AppCompatActivity implements View.OnClic
     private void enableConfirm(){
 
         this.btnConfirm.setEnabled(true);
-        this.btnConfirm.setBackgroundColor(getColor(R.color.green));
+        this.btnConfirm.setBackgroundColor(getColor(R.color.blue_main_background));
         this.btnConfirm.setTextColor(getColor(R.color.white));
 
     }
@@ -139,7 +137,7 @@ public class ForgotPinAcitivity extends AppCompatActivity implements View.OnClic
     private void disableConfirm(){
 
         this.btnConfirm.setEnabled(false);
-        this.btnConfirm.setBackgroundColor(getColor(R.color.gray));
+        this.btnConfirm.setBackgroundColor(getColor(R.color.dark_blue_button));
         this.btnConfirm.setTextColor(getColor(R.color.black_main_background));
 
     }

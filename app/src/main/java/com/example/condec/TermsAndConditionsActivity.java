@@ -7,84 +7,55 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
-public class TermsAndConditionsActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+import com.google.android.material.button.MaterialButton;
 
-    private CheckBox chkAgreed;
-    private Button btnConfirm;
+public class TermsAndConditionsActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private MaterialButton btnAccept;
+    private MaterialButton btnDecline;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_terms_and_conditions);
+        setContentView(R.layout.layout_terms_and_conditions);
 
-        this.chkAgreed = findViewById(R.id.chkAgreed);
-        this.btnConfirm = findViewById(R.id.btnConfirmAgreement);
+        this.btnAccept = findViewById(R.id.btnConfirmAgreement);
+        this.btnDecline = findViewById(R.id.btnDeclineAgreement);
 
-        this.chkAgreed.setOnCheckedChangeListener(this);
-        this.btnConfirm.setOnClickListener(this);
-
-        update();
+        this.btnAccept.setOnClickListener(this);
+        this.btnDecline.setOnClickListener(this);
 
     }
 
-    private void submit(){
+    private void accept(){
 
-        if (this.chkAgreed.isChecked() == true){
+        boolean hasAgreed = true;
+        SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = condecPreferences.edit();
+        editor.putBoolean("hasAgreedConditions", hasAgreed);
+        editor.apply();
 
-            boolean hasAgreed = true;
-            SharedPreferences condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = condecPreferences.edit();
-            editor.putBoolean("hasAgreedConditions", hasAgreed);
-            editor.apply();
-
-            Intent intent = new Intent(TermsAndConditionsActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-
-        }
-
-    }
-
-    private void update(){
-
-        if (this.chkAgreed.isChecked() == true){
-
-            this.btnConfirm.setEnabled(true);
-            this.btnConfirm.setBackgroundColor(getColor(R.color.green));
-            this.btnConfirm.setTextColor(getColor(R.color.white));
-
-        }
-        else {
-
-            this.btnConfirm.setEnabled(false);
-            this.btnConfirm.setBackgroundColor(getColor(R.color.gray));
-            this.btnConfirm.setTextColor(getColor(R.color.black_main_background));
-
-        }
+        Intent intent = new Intent(TermsAndConditionsActivity.this, MainActivity.class);
+        intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+        startActivity(intent);
+        finish();
 
     }
 
     @Override
     public void onClick(View view) {
 
-        if (this.btnConfirm == view){
+        if (this.btnAccept == view){
 
-            submit();
+            accept();
 
-        }
+        } else if (this.btnDecline == view) {
 
-    }
-
-    @Override
-    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
-        if (this.chkAgreed == compoundButton){
-
-            update();
+            return;
 
         }
 
