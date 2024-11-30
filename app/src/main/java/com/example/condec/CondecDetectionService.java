@@ -306,7 +306,7 @@ public class CondecDetectionService extends Service {
                     }
                 });
             }
-        }, 0, 750); // Run every 1 seconds
+        }, 0, 1000); // Run every 1 seconds
 
     }
 
@@ -420,7 +420,9 @@ public class CondecDetectionService extends Service {
             // Get the threshold for the current app
             if (appThresholds.containsKey(currentApp)  || bypassThreshold) {
                 Log.d("CondecDetectionService", "Current App: " + currentApp);
-                int threshold = appThresholds.get(currentApp);
+                int threshold = 0;
+
+                if(bypassThreshold == false) threshold = appThresholds.get(currentApp);
 
                 Log.d("CondecDetectionService", "Current App AI Result: " + percentage);
                 Log.d("CondecDetectionService", "Current App AI Threshold: " + threshold);
@@ -428,7 +430,7 @@ public class CondecDetectionService extends Service {
                 Log.d("CondecDetectionService", "AI Judgement Result: " + (percentage > threshold));
                 // Trigger action if the threshold is exceeded*/
 
-                if (bypassThreshold) threshold = 90;
+                if (bypassThreshold == true) threshold = 90;
                 if (percentage > threshold) {
                     Log.d("CondecAccessabilityService", "AI Perform Swipe And Back");
                     Intent intent = new Intent("com.example.ACTION_SWIPE_AND_BACK");

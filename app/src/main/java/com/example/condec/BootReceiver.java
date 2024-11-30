@@ -45,6 +45,11 @@ public class BootReceiver extends BroadcastReceiver {
                 context.startForegroundService(serviceIntent);
             }
 
+            // Trigger the SleepTimeReceiver to reschedule alarms at boot
+            Log.d("Condec Boot Receiver", "Triggering SleepTimeReceiver to reschedule alarms.");
+            Intent sleepReceiverIntent = new Intent(context, SleepTimeReceiver.class);
+            context.sendBroadcast(sleepReceiverIntent);
+
             boolean detectionServiceStatus = prefs.getBoolean("condecDetectionServiceStatus", false);
             Log.d("Condec Boot Receiver", "Checking DetectionServiceStatus: " + detectionServiceStatus);
 

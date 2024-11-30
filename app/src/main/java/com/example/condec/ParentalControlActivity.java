@@ -165,6 +165,12 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
 
     }
 
+    public String getCurrentDeviceTarget(){
+
+        return this.deviceName;
+
+    }
+
     @Override
     public void onClick(View view) {
 

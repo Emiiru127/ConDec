@@ -42,22 +42,28 @@
         tools:targetApi="31">
         <activity
             android:name=".ParentalControlActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".ParentalAppUsageActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".RequestDetectionPermission"
+            android:screenOrientation="portrait"
             android:exported="false"
             android:launchMode="singleTop" />/>
         <activity
             android:name=".AppSelectionActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".SettingsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".PasswordPromptActivity"
+            android:screenOrientation="portrait"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
@@ -73,6 +79,11 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <receiver android:name=".SleepTimeReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".AppInstallationReceiver"
             android:exported="false">
@@ -103,41 +114,53 @@
 
         <activity
             android:name=".StartingPageActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".ForgotPinActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".CreateQuestionActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".MainMenuActivity"
+            android:screenOrientation="portrait"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
         <activity
             android:name=".EnterPinActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".TermsAndConditionsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".CreatePinActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".RequestAdminPermission"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".ReadTermsConditionsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".AboutCondecActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".DetectionTimeCheckDialog"
+            android:screenOrientation="portrait"
             android:exported="false"
-            android:launchMode="singleTop" />/>
+            android:launchMode="singleTop" />
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -57,6 +57,16 @@ public class CondecSecurityService extends Service {
             }
         }
     };
+
+    private BroadcastReceiver restartReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER".equals(intent.getAction())) {
+                isRequestPermissionActivityRunning = false;
+                restartRunnableServiceCheck();
+            }
+        }
+    };
     private BroadcastReceiver updateFlagsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -76,17 +86,17 @@ public class CondecSecurityService extends Service {
             }
             else if ("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_ON".equals(intent.getAction())) {
                 Log.d("Condec Security", "RECEIVED REQUEST TO CHECK FLAGS");
-                isVPNServiceManuallyOff = false;
+               /* isVPNServiceManuallyOff = false;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check*/
             }
             else if ("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_OFF".equals(intent.getAction())) {
                 Log.d("Condec Security", "RECEIVED REQUEST TO CHECK FLAGS");
-                isVPNServiceManuallyOff = true;
+               /* isVPNServiceManuallyOff = true;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check*/
             }
         }
     };
@@ -99,6 +109,9 @@ public class CondecSecurityService extends Service {
         SharedPreferences.Editor editor =   this.condecPreferences.edit();
         editor.putBoolean("condecSecurityServiceStatus", true);
         editor.apply();
+
+        IntentFilter filter6 = new IntentFilter("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER");
+        registerReceiver(restartReceiver, filter6);
 
         IntentFilter filter2 = new IntentFilter("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_ON");
         registerReceiver(updateFlagsReceiver, filter2);
@@ -127,6 +140,13 @@ public class CondecSecurityService extends Service {
     private void stopRunnableServiceCheck() {
         handlerServiceCheck.removeCallbacks(runnableServiceCheck); // Remove any callbacks to stop the thread
     }
+
+    private void restartRunnableServiceCheck() {
+        Log.d("Condec Security", "Service Check Restarting");
+        handlerServiceCheck.removeCallbacks(runnableServiceCheck); // Remove any callbacks to stop the thread
+        handlerServiceCheck.postDelayed(runnableServiceCheck, 5000); // 5000ms service check
+    }
+
     private void checkFlags(){
 
         Log.d("Condec Security", "CHECKING FLAGS:");
@@ -244,7 +264,7 @@ public class CondecSecurityService extends Service {
                 Log.d("Condec Security", "STARTING DETECTION SERVICE:");
             }
         }
-
+/*
         Log.d("Condec Security", "CHECKING VPN SERVICE:");
         Log.d("Condec Security", "Manual: " + isVPNServiceManuallyOff);
         Log.d("Condec Security", "Service Status: " + isServiceRunning(CondecVPNService.class));
@@ -257,7 +277,7 @@ public class CondecSecurityService extends Service {
             Log.d("Condec Security", "STARTING VPN SERVICE:");
 
         }
-
+*/
     }
 
     private boolean isServiceRunning(Class<?> serviceClass) {

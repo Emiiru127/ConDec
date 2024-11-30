@@ -52,6 +52,9 @@ public class RequestDetectionPermission extends AppCompatActivity {
                 startActivity(backIntent);
                 Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
                 sendBroadcast(homeIntent);
+                CondecSecurityService.isRequestPermissionActivityRunning = false;
+                Intent broadcastIntent = new Intent("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER");
+                sendBroadcast(broadcastIntent);
                 finish(); // Close the activity
             } else {
                 // User denied the permission, prompt again
@@ -65,6 +68,18 @@ public class RequestDetectionPermission extends AppCompatActivity {
         super.onStop();
 
         CondecSecurityService.isRequestPermissionActivityRunning = false;
+        Intent broadcastIntent = new Intent("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER");
+        sendBroadcast(broadcastIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        CondecSecurityService.isRequestPermissionActivityRunning = false;
+        Intent broadcastIntent = new Intent("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER");
+        sendBroadcast(broadcastIntent);
+
     }
 
     @Override

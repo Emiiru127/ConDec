@@ -141,7 +141,7 @@ public class CondecAccessibilityService extends AccessibilityService {
             if (!result) {
                 Log.e("CondecAccessibilityService", "Failed to press back button");
             }
-        }, 500); // 500ms delay to allow the swipe to complete before pressing back
+        }, 750); // 500ms delay to allow the swipe to complete before pressing back
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 

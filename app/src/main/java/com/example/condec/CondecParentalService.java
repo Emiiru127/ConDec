@@ -359,7 +359,7 @@ public class CondecParentalService extends Service {
         long startTime = calendar.getTimeInMillis();
         long endTime = System.currentTimeMillis();
 
-        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_WEEKLY, startTime, endTime);
         if (usageStatsList == null || usageStatsList.isEmpty()) {
             Log.d("CondecParentalService", "No usage data available.");
             return null;
@@ -531,6 +531,7 @@ public class CondecParentalService extends Service {
 
         // Pass the sorted list to the activity (for example)
         Intent intent = new Intent(parentalControlActivity, ParentalAppUsageActivity.class);
+        intent.putExtra("deviceName", parentalControlActivity.getCurrentDeviceTarget());
         intent.putParcelableArrayListExtra("appUsageList", (ArrayList<ParentalAppUsageInfo>) appUsageList);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
@@ -699,39 +700,33 @@ public class CondecParentalService extends Service {
     }
 
     @SuppressLint("ScheduleExactAlarm")
-    private void reScheduleSleepTime(){
+    private void reScheduleSleepTime() {
 
         Calendar startTimeCalendar = Calendar.getInstance();
         Calendar endTimeCalendar = Calendar.getInstance();
 
-        PendingIntent startPendingIntent;
-        PendingIntent stopPendingIntent;
-
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        // Load stored times or set defaults
+        // Load stored times
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         long startMillis = sharedPreferences.getLong("sleepStartTime", -1);
         long endMillis = sharedPreferences.getLong("sleepEndTime", -1);
 
-        boolean useTimeOn = sharedPreferences.getBoolean("sleepUseTimeOn", false);
-        boolean manualOn = sharedPreferences.getBoolean("sleepManualOn", false);
+        startTimeCalendar.setTimeInMillis(startMillis);
+        endTimeCalendar.setTimeInMillis(endMillis);
 
         long currentTime = System.currentTimeMillis();
         long startTime = startTimeCalendar.getTimeInMillis();
         long endTime = endTimeCalendar.getTimeInMillis();
 
-        startTimeCalendar.setTimeInMillis(startMillis);
-        endTimeCalendar.setTimeInMillis(endMillis);
-
         Intent startIntent = new Intent(this, CondecSleepService.class);
         startIntent.setAction("START_SERVICE");
-        startPendingIntent = PendingIntent.getForegroundService(
+        PendingIntent startPendingIntent = PendingIntent.getForegroundService(
                 this, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent stopIntent = new Intent(this, CondecSleepService.class);
         stopIntent.setAction("STOP_SERVICE");
-        stopPendingIntent = PendingIntent.getForegroundService(
+        PendingIntent stopPendingIntent = PendingIntent.getForegroundService(
                 this, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         // Cancel existing alarms before rescheduling
@@ -740,19 +735,18 @@ public class CondecParentalService extends Service {
             alarmManager.cancel(stopPendingIntent);
         }
 
+        // Schedule start and stop services
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTime, startPendingIntent);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTime, stopPendingIntent);
 
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTimeCalendar.getTimeInMillis(), startPendingIntent);
-
-        // Schedule the service stop
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTimeCalendar.getTimeInMillis(), stopPendingIntent);
-
-        // Handle current state: should we start or stop the service now?
+        // Check the current time
         if (currentTime >= startTime && currentTime < endTime) {
+            Log.d("CondecSleepService", "Starting service immediately as current time is within the sleep window.");
             startForegroundService(new Intent(this, CondecSleepService.class));
-        } else {
+        } else if (currentTime >= endTime) {
+            Log.d("CondecSleepService", "Current time is past end time; not starting the service.");
             stopService(new Intent(this, CondecSleepService.class));
         }
-
     }
 
     private void cancelScheduledSleepTime(){

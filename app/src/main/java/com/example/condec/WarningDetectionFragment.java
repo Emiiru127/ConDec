@@ -56,23 +56,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     boolean isBinded = false;
     boolean hasAllowedScreenCapture = false;
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            CondecDetectionService.LocalBinder binder = (CondecDetectionService.LocalBinder) service;
-            condecDetectionService = binder.getService();
 
-            isBinded = true;
-
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-
-            isBinded = false;
-
-        }
-    };
     public WarningDetectionFragment() {
         // Required empty public constructor
     }
@@ -191,6 +175,25 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        update();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        update();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        update();
+    }
+
     private void startService(int screenCaptureResultCode, Intent screenCaptureIntent)  {
 
         //boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
@@ -214,7 +217,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
             Intent serviceIntent = CondecDetectionService.newIntent(getActivity(), screenCaptureResultCode, screenCaptureIntent);
             getActivity().startForegroundService(serviceIntent);
-            getActivity().bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
 
 
         }
@@ -240,15 +243,20 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         boolean isDetectionServiceManuallyOff = this.condecPreferences.getBoolean("isDetectionServiceManuallyOff", true);
         Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY: " + isDetectionServiceManuallyOff);
 
-        if (isBinded == true){
 
-            getActivity().unbindService(this.serviceConnection);
+        try {
+
             this.hasAllowedScreenCapture = false;
             this.isServiceActive = false;
             this.isBinded = false;
 
             Intent serviceIntent = new Intent(getActivity(), CondecDetectionService.class);
             getActivity().stopService(serviceIntent);
+
+
+        }catch (Exception e){
+
+            Log.d("Detection Fragment", "ERROR: " + e);
 
         }
 
@@ -282,8 +290,6 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void checkAndBindService() {
         if (isServiceRunning(CondecDetectionService.class)) {
-            Intent serviceIntent = new Intent(getActivity(), CondecDetectionService.class);
-            getActivity().bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
             this.isServiceActive = true;
             update();
@@ -291,14 +297,6 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         }
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        if(isServiceRunning(CondecDetectionService.class) && isBinded){
-            getActivity().unbindService(serviceConnection);
-
-        }
-    }
 
     private boolean isServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);

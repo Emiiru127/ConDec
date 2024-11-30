@@ -34,6 +34,10 @@ public class ParentalAppUsageActivity extends AppCompatActivity implements View.
         this.txtDeviceAppUsage = findViewById(R.id.txtDeviceAppUsage);
         this.rvParentalAppUsages = findViewById(R.id.rvParentalAppUsages);
 
+        String targetDevice = getIntent().getStringExtra("deviceName");
+
+        this.txtDeviceAppUsage.setText(targetDevice + "'s App Usages");
+
         // Retrieve the app usage data from the Intent
         appUsageList = getIntent().getParcelableArrayListExtra("appUsageList");
 

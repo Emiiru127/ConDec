@@ -1,13 +1,8 @@
 package com.example.condec;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.VpnService;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -47,22 +42,6 @@ public class CondecVPNService extends VpnService {
 
     private ExecutorService executorService;
 
-    private final BroadcastReceiver vpnReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network activeNetwork = cm.getActiveNetwork();
-            NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
-
-            // Check if VPN is no longer connected
-            if (capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                Log.d(TAG, "VPN disconnected from system settings");
-                stopVpn();
-            }
-        }
-    };
-
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -74,20 +53,10 @@ public class CondecVPNService extends VpnService {
 
         executorService = Executors.newSingleThreadExecutor();
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(vpnReceiver, filter);
-
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if (intent == null) {
-            Log.e("CondecVPNService", "Received null Intent. Stopping service.");
-            return START_NOT_STICKY; // You can choose to stop the service or handle it differently
-        }
-
         if (ACTION_STOP_VPN.equals(intent.getAction())) {
             stopVpn();
             return START_NOT_STICKY;
@@ -102,7 +71,6 @@ public class CondecVPNService extends VpnService {
     }
 
     private void fetchBlockedDomainsAndStartVpn() {
-        // Use AsyncTask to run the database query on a background thread
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -110,8 +78,10 @@ public class CondecVPNService extends VpnService {
                 List<String> urls = blockedURLRepository.getAllBlockedUrlsSync();
 
                 if (urls != null) {
-                    blockedDomains.clear();
-                    blockedDomains.addAll(urls);
+                    synchronized (blockedDomains) {
+                        blockedDomains.clear();
+                        blockedDomains.addAll(urls);
+                    }
 
                     Log.d(TAG, "Blocked Domains Updated:");
                     for (String url : blockedDomains) {
@@ -130,8 +100,16 @@ public class CondecVPNService extends VpnService {
             public void run() {
                 try {
                     List<InetAddress> blockedIps = new ArrayList<>();
-                    for (String domain : blockedDomains) {
-                        blockedIps.addAll(resolveDomainToIps(domain));
+
+                    synchronized (blockedDomains) {
+                        for (String domain : blockedDomains) {
+                            String extractedDomain = getDomainFromUrl(domain);
+                            if (extractedDomain != null && !extractedDomain.isEmpty()) {
+                                blockedIps.addAll(resolveDomainToIps(extractedDomain));
+                            } else {
+                                Log.e(TAG, "Invalid or empty domain: " + domain);
+                            }
+                        }
                     }
 
                     if (blockedIps.isEmpty()) {
@@ -172,7 +150,6 @@ public class CondecVPNService extends VpnService {
             }
         });
         vpnThread.start();
-
     }
 
     @Override
@@ -180,8 +157,6 @@ public class CondecVPNService extends VpnService {
 
         Log.d(TAG, "VPN is On Destroy");
         stopVpn();
-        unregisterReceiver(vpnReceiver);  // Unregister the receiver
-
         Log.d(TAG, "VPN is On Destroy LAst");
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);

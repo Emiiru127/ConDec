@@ -85,25 +85,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private CondecDetectionService condecDetectionService;
     boolean mBound = false;
 
-    public ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            CondecDetectionService.LocalBinder binder = (CondecDetectionService.LocalBinder) service;
-            condecDetectionService = binder.getService();
-
-            condecDetectionService.setSurfaceView(surfaceView);
-            mBound = true;
-
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-
-            mBound = false;
-
-        }
-    };
-
     private boolean isToggleSleep;
 
     @Override
@@ -117,8 +98,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         updateFrameFeatures("Warning Detection");
 
-        checkAdminPermission();
-        checkBatteryPermission();
         checkAndRequestPermissions();
         checkSleepService();
 
@@ -167,6 +146,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         for (ApplicationInfo app : userApps) {
             previouslySelectedApps.add(app.packageName); // Select all user apps on first launch
         }
+
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putStringSet("blockedApps", previouslySelectedApps);
         editor.putBoolean("isInitializationDone", true); // Mark initialization as done
@@ -282,7 +262,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
+    // Check and request all necessary permissions
     private void checkAndRequestPermissions() {
+        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        mAdminName = new ComponentName(this, AdminReceiver.class);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 requestOverlayPermission();
@@ -292,26 +276,68 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestVPNPermission();
             } else if (!isAccessibilityServiceEnabled()) {
                 requestAccessibilityPermission();
-            } else {
-                startRequiredServices();
+            } else if (!isBatteryOptimizationIgnored()) {
+                requestBatteryOptimizationPermission();
+            } else if (!mDPM.isAdminActive(mAdminName)) {
+                requestAdminPermission();
             }
         } else {
-            // For devices lower than Marshmallow, directly check VPN permission
             if (!isVPNPermissionGranted()) {
                 requestVPNPermission();
             } else {
-                startRequiredServices();
+                requestAdminPermission();
             }
         }
     }
+
+
+    private boolean isBatteryOptimizationIgnored() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        return pm.isIgnoringBatteryOptimizations(getPackageName());
+    }
     // Continuously request Accessibility Permission until granted
     private void requestAccessibilityPermission() {
-        if (!isAccessibilityServiceEnabled()) {
-            // Show dialog to guide the user to accessibility settings
-            Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-            startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
-        }
+        TipDialog tipDialog = new TipDialog("Accessibility Permission",
+                "This app requires accessibility permission to monitor and control app activities.",
+                () -> {
+                    if (!isAccessibilityServiceEnabled()) {
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
+                    }
+                });
+        tipDialog.show(getSupportFragmentManager(), "AccessibilityPermissionDialog");
     }
+
+    private void requestAdminPermission() {
+        TipDialog tipDialog = new TipDialog("Device Admin Permission",
+                "This app requires device admin privileges to perform specific tasks securely.",
+                () -> {
+                    mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+                    mAdminName = new ComponentName(this, AdminReceiver.class);
+
+                    if (!mDPM.isAdminActive(mAdminName)) {
+                        Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
+                        startActivity(intent);
+                    }
+                });
+        tipDialog.show(getSupportFragmentManager(), "AdminPermissionDialog");
+    }
+
+    private void requestBatteryOptimizationPermission() {
+        TipDialog tipDialog = new TipDialog("Battery Optimization",
+                "This app needs to ignore battery optimizations to function correctly in the background.",
+                () -> {
+                    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                    if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                        Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    }
+                });
+        tipDialog.show(getSupportFragmentManager(), "BatteryOptimizationPermissionDialog");
+    }
+
+
 
     /*
     private void requestCapturePermission(){
@@ -324,24 +350,36 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }*/
     private void requestOverlayPermission() {
-        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:" + getPackageName()));
-        startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
+        TipDialog tipDialog = new TipDialog("Overlay Permission", "This app requires overlay permission to display content on top of other apps.",
+                () -> {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
+                });
+        tipDialog.show(getSupportFragmentManager(), "OverlayPermissionDialog");
     }
 
     private void requestUsageAccessPermission() {
-        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-        startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
+        TipDialog tipDialog = new TipDialog("Usage Access Permission", "This app requires usage access permission to monitor your app usage.",
+                () -> {
+                    Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                    startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
+                });
+        tipDialog.show(getSupportFragmentManager(), "UsageAccessPermissionDialog");
     }
 
     private void requestVPNPermission() {
-        Intent vpnIntent = CondecVPNService.prepare(this);
-        if (vpnIntent != null) {
-            startActivityForResult(vpnIntent, REQUEST_CODE_VPN);
-        } else {
-            // VPN permission is already granted
-            startRequiredServices();
-        }
+        TipDialog tipDialog = new TipDialog("VPN Permission",
+                "This app requires VPN permission to secure your network connection.",
+                () -> {
+                    Intent vpnIntent = CondecVPNService.prepare(this);
+                    if (vpnIntent != null) {
+                        startActivityForResult(vpnIntent, REQUEST_CODE_VPN);
+                    } else {
+                        // VPN permission is already granted
+                        startRequiredServices();
+                    }
+                });
+        tipDialog.show(getSupportFragmentManager(), "VPNPermissionDialog");
     }
     private boolean isUsageAccessGranted() {
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
@@ -371,6 +409,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             }
         } else if (requestCode == REQUEST_CODE_VPN) {
             if (isVPNPermissionGranted()) {
+                Intent vpnIntent = new Intent(this, CondecVPNService.class);
+                this.startService(vpnIntent);
                 checkAndRequestPermissions();
             } else {
                 Toast.makeText(this, "VPN permission is required.", Toast.LENGTH_SHORT).show();
@@ -616,6 +656,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         // Notify discovery process or UI to update the device list
         refreshDeviceListWithNewName();
+        restartParentalService();
+
     }
 
     private void refreshDeviceListWithNewName() {
@@ -665,6 +707,18 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         Log.d("Condec Sleep", "Sleep Mode Status: " + this.isToggleSleep);
 
         update();
+    }
+
+    private void restartParentalService(){
+
+        // Stop the service
+        Intent stopIntent = new Intent(this, CondecParentalService.class);
+        stopService(stopIntent);
+
+        // Start the service
+        Intent startIntent = new Intent(this, CondecParentalService.class);
+        startForegroundService(startIntent);
+
     }
 
     private void update(){

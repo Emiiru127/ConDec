@@ -171,6 +171,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
         boolean isVPNServiceManuallyOff = this.condecPreferences.getBoolean("isVPNServiceManuallyOff", true);
         Log.d("Condec Security", "VPN SERVICE WAS MANUALLY: " + isVPNServiceManuallyOff);
+
         Intent intent = new Intent(getActivity(), CondecVPNService.class);
         intent.setAction(CondecVPNService.ACTION_STOP_VPN);
         getActivity().startService(intent);
@@ -236,8 +237,15 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     private void addUrlToDatabase(String url) {
         // Perform the database operation
-            UserBlockedUrl userBlockedUrl = new UserBlockedUrl(url);
-            repository.insertUserBlockedUrl(userBlockedUrl);
+        UserBlockedUrl userBlockedUrl = new UserBlockedUrl(url);
+        repository.insertUserBlockedUrl(userBlockedUrl);
+
+        if (isServiceRunning(CondecVPNService.class)){
+
+            restartWebsiteBlocking();
+
+        }
+
     }
 
     private void startVpnService(){
@@ -256,6 +264,13 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
         Intent intent = new Intent(getActivity(), CondecVPNService.class);
         getActivity().startService(intent);
+
+    }
+
+    private void restartWebsiteBlocking(){
+
+        stopVpnService();
+        startVpnService();
 
     }
 

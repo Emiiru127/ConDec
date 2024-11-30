@@ -120,7 +120,7 @@ public class AppUsageFragment extends Fragment implements View.OnClickListener {
         long endTime = System.currentTimeMillis();
 
         // Query usage stats for the current day only
-        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_WEEKLY, startTime, endTime);
         if (usageStatsList == null || usageStatsList.isEmpty()) {
             Toast.makeText(getContext(), "No usage data available", Toast.LENGTH_SHORT).show();
             return;

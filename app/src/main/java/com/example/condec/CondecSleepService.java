@@ -17,6 +17,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.Telephony;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -92,6 +93,20 @@ public class CondecSleepService extends Service {
         ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         String defaultLauncher = resolveInfo.activityInfo.packageName;
         allowedApps.add(defaultLauncher);
+
+        // Allow default dialer app
+        Intent dialerIntent = new Intent(Intent.ACTION_DIAL);
+        ResolveInfo dialerInfo = getPackageManager().resolveActivity(dialerIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        if (dialerInfo != null) {
+            String dialerPackage = dialerInfo.activityInfo.packageName;
+            allowedApps.add(dialerPackage);
+        }
+
+        // Allow default SMS app
+        String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(this);
+        if (defaultSmsPackage != null) {
+            allowedApps.add(defaultSmsPackage);
+        }
 
         IntentFilter filter = new IntentFilter("com.example.condec.UNLOCK_APP");
         registerReceiver(unlockReceiver, filter);
