@@ -18,8 +18,14 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-public class MainMenuActivity extends AppCompatActivity {
+import org.w3c.dom.Text;
+
+public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_CODE = 1;
     private MediaProjectionManager mediaProjectionManager;
@@ -31,6 +37,86 @@ public class MainMenuActivity extends AppCompatActivity {
     private MediaProjection mediaProjection;
     private VirtualDisplay virtualDisplay;
     boolean mBound = false;
+
+
+    private ImageView imgViewSystemStatus;
+    private Button btnSystemStatus;
+    private TextView txtSystemStatus;
+
+    private boolean isSystemActive = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main_menu);
+
+        this.imgViewSystemStatus = findViewById(R.id.imgViewStatus);
+        this.btnSystemStatus = findViewById(R.id.btnSystemStatus);
+        this.txtSystemStatus = findViewById(R.id.txtSystemStatus);
+
+        this.imgViewSystemStatus.setOnClickListener(this);
+        this.btnSystemStatus.setOnClickListener(this);
+
+        update();
+
+/*
+        this.surfaceView = findViewById(R.id.vDisplay);
+
+        this.surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+
+            public void surfaceCreated(SurfaceHolder holder) {
+                // The surface is ready to be used.
+                surface = holder.getSurface();
+            }
+
+
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                // Surface size or format has changed. Depending on your setup, you may need to handle this.
+            }
+
+
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                // Surface is no longer available.
+                surface = null;
+            }
+        });
+
+        this.surface = this.surfaceView.getHolder().getSurface();
+
+*/
+
+/*
+        System.out.println("TEST1");
+        mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        System.out.println("TEST1.5");
+        Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
+        startActivityForResult(permissionIntent, REQUEST_CODE);
+        System.out.println("TEST2");
+
+*/
+
+    }
+
+    private void update(){
+
+        if (this.isSystemActive){
+
+            this.imgViewSystemStatus.setImageResource(R.drawable.power_on_button_icon);
+            this.btnSystemStatus.setText("On");
+            this.btnSystemStatus.setBackgroundColor(getColor(R.color.green));
+            this.txtSystemStatus.setText("Click to Off");
+
+        }
+        else {
+
+            this.imgViewSystemStatus.setImageResource(R.drawable.power_off_button_icon);
+            this.btnSystemStatus.setText("Off");
+            this.btnSystemStatus.setBackgroundColor(getColor(R.color.red));
+            this.txtSystemStatus.setText("Click to On");
+
+        }
+
+    }
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -79,48 +165,6 @@ public class MainMenuActivity extends AppCompatActivity {
         }
     };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_menu);
-
-        this.surfaceView = findViewById(R.id.vDisplay);
-
-        this.surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
-
-            public void surfaceCreated(SurfaceHolder holder) {
-                // The surface is ready to be used.
-                surface = holder.getSurface();
-            }
-
-
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                // Surface size or format has changed. Depending on your setup, you may need to handle this.
-            }
-
-
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                // Surface is no longer available.
-                surface = null;
-            }
-        });
-
-        this.surface = this.surfaceView.getHolder().getSurface();
-
-
-
-/*
-        System.out.println("TEST1");
-        mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        System.out.println("TEST1.5");
-        Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
-        startActivityForResult(permissionIntent, REQUEST_CODE);
-        System.out.println("TEST2");
-
-*/
-
-    }
-
     private void startProjection(int resultCode, Intent data){
 
         Intent serviceIntent = MediaProjector.newIntent(this, resultCode, data);
@@ -145,4 +189,15 @@ public class MainMenuActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onClick(View view) {
+
+        if (this.btnSystemStatus == view || this.imgViewSystemStatus == view){
+
+            this.isSystemActive = !this.isSystemActive;
+            update();
+
+        }
+
+    }
 }

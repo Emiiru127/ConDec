@@ -101,6 +101,14 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
+    private void forgotPassword(){
+
+        Intent intent = new Intent(EnterPinActivity.this, ForgotPinAcitivity.class);
+        startActivity(intent);
+        finish();
+
+    }
+
     public void update(){
 
         if (this.pinController.isDone() == true){
@@ -126,6 +134,11 @@ public class EnterPinActivity extends AppCompatActivity implements View.OnClickL
         if(this.btnEnterLogin == view){
 
             login();
+
+        }
+        if(this.btnForgotPassword == view){
+
+            forgotPassword();
 
         }
 

@@ -52,13 +52,13 @@ public class MainActivity extends AppCompatActivity {
                 finish();
 
             }
-            else if (this.hasAllowedCapture == false){
+            /*else if (this.hasAllowedCapture == false){
 
                 Intent intent = new Intent(MainActivity.this, RequestMediaProjectionPermission.class);
                 startActivity(intent);
                 finish();
 
-            }
+            }*/
             else {
 
                 Intent intent = new Intent(MainActivity.this, EnterPinActivity.class);

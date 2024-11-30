@@ -3,17 +3,39 @@
 
     <string name="terms_and_agreements">
 
-        Lorem ipsum dolor sit amet. Eum assumenda officiis eum accusantium consequatur sit fugit galisum. Id dolor quia eum perferendis pariatur eos ratione ipsum et culpa libero et adipisci delectus ut omnis fuga aut consequuntur Quis.
+        <b>Terms of Use:</b>
+        \n\n\t\tBy downloading, installing, or using the Condec Android application, you agree to be bound by the following Terms of Use. If you do not agree to these Terms, you may not use the App. These Terms constitute a legally binding agreement between you and the application.
+        \n\n<b>1. License:</b>
+        \n\t\t• Subject to your compliance with these Terms, Condec grants you a limited, non-exclusive, non-transferable, revocable license to use the App for your personal, non-commercial use.
+        \n\n<b>2. Use of the App:</b>
+        \n\t\t• You agree to use the App only for its intended purpose, which is to assist parents in detecting and removing adult content from children\'s devices.
+        \n\t\t• You agree not to use the App in any way that may violate any laws, regulations, or third-party rights.
+        \n\n<b>3. User Account:</b>
+        \n\t\t• The App does not require you to create a user account. Instead, you have the option to create a PIN and backup password for security purposes.
+        \n\n<b>4. Privacy:</b>
+        \n\t\t• Your use of the App is subject to our Privacy Policy, which outlines how we collect, use, disclose, and safeguard your information. By using the App, you consent to the terms of our Privacy Policy.
+        \n\n<b>5. Intellectual Property:</b>
+        \n\t\t• All intellectual property rights in the App, including but not limited to copyrights, trademarks, and trade secrets, are owned by Condec or its licensors.
+        \n\t\t• You may not modify, adapt, reproduce, distribute, or create derivative works based on the App without prior written consent from Condec.
 
-        Rem ipsam ducimus ut fugiat repudiandae aut veniam ipsum eos quos enim in itaque omnis. Id fugiat perspiciatis qui quasi debitis in odit inventore sit aperiam deserunt. Ut dolor velit sed facere suscipit qui architecto voluptatem non quia numquam aut tenetur recusandae!
 
-        Nam iste modi ut aliquid illum sed ducimus dolores sed voluptas atque. Rem quis nihil ut voluptatem placeat est reiciendis tempore nam quas odio. Et exercitationem assumenda ut voluptate nobis sit laboriosam nostrum et accusamus quasi et ullam consectetur est eligendi quam eum natus maxime.
-
-        Lorem ipsum dolor sit amet. Ut alias maxime ad voluptatibus similique aut omnis ratione non sapiente corporis sit eius quia aut voluptatem eius. A doloribus aspernatur aut laborum excepturi cum similique debitis vel nostrum eius. Et iusto sequi sit veniam sunt ut odio galisum et dolorem nostrum aut magnam officia sed sequi culpa. Hic commodi consequatur ut eaque quae non rerum cumque ut nesciunt quia ut iusto voluptas et inventore dolorum id reiciendis consequatur.
-
-        Est sunt cupiditate rem ipsum aspernatur nam optio consectetur aut velit veniam ea internos cumque est soluta aliquid quo voluptas obcaecati. Ut quos vitae eum eaque deserunt eum exercitationem quae eos itaque aliquam ut sunt internos ab neque rerum est facilis nisi! Et aliquid rerum ab quis eius id quod voluptatem. Qui rerum velit hic animi culpa ut voluptatem temporibus eum laborum fugit.
-
-        Qui nemo facilis ex odio autem quo Quis optio non quia dignissimos 33 minus molestiae ut illo asperiores. Et aliquam minus et beatae animi aut voluptate autem est eius dolorem! Ea tempora commodi est possimus quae est esse architecto sit eligendi blanditiis et corrupti magnam! Et exercitationem assumenda eum fuga repellendus sit minus exercitationem rem quis omnis vel similique mollitia eos doloribus cumque.
+        \n\n\n<b>Privacy Policy:</b>
+        \n\n\t\tCondec is committed to ensuring the privacy and security of your information when you use our application. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information in relation to the use of the App.
+        \n\n<b>1. Information We Collect:</b>
+        \n\t\t• PIN and Backup Password: When you use the App, you have the option to create a PIN and backup password for security purposes. These credentials are used to access and configure the App\'s settings but are not linked to any personal information or user account.
+        \n\n<b>2. Use of Information:</b>
+        \n\t\t• The PIN and backup password created by the user are solely used to authenticate and authorize access to the App\'s features and settings.
+        \n\t\t• We do not collect or store any personal information about users or their activities within the App.
+        \n\n<b>3. Data Security:</b>
+        \n\t\t• We take appropriate measures to ensure the security of the PIN and backup password created by the user, including encryption and secure storage mechanisms.
+        \n\t\t• We do not have access to or store the PIN or backup password on our servers, minimizing the risk of unauthorized access or misuse.
+        \n\n<b>4. Data Sharing and Disclosure:</b>
+        \n\t\t• We do not share or disclose the PIN or backup password with third parties, except as required by law or to comply with legal obligations.
+        \n\n<b>5. Children\'s Privacy:</b>
+        \n\t\t• The App is designed to protect children from exposure to adult content, and no personal information is collected from users, including children, for any other purpose.
+        \n\t\t• Parents or legal guardians are responsible for installing and using the App on their children\'s devices and should ensure compliance with applicable laws and regulations regarding children\'s privacy and online safety.
+        \n\n<b>6. Changes to this Privacy Policy:</b>
+        \n\t\t• We reserve the right to update or modify this Privacy Policy at any time. Any changes will be effective immediately upon posting on our website or within the App. We encourage you to review this Privacy Policy periodically for any updates or changes.
 
     </string>
 

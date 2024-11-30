@@ -8,22 +8,24 @@
 
     <Button
         android:id="@+id/btnConfirmCreatePin"
-        android:layout_width="198dp"
+        android:layout_width="201dp"
         android:layout_height="44dp"
-        android:layout_marginBottom="48dp"
+        android:layout_marginBottom="36dp"
         android:backgroundTint="@color/gray"
         android:enabled="false"
         android:text="Confirm"
         android:textColor="@color/black_main_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tableLayout"
+        app:layout_constraintVertical_bias="0.463" />
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="273dp"
         android:layout_height="51dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -33,12 +35,12 @@
         android:id="@+id/linearLayout"
         android:layout_width="324dp"
         android:layout_height="50dp"
-        android:layout_marginTop="72dp"
+        android:layout_marginTop="2dp"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/imageView">
 
         <TextView
             android:id="@+id/textView10"
@@ -66,21 +68,21 @@
         android:id="@+id/textView17"
         android:layout_width="177dp"
         android:layout_height="27dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         android:gravity="center|left"
         android:text="Enter new PIN"
         android:textColor="@color/gray_text"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.225"
+        app:layout_constraintHorizontal_bias="0.183"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
     <LinearLayout
         android:id="@+id/pinView1CreateBackground"
         android:layout_width="328dp"
-        android:layout_height="75dp"
+        android:layout_height="65dp"
         android:layout_marginTop="4dp"
         android:background="@drawable/layout_round_main_background"
         android:orientation="horizontal"
@@ -101,7 +103,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView1Create2"
@@ -113,7 +115,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView1Create3"
@@ -124,7 +126,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView1Create4"
@@ -137,7 +139,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
     </LinearLayout>
 
@@ -152,14 +154,14 @@
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.221"
+        app:layout_constraintHorizontal_bias="0.179"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pinView1CreateBackground" />
 
     <LinearLayout
         android:id="@+id/pinView2CreateBackground"
         android:layout_width="326dp"
-        android:layout_height="75dp"
+        android:layout_height="65dp"
         android:layout_marginTop="4dp"
         android:background="@drawable/layout_round_main_background"
         android:orientation="horizontal"
@@ -180,7 +182,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView2Create2"
@@ -192,7 +194,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView2Create3"
@@ -203,7 +205,7 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
         <TextView
             android:id="@+id/pinView2Create4"
@@ -216,19 +218,18 @@
             android:backgroundTint="@color/gray"
             android:gravity="center"
             android:text="*"
-            android:textSize="48sp" />
+            android:textSize="44sp" />
 
     </LinearLayout>
 
     <TableLayout
         android:id="@+id/tableLayout"
-        android:layout_width="283dp"
-        android:layout_height="278dp"
-        android:layout_marginTop="28dp"
+        android:layout_width="289dp"
+        android:layout_height="234dp"
+        android:layout_marginTop="20dp"
         android:collapseColumns="3"
         android:stretchColumns="0,1,2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pinView2CreateBackground">
 
@@ -240,8 +241,8 @@
             <Button
 
                 android:id="@+id/btnCreateNum1"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -251,8 +252,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum2"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -262,8 +263,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum3"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -280,8 +281,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum4"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -291,8 +292,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum5"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -302,8 +303,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum6"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -319,8 +320,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum7"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -330,8 +331,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum8"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -341,8 +342,8 @@
 
             <Button
                 android:id="@+id/btnCreateNum9"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -357,13 +358,13 @@
 
             <TextView
                 android:id="@+id/textView2"
-                android:layout_width="60dp"
-                android:layout_height="60dp" />
+                android:layout_width="50dp"
+                android:layout_height="50dp" />
 
             <Button
                 android:id="@+id/btnCreateNum0"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
@@ -373,8 +374,8 @@
 
             <Button
                 android:id="@+id/btnCreateNumBack"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:width="75dp"
                 android:height="75dp"
