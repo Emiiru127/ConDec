@@ -205,7 +205,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
         if (checkString(this.editTxtQuestion.getText().toString().trim()) == false){
 
-            Toast.makeText(CreateQuestionActivity.this, "INVALID Question", Toast.LENGTH_SHORT).show();
+            showMessage("Invalid Question", "The question is invalid format or empty.", "Ok");
             return;
 
         }
@@ -218,7 +218,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         }
         else {
 
-            Toast.makeText(CreateQuestionActivity.this, "INVALID BACKUP PASSWORD", Toast.LENGTH_SHORT).show();
+            showMessage("Invalid Backup Password", "The answers are not matched.", "Ok");
 
         }
 
@@ -332,6 +332,13 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         } else {
             Toast.makeText(getApplicationContext(), "External storage not available", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void showMessage(String title, String message, String buttonText){
+
+        TipDialog dialog = new TipDialog(title, message, buttonText);
+        dialog.show(getSupportFragmentManager(), "CreateQuestionDialog");
+
     }
 
     private boolean shouldAllowBack(){

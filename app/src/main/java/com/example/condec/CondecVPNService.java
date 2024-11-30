@@ -2,9 +2,7 @@ package com.example.condec;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
 import android.net.VpnService;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -27,7 +25,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -36,11 +34,11 @@ import java.util.concurrent.Executors;
 public class CondecVPNService extends VpnService {
 
     private static final String TAG = "Condec Vpn Service";
-
     public static final String ACTION_STOP_VPN = "com.example.condec.STOP_VPN";
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
 
+    // List of domains to block
     private List<String> blockedDomains = new ArrayList<>();
 
     private ExecutorService executorService;
@@ -74,6 +72,7 @@ public class CondecVPNService extends VpnService {
     }
 
     private void fetchBlockedDomainsAndStartVpn() {
+
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -81,10 +80,8 @@ public class CondecVPNService extends VpnService {
                 List<String> urls = blockedURLRepository.getAllBlockedUrlsSync();
 
                 if (urls != null) {
-                    synchronized (blockedDomains) {
-                        blockedDomains.clear();
-                        blockedDomains.addAll(urls);
-                    }
+                    blockedDomains.clear();
+                    blockedDomains.addAll(urls);
 
                     Log.d(TAG, "Blocked Domains Updated:");
                     for (String url : blockedDomains) {
@@ -103,16 +100,8 @@ public class CondecVPNService extends VpnService {
             public void run() {
                 try {
                     List<InetAddress> blockedIps = new ArrayList<>();
-
-                    synchronized (blockedDomains) {
-                        for (String domain : blockedDomains) {
-                            String extractedDomain = getDomainFromUrl(domain);
-                            if (extractedDomain != null && !extractedDomain.isEmpty()) {
-                                blockedIps.addAll(resolveDomainToIps(extractedDomain));
-                            } else {
-                                Log.e(TAG, "Invalid or empty domain: " + domain);
-                            }
-                        }
+                    for (String domain : blockedDomains) {
+                        blockedIps.addAll(resolveDomainToIps(domain));
                     }
 
                     if (blockedIps.isEmpty()) {
@@ -126,19 +115,11 @@ public class CondecVPNService extends VpnService {
 
                     for (InetAddress ip : blockedIps) {
                         String ipAddress = ip.getHostAddress();
-                        try {
-
-                            if (isValidIPv4Address(ipAddress)) {
-                                Log.i(TAG, "Blocking IP: " + ipAddress);
-                                builder.addRoute(ipAddress, 32);
-                            } else {
-                                Log.w(TAG, "Invalid IP address format: " + ipAddress);
-                            }
-
-                        }catch (Exception e){
-
-                            Log.w(TAG, "ERROR: Invalid IP address format: " + ipAddress);
-
+                        if (isValidIPv4Address(ipAddress)) {
+                            Log.i(TAG, "Blocking IP: " + ipAddress);
+                            builder.addRoute(ipAddress, 32);
+                        } else {
+                            Log.w(TAG, "Invalid IP address format: " + ipAddress);
                         }
                     }
 
@@ -161,6 +142,7 @@ public class CondecVPNService extends VpnService {
             }
         });
         vpnThread.start();
+
     }
 
     @Override
@@ -183,7 +165,7 @@ public class CondecVPNService extends VpnService {
         if (vpnThread != null && vpnThread.isAlive()) {
             vpnThread.interrupt();
             try {
-                vpnThread.join();
+                vpnThread.join(); // Wait for the thread to finish
                 Log.d(TAG, "VPN thread stopped successfully");
             } catch (InterruptedException e) {
                 Log.e(TAG, "Error waiting for VPN thread to stop", e);
@@ -207,19 +189,33 @@ public class CondecVPNService extends VpnService {
         Log.d(TAG, "VPN service stopped");
     }
 
-    private String getDomainFromUrl(String url) {
+    public static String extractDomain(String input) {
         try {
-            URI uri = new URI(url);
-            String host = uri.getHost();
-            if (host == null) {
-                return url;
+
+            if (!input.startsWith("http://") && !input.startsWith("https://")) {
+                input = "http://" + input;
             }
-            return host.startsWith("www.") ? host.substring(4) : host;
-        } catch (URISyntaxException e) {
-            Log.e(TAG, "Invalid URL format: " + url, e);
-            return url;
+
+            URL url = new URL(input);
+
+            String host = url.getHost();
+
+            if (host.startsWith("www.")) {
+                host = host.substring(4);
+            }
+
+            if (!host.contains(".")) {
+                throw new IllegalArgumentException("Input is not a valid domain or URL.");
+            }
+
+            return host;
+        } catch (Exception e) {
+
+            System.err.println("Invalid input: " + input);
+            return null;
         }
     }
+
 
     private List<InetAddress> resolveDomainToIps(String domain) {
         List<InetAddress> ipAddresses = new ArrayList<>();

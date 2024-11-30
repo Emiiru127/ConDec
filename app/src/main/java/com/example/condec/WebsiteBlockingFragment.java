@@ -32,6 +32,7 @@ import com.example.condec.Classes.WebsiteBlockAdapter;
 import com.example.condec.Database.BlockedURLRepository;
 import com.example.condec.Database.UserBlockedUrl;
 
+import java.net.URL;
 import java.util.List;
 
 public class WebsiteBlockingFragment extends Fragment implements View.OnClickListener {
@@ -209,6 +210,13 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
         return false;
     }
 
+    private void showMessage(String title, String message, String buttonText){
+
+        TipDialog dialog = new TipDialog(title, message, buttonText);
+        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesDialog");
+
+    }
+
     private void showTip(){
 
         TipDialog dialog = new TipDialog("Blocked Websites", "Restrict access to certain websites on your device. Blocked sites are automatically inaccessible.");
@@ -240,8 +248,21 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
         btnAdd.setOnClickListener(v -> {
             String url = editTxtInput.getText().toString().trim();
             if (!url.isEmpty()) {
-                addUrlToDatabase(url);
+
                 dialog.dismiss();
+                String newURL = extractDomain(url);
+                Log.d("Website Fragment", "Extracted URL: " + newURL);
+
+                if (newURL == null){
+
+                    Log.d("Website Fragment", "Invalid URL: " + newURL);
+                    showMessage("Invalid URL", "The URL you provided is not a valid domain or URL.", "Ok");
+                    return;
+
+                }
+                Log.d("Website Fragment", "Added: " + newURL + " to Blocked Database");
+                addUrlToDatabase(newURL);
+
             }
         });
 
@@ -278,6 +299,33 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
         Intent intent = new Intent(getActivity(), CondecVPNService.class);
         getActivity().startService(intent);
 
+    }
+
+    private static String extractDomain(String input) {
+        try {
+
+            if (!input.startsWith("http://") && !input.startsWith("https://")) {
+                input = "http://" + input;
+            }
+
+            URL url = new URL(input);
+
+            String host = url.getHost();
+
+            if (host.startsWith("www.")) {
+                host = host.substring(4);
+            }
+
+            if (!host.contains(".")) {
+                throw new IllegalArgumentException("Input is not a valid domain or URL.");
+            }
+
+            return host;
+        } catch (Exception e) {
+
+            System.err.println("Invalid input: " + input);
+            return null;
+        }
     }
 
     private void restartWebsiteBlocking(){

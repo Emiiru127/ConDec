@@ -135,6 +135,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
             switchParentMode.setChecked(isChecked);
 
         });
+        startDiscoveryRefresh();
     }
 
     private void toggleParentModeUI(boolean isChecked) {

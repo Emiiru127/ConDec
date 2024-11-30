@@ -83,8 +83,8 @@ public class CondecDetectionService extends Service {
     private Handler imageProcessingHandler;
     private static final long TWO_HOURS_IN_MILLIS = 2 * 60 * 60 * 1000;
 
-    private boolean isImageReaderActive = false;  // Flag for ImageReader state
-    private boolean isMediaProjectionActive = false;  // Flag for MediaProjection state
+    private boolean isImageReaderActive = false;
+    private boolean isMediaProjectionActive = false;
 
     private ByteArrayOutputStream latestImageStream;
 
@@ -117,7 +117,6 @@ public class CondecDetectionService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        // Notify Parental Service that Detection Service has started
         Intent intent = new Intent("com.example.condec.ACTION_DETECTION_STARTED");
         sendBroadcast(intent);
 
@@ -235,8 +234,8 @@ public class CondecDetectionService extends Service {
             try {
                 createVirtualDisplay();
             } catch (Exception e) {
-                Log.e("YourService", "Error in service", e);
-                // Optionally notify the user or handle the error
+                Log.e("MediaProjection", "Error in service", e);
+
             }
 
             Toast.makeText(CondecDetectionService.this, "Media Projection Initialized", Toast.LENGTH_SHORT).show();
@@ -272,7 +271,6 @@ public class CondecDetectionService extends Service {
             return;
         }
 
-        // Initialize HandlerThread
         if (imageProcessingThread == null) {
             imageProcessingThread = new HandlerThread("ImageProcessingThread");
             imageProcessingThread.start();
@@ -285,24 +283,23 @@ public class CondecDetectionService extends Service {
                 Image image = null;
                 synchronized (CondecDetectionService.this) {
                     try {
-                        // Close the previous image if it exists
+
                         if (latestImage != null) {
                             latestImage.close();
                         }
 
-                        // Acquire the latest image
                         image = reader.acquireLatestImage();
                         if (image != null) {
                             Bitmap bitmap = convertImageToBitmapFull(image);
                             storeLatestImage(bitmap);
-                            latestImage = image; // Assign the latest image
+                            latestImage = image;
                         } else {
                             Log.d("CondecDetectionService", "Image from ImageReader is null");
                         }
                     } catch (Exception e) {
                         Log.e("CondecDetectionService", "Error acquiring image", e);
                     } finally {
-                        // Ensure the acquired image is closed if not already closed
+
                         if (image != null && image != latestImage) {
                             image.close();
                         }
@@ -508,26 +505,22 @@ public class CondecDetectionService extends Service {
 
     }
 
-    // Convert Image to Bitmap
     private Bitmap convertImageToBitmapFull(Image image) {
         if (image == null) {
             Log.e("CondecDetectionService", "Image is null, cannot convert to bitmap.");
             return null;
         }
 
-        // Check if the Image format is compatible with direct Bitmap creation
         if (image.getFormat() == PixelFormat.RGBA_8888 || image.getFormat() == ImageFormat.YUV_420_888) {
             int width = image.getWidth();
             int height = image.getHeight();
 
-            // Get the pixel data from the image planes
             Image.Plane[] planes = image.getPlanes();
             ByteBuffer buffer = planes[0].getBuffer();
             int pixelStride = planes[0].getPixelStride();
             int rowStride = planes[0].getRowStride();
             int rowPadding = rowStride - pixelStride * width;
 
-            // Create a Bitmap with the pixel data
             Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888);
             bitmap.copyPixelsFromBuffer(buffer);
             return bitmap;
@@ -537,36 +530,32 @@ public class CondecDetectionService extends Service {
         }
     }
 
-    // Store the latest image as a byte array for easy access by ParentalService
     private void storeLatestImage(Bitmap bitmap) {
         if (bitmap == null) {
             Log.e("CondecDetectionService", "Bitmap is null, cannot store image.");
             return;
         }
 
-        // Determine if the image is in portrait or landscape orientation
         int targetWidth;
         int targetHeight;
         if (bitmap.getWidth() > bitmap.getHeight()) {
-            // Landscape orientation
+
             targetWidth = 1280;
             targetHeight = 720;
         } else {
-            // Portrait orientation
+
             targetWidth = 720;
             targetHeight = 1280;
         }
 
-        // Resize while maintaining aspect ratio
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true);
 
-        // Compress the resized bitmap to JPEG with low quality for efficient transmission
         latestImageStream = new ByteArrayOutputStream();
         resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 20, latestImageStream);
 
         Log.d("CondecDetectionService", "Resized and stored image at 720p resolution based on orientation for transmission.");
     }
-    // Public method for ParentalService to retrieve the latest image data
+
     public byte[] getLatestImageData() {
         return (latestImageStream != null) ? latestImageStream.toByteArray() : null;
     }
@@ -636,14 +625,11 @@ public class CondecDetectionService extends Service {
     private synchronized void stopService() {
         Log.d("CondecDetectionService", "Stopping CondecDetectionService");
 
-        // Notify the Parental Service to unbind
         Intent unbindIntent = new Intent("com.example.condec.ACTION_UNBIND_DETECTION");
         sendBroadcast(unbindIntent);
 
-        // Stop the screen projection
         stopProjection();
 
-        // Synchronize access to latestImage to avoid concurrent modification
         synchronized (this) {
 
             if (latestImage != null) {
@@ -665,21 +651,18 @@ public class CondecDetectionService extends Service {
 
         }
 
-        // Cancel any existing timer tasks
         if (timer != null) {
             timer.cancel();
             timer = null;
         }
 
-        // Remove any scheduled time checks
         if (handlerTimeCheck != null) {
             handlerTimeCheck.removeCallbacks(timeCheckRunnable);
         }
 
-        // Clean up the inference thread and interpreter safely
         if (inferenceThread != null) {
             try {
-                inferenceThread.join(1000); // Add timeout for join to avoid blocking indefinitely
+                inferenceThread.join(1000);
             } catch (InterruptedException e) {
                 Log.e("CondecDetectionService", "Error joining inference thread", e);
             }
@@ -692,7 +675,6 @@ public class CondecDetectionService extends Service {
             tflite = null;
         }
 
-        // Clean up the handler and its looper
         if (handler != null) {
             try {
                 handler.getLooper().quitSafely();
@@ -702,95 +684,33 @@ public class CondecDetectionService extends Service {
             handler = null;
         }
 
-        // Clean up the handler thread used for time checks
         if (handlerThreadTimeCheck != null) {
             try {
                 handlerThreadTimeCheck.quitSafely();
-                handlerThreadTimeCheck.join(1000); // Timeout for joining thread
+                handlerThreadTimeCheck.join(1000);
             } catch (InterruptedException e) {
                 Log.e("CondecDetectionService", "Error joining time check thread", e);
             }
             handlerThreadTimeCheck = null;
         }
 
-        // Stop the foreground service
         stopForeground(true);
 
-        // Delay stopping the service to allow for unbinding
-        new Handler().postDelayed(this::stopSelf, 1000);  // 1 second delay
+        new Handler().postDelayed(this::stopSelf, 1000);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        // Unregister the stop service receiver
         unregisterReceiver(stopServiceReceiver);
 
-        // Update service status in SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("condecDetectionServiceStatus", false);
         editor.apply();
 
         stopService();
-/*
-        // Cancel the timer if it's running
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-
-        // Remove scheduled time check callbacks
-        handlerTimeCheck.removeCallbacks(timeCheckRunnable);
-
-        // Clean up the image resources
-        if (latestImage != null) {
-            latestImage.close();
-            latestImage = null;
-        }
-
-        if (imageReader != null && isImageReaderActive) {
-            imageReader.close();
-            imageReader = null;
-            isImageReaderActive = false;
-        }
-
-        // Stop the screen projection
-        stopProjection();
-
-        // Clean up the TensorFlow Lite interpreter
-        if (tflite != null) {
-            tflite.close();
-            tflite = null;
-        }
-
-        // Clean up the inference thread and interpreter in onDestroy as well
-        if (inferenceThread != null) {
-            try {
-                inferenceThread.join();
-            } catch (InterruptedException e) {
-                Log.e("CondecDetectionService", "Error joining inference thread", e);
-            }
-            inferenceThread.quitSafely();
-            inferenceThread = null;
-        }
-
-        // Stop and clean up the handler and thread
-        if (handler != null) {
-            handler.getLooper().quitSafely();
-            handler = null;
-        }
-
-        if (handlerThreadTimeCheck != null) {
-            try {
-                handlerThreadTimeCheck.quitSafely();
-                handlerThreadTimeCheck.join();
-            } catch (InterruptedException e) {
-                Log.e("CondecDetectionService", "Error joining time check thread", e);
-            }
-            handlerThreadTimeCheck = null;
-        }*/
 
     }
 }

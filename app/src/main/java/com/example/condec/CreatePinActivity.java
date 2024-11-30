@@ -157,7 +157,7 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         }
         else {
 
-            Toast.makeText(CreatePinActivity.this, "INVALID PIN", Toast.LENGTH_SHORT).show();
+            showMessage("Invalid PIN", "The PINS are not matched.", "Ok");
 
         }
 
@@ -236,9 +236,16 @@ public class CreatePinActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
+    private void showMessage(String title, String message, String buttonText){
+
+        TipDialog dialog = new TipDialog(title, message, buttonText);
+        dialog.show(getSupportFragmentManager(), "CreatePinDialog");
+
+    }
+
     private boolean shouldAllowBack(){
 
-        return  false;
+        return false;
 
     }
 
