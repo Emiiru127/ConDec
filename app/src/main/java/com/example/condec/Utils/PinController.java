@@ -38,7 +38,7 @@ public class PinController {
 
     }
 
-    public void recieveData(String data){
+    public void receiveData(String data){
 
         if ((!pinView.isFull() || data.equals("X"))){
 

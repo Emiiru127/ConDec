@@ -14,7 +14,7 @@ import android.widget.CompoundButton;
 public class TermsAndConditionsActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     private CheckBox chkAgreed;
-    private Button confirmAgreement;
+    private Button btnConfirm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +22,10 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
         setContentView(R.layout.activity_terms_and_conditions);
 
         this.chkAgreed = findViewById(R.id.chkAgreed);
-        this.confirmAgreement = findViewById(R.id.btnConfirmAgreement);
+        this.btnConfirm = findViewById(R.id.btnConfirmAgreement);
 
         this.chkAgreed.setOnCheckedChangeListener(this);
-        this.confirmAgreement.setOnClickListener(this);
+        this.btnConfirm.setOnClickListener(this);
 
         update();
 
@@ -53,16 +53,16 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
 
         if (this.chkAgreed.isChecked() == true){
 
-            this.confirmAgreement.setEnabled(true);
-            this.confirmAgreement.setBackgroundColor(getColor(R.color.green));
-            this.confirmAgreement.setTextColor(getColor(R.color.white));
+            this.btnConfirm.setEnabled(true);
+            this.btnConfirm.setBackgroundColor(getColor(R.color.green));
+            this.btnConfirm.setTextColor(getColor(R.color.white));
 
         }
         else {
 
-            this.confirmAgreement.setEnabled(false);
-            this.confirmAgreement.setBackgroundColor(getColor(R.color.gray));
-            this.confirmAgreement.setTextColor(getColor(R.color.black_main_background));
+            this.btnConfirm.setEnabled(false);
+            this.btnConfirm.setBackgroundColor(getColor(R.color.gray));
+            this.btnConfirm.setTextColor(getColor(R.color.black_main_background));
 
         }
 
@@ -71,7 +71,7 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
     @Override
     public void onClick(View view) {
 
-        if (this.confirmAgreement == view){
+        if (this.btnConfirm == view){
 
             submit();
 

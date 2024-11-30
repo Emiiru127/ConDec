@@ -1,187 +1,188 @@
 package com.example.condec;
 
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.hardware.display.VirtualDisplay;
-import android.media.projection.MediaProjection;
+import android.content.SharedPreferences;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
+public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
 
-public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener {
-
-    private static final int REQUEST_CODE = 1;
+    private static final int REQUEST_CAPTURE_CODE = 1;
     private MediaProjectionManager mediaProjectionManager;
+    private CondecService condecService;
+
+
+    private SharedPreferences condecPreferences;
+    private ImageView imgViewServiceStatus;
+    private Button btnServiceStatus;
+    private TextView txtServiceStatus;
+
+    private boolean isServiceActive = false;
 
     private SurfaceView surfaceView;
-    private Surface surface;
+    boolean isBinded = false;
 
-    private MediaProjector mediaProjector;
-    private MediaProjection mediaProjection;
-    private VirtualDisplay virtualDisplay;
-    boolean mBound = false;
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            CondecService.LocalBinder binder = (CondecService.LocalBinder) service;
+            condecService = binder.getService();
 
+            condecService.setSurfaceView(surfaceView);
 
-    private ImageView imgViewSystemStatus;
-    private Button btnSystemStatus;
-    private TextView txtSystemStatus;
+            isBinded = true;
 
-    private boolean isSystemActive = false;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+
+            isBinded = false;
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-        this.imgViewSystemStatus = findViewById(R.id.imgViewStatus);
-        this.btnSystemStatus = findViewById(R.id.btnSystemStatus);
-        this.txtSystemStatus = findViewById(R.id.txtSystemStatus);
+        this.condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
 
-        this.imgViewSystemStatus.setOnClickListener(this);
-        this.btnSystemStatus.setOnClickListener(this);
+        this.imgViewServiceStatus = findViewById(R.id.imgViewStatus);
+        this.btnServiceStatus = findViewById(R.id.btnSystemStatus);
+        this.txtServiceStatus = findViewById(R.id.txtSystemStatus);
+
+        this.imgViewServiceStatus.setOnClickListener(this);
+        this.btnServiceStatus.setOnClickListener(this);
+
+        this.isServiceActive = false;//this.condecPreferences.getBoolean("isSystemActive", false);
+
+        this.surfaceView = findViewById(R.id.screenView);
+        this.surfaceView.setZOrderOnTop(true);
 
         update();
 
-/*
-        this.surfaceView = findViewById(R.id.vDisplay);
+    }
 
-        this.surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-            public void surfaceCreated(SurfaceHolder holder) {
-                // The surface is ready to be used.
-                surface = holder.getSurface();
-            }
+        if (condecService != null){
 
+            this.condecService.setSurfaceView(this.surfaceView);
 
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                // Surface size or format has changed. Depending on your setup, you may need to handle this.
-            }
-
-
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                // Surface is no longer available.
-                surface = null;
-            }
-        });
-
-        this.surface = this.surfaceView.getHolder().getSurface();
-
-*/
-
-/*
-        System.out.println("TEST1");
-        mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        System.out.println("TEST1.5");
-        Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
-        startActivityForResult(permissionIntent, REQUEST_CODE);
-        System.out.println("TEST2");
-
-*/
+        }
 
     }
 
     private void update(){
 
-        if (this.isSystemActive){
+        if (this.isServiceActive){
 
-            this.imgViewSystemStatus.setImageResource(R.drawable.power_on_button_icon);
-            this.btnSystemStatus.setText("On");
-            this.btnSystemStatus.setBackgroundColor(getColor(R.color.green));
-            this.txtSystemStatus.setText("Click to Off");
+            this.imgViewServiceStatus.setImageResource(R.drawable.power_on_button_icon);
+            this.btnServiceStatus.setText("On");
+            this.btnServiceStatus.setBackgroundColor(getColor(R.color.green));
+            this.txtServiceStatus.setText("Click to Off");
 
         }
         else {
 
-            this.imgViewSystemStatus.setImageResource(R.drawable.power_off_button_icon);
-            this.btnSystemStatus.setText("Off");
-            this.btnSystemStatus.setBackgroundColor(getColor(R.color.red));
-            this.txtSystemStatus.setText("Click to On");
+            this.imgViewServiceStatus.setImageResource(R.drawable.power_off_button_icon);
+            this.btnServiceStatus.setText("Off");
+            this.btnServiceStatus.setBackgroundColor(getColor(R.color.red));
+            this.txtServiceStatus.setText("Click to On");
 
         }
 
     }
 
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            MediaProjector.LocalBinder binder = (MediaProjector.LocalBinder) service;
-            mediaProjector = binder.getService();
+    private void toggleService(){
 
-            mediaProjector.setSurface(surface);
+        this.isServiceActive = !this.isServiceActive;
+/*
+        if (this.isSystemActive == true){
 
 
-            DisplayMetrics metrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-            int screenWidth = metrics.widthPixels;
-            int screenHeight = metrics.heightPixels;
-            int screenDensity = metrics.densityDpi;
-
-            mediaProjection = mediaProjector.getMediaProjection();
-
-            System.out.println("YAHALLO0");
-            System.out.println("Before:" + surface);
-            System.out.println("MediaProjection Initialized: " + (mediaProjection != null));
-
-
-            virtualDisplay = mediaProjection.createVirtualDisplay("MediaProjector",
-                    screenWidth, screenHeight, screenDensity, VIRTUAL_DISPLAY_FLAG_PRESENTATION,
-                    surface, null, null);
-            System.out.println("Test Projector2:" + surface);
-
-
-            System.out.println("YAHALLO3");
-
-            System.out.println("STARTED PROJECTING");
-
-            System.out.println("MediaProjection Initialized: " + (mediaProjection != null));
-            System.out.println("Virtual Display Created: " + (virtualDisplay != null));
-            System.out.println("Surface Ready: " + (surface != null && surface.isValid()));
-
-            mBound = true;
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
+        SharedPreferences.Editor editor = this.condecPreferences.edit();
+        editor.putBoolean("isSystemActive", this.isSystemActive);
+        editor.apply();*/
 
-            mBound = false;
+    }
+
+    private void requestCapturePermission(){
+
+        boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
+        hasAllowedScreenCapture = false;
+        if (hasAllowedScreenCapture == false){
+
+            System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
+            mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+            Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
+            startActivityForResult(permissionIntent, REQUEST_CAPTURE_CODE);
+
+
         }
-    };
 
-    private void startProjection(int resultCode, Intent data){
+    }
 
-        Intent serviceIntent = MediaProjector.newIntent(this, resultCode, data);
+    private void startService(int screenCaptureResultCode, Intent screenCaptureIntent)  {
 
-        //startForegroundService(serviceIntent);
-        startForegroundService(serviceIntent);
-        bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
+        boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
+
+        hasAllowedScreenCapture = false;
+        if (hasAllowedScreenCapture == false){
+
+           // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
+            //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
+
+            Intent serviceIntent = CondecService.newIntent(this, screenCaptureResultCode, screenCaptureIntent);
+            startForegroundService(serviceIntent);
+            bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        }
+        else {
+
+            System.out.println("NO PERMISSION");
+
+        }
 
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE) {
+        if (requestCode == REQUEST_CAPTURE_CODE) {
             if (resultCode == RESULT_OK) {
                 // Get the MediaProjection
 
-                startProjection(resultCode, data);
+                boolean hasAllowedScreenCapture = false; // FORCED CODE
+                int screenCaptureResultCode = resultCode;
+                String serializedIntent = data.toUri(Intent.URI_INTENT_SCHEME);
+
+
+                startService(resultCode, data);
+
+                SharedPreferences.Editor editor = condecPreferences.edit();
+                editor.putBoolean("hasAllowedScreenCapture", hasAllowedScreenCapture);
+                editor.putInt("screenCaptureResultCode", screenCaptureResultCode);
+                editor.putString("savedScreenCaptureIntent", serializedIntent);
+                editor.apply();
+
                 // Continue with using the mediaProjection object
             } else {
                 // User denied permission
@@ -192,12 +193,15 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
 
-        if (this.btnSystemStatus == view || this.imgViewSystemStatus == view){
+        if (this.btnServiceStatus == view || this.imgViewServiceStatus == view){
 
-            this.isSystemActive = !this.isSystemActive;
+            this.isServiceActive = !this.isServiceActive;
+            //startMainSystem();
+            requestCapturePermission();
             update();
 
         }
 
     }
+
 }

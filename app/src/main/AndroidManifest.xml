@@ -25,9 +25,6 @@
             android:name=".CreateQuestionActivity"
             android:exported="false" />
         <activity
-            android:name=".RequestMediaProjectionPermission"
-            android:exported="false" />
-        <activity
             android:name=".MainMenuActivity"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
@@ -51,10 +48,10 @@
         </activity>
 
         <service
-            android:name=".MediaProjector"
-            android:enabled="true"
+            android:name="com.example.condec.CondecService"
             android:exported="true"
-            android:foregroundServiceType="mediaProjection" />
+            android:enabled="true"
+            android:foregroundServiceType="mediaProjection"/>
     </application>
 
 </manifest>

@@ -38,7 +38,7 @@ public class NumpadView implements View.OnClickListener {
 
         if(this.pinController != null){
 
-            this.pinController.recieveData(button.getText().toString());
+            this.pinController.receiveData(button.getText().toString());
 
         }
 
