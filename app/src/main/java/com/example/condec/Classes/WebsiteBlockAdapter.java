@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -88,7 +89,7 @@ public class WebsiteBlockAdapter extends RecyclerView.Adapter<WebsiteBlockAdapte
 
     public static class WebsiteBlockedViewHolder extends RecyclerView.ViewHolder {
         TextView urlTextView;
-        Button removeButton;
+        ImageButton removeButton;
 
         public WebsiteBlockedViewHolder(View itemView) {
             super(itemView);

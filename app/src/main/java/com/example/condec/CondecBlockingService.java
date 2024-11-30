@@ -94,8 +94,8 @@ public class CondecBlockingService extends Service {
         }
 
         Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Condec App Lock")
-                .setContentText("Monitoring blocked apps.")
+                .setContentTitle("ConDec is Running")
+                .setContentText("ConDec is running on background")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .build();
 

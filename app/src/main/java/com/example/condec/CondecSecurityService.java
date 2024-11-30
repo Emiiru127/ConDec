@@ -172,8 +172,8 @@ public class CondecSecurityService extends Service {
         }
 
         Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Condec Security Service")
-                .setContentText("Preventing Uninstallation")
+                .setContentTitle("ConDec is Running")
+                .setContentText("ConDec is running on background")
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .build();
 

@@ -629,11 +629,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            String userInput = input.getText().toString();
-            // Handle the user input here
-            renameDevice(userInput);
-        });
+        builder.setPositiveButton("OK",null);
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
@@ -643,6 +639,20 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         // Access the buttons and set the color
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));   // Set negative button color
+
+        // Set a custom click listener for the "OK" button
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String userInput = input.getText().toString().trim();
+
+            if (userInput.isEmpty()) {
+                // Show a toast if the input is empty
+                Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
+            } else {
+                // If input is valid, rename the device and close the dialog
+                renameDevice(userInput);
+                dialog.dismiss();
+            }
+        });
 
     }
 
@@ -676,16 +686,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         builder.setCancelable(false); // Disable canceling the dialog
 
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            String userInput = input.getText().toString().trim();
-            if (!userInput.isEmpty()) {
-                renameDevice(userInput);
-                startRequiredServices(); // Start services after the name is provided
-            } else {
-                Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
-                showMandatoryRenameDeviceDialog(); // Show the dialog again if the input is empty
-            }
-        });
+        builder.setPositiveButton("OK", null);
 
         AlertDialog dialog = builder.create();
         dialog.show(); // Show the dialog first to access buttons
@@ -693,9 +694,24 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         // Access the buttons and set the color
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
 
+        // Set a custom click listener for the "OK" button
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String userInput = input.getText().toString().trim();
+
+            if (userInput.isEmpty()) {
+                // Show a toast if the input is empty
+                Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
+            } else {
+                // If input is valid, rename the device and close the dialog
+                renameDevice(userInput);
+                dialog.dismiss();
+            }
+        });
+
     }
 
     private void renameDevice(String name) {
+
         SharedPreferences.Editor editor = this.condecPreferences.edit();
         editor.putString("oldDeviceName", this.txtViewRename.toString());
         editor.putString("deviceName", name);

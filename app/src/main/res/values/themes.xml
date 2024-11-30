@@ -20,26 +20,6 @@
         <item name="colorButtonNormal">@color/black_main_background</item>
     </style>
 
-
-    <!-- Custom TimePickerDialog theme
-    <style name="CustomTimePickerDialog" parent="Theme.Material3.DayNight.Dialog">
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/white</item>
-        <item name="android:buttonStyle">@style/CustomButtonStyle</item>
-        <item name="android:timePickerStyle">@style/CustomTimePickerStyle</item>
-    </style>
-
-    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button">
-        <item name="android:textColor">@android:color/white</item>
-        <item name="android:background">?android:attr/selectableItemBackground</item>
-    </style>
-
-    <style name="CustomTimePickerStyle" parent="android:Widget.Holo.TimePicker">
-        <item name="android:headerTimeTextColor">@android:color/white</item>
-        <item name="android:headerBackground">@android:color/black</item>
-        <item name="android:timePickerMode">spinner</item>
-    </style>
--->
     <style name="CustomSwitchStyle" parent="Widget.AppCompat.CompoundButton.Switch">
         <item name="android:thumb">@drawable/custom_switch_thumb</item>
         <item name="android:track">@drawable/custom_switch_track</item>
@@ -58,6 +38,19 @@
         <item name="android:track">@drawable/custom_switch_track_app_block</item>
         <item name="android:minHeight">50dp</item>
         <item name="android:switchMinWidth">50dp</item>
+        <item name="android:switchPadding">8dp</item> <!-- Less padding for compact size -->
+        <item name="android:textOn">On</item>
+        <item name="android:textOff">Off</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">12sp</item> <!-- Text size for "On" and "Off" -->
+        <item name="android:switchTextAppearance">@style/CustomSwitchTextAppearance</item>
+    </style>
+
+    <style name="CustomSwitchFeatureStyle" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/custom_switch_thumb_features</item>
+        <item name="android:track">@drawable/custom_switch_track_features</item>
+        <item name="android:minHeight">45dp</item>
+        <item name="android:switchMinWidth">40dp</item>
         <item name="android:switchPadding">8dp</item> <!-- Less padding for compact size -->
         <item name="android:textOn">On</item>
         <item name="android:textOff">Off</item>

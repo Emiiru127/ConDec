@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:padding="10dp"
+    android:paddingLeft="10dp"
+    android:paddingTop="5dp"
+    android:paddingRight="10dp"
     tools:context=".AppBlockingFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -70,11 +72,13 @@
 
                         <Switch
                             android:id="@+id/switchAppBlock"
-                            style="@style/CustomSwitchStyle"
+                            style="@style/CustomSwitchFeatureStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="0dp"
-                            android:layout_marginRight="20dp"
-                            android:switchMinWidth="60dp"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginRight="10dp"
+                            android:switchMinWidth="50dp"
                             android:textSize="12sp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -142,6 +146,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:background="@color/transparent"
+                android:scrollbarThumbVertical="@color/blue_main_background"
+                android:scrollbarTrackVertical="@color/gray_text"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
@@ -153,7 +159,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/transparent"
-                    android:orientation="vertical"></LinearLayout>
+                    android:orientation="vertical"
+                    android:paddingTop="10dp"></LinearLayout>
             </ScrollView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 

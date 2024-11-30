@@ -2,6 +2,7 @@ package com.example.condec.Classes;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,7 +11,7 @@ import com.example.condec.R;
 
 public class WebsiteBlocked extends RecyclerView.ViewHolder {
     private TextView urlTextView;
-    private Button removeButton;
+    private ImageButton removeButton;
 
     public WebsiteBlocked(View itemView) {
         super(itemView);

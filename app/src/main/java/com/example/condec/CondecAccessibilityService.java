@@ -22,6 +22,8 @@ public class CondecAccessibilityService extends AccessibilityService {
     private Runnable scrollRunnable;
 
     private BroadcastReceiver swipeAndBackReceiver;
+
+    private BroadcastReceiver goBackReceiver;
     private BroadcastReceiver goHomeReceiver;
     private boolean isSwippingAndBacking = false;
     private boolean isBacking = false;
@@ -72,6 +74,15 @@ public class CondecAccessibilityService extends AccessibilityService {
         filter.addAction("com.example.ACTION_SWIPE_AND_BACK");
         registerReceiver(swipeAndBackReceiver, filter);
 
+        goBackReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.ACTION_GO_BACK".equals(intent.getAction())) {
+                    goBack();
+                }
+            }
+        };
+
         goHomeReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -84,6 +95,10 @@ public class CondecAccessibilityService extends AccessibilityService {
         IntentFilter filter2 = new IntentFilter();
         filter2.addAction("com.example.ACTION_GO_HOME");
         registerReceiver(goHomeReceiver, filter2);
+
+        IntentFilter filter3 = new IntentFilter();
+        filter3.addAction("com.example.ACTION_GO_BACK");
+        registerReceiver(goBackReceiver, filter3);
     }
 
     @Override
@@ -176,6 +191,9 @@ public class CondecAccessibilityService extends AccessibilityService {
     // If you want to scroll using ACTION_SCROLL_BACKWARD
     public void goHome() {
         performGlobalAction(GLOBAL_ACTION_HOME);
+    }
+    public void goBack() {
+        performGlobalAction(GLOBAL_ACTION_BACK);
     }
 
     private void getScreenDimensions() {

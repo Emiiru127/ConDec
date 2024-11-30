@@ -122,6 +122,14 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
                 startActivity(backIntent);
                 Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
                 sendBroadcast(homeIntent);
+
+                SharedPreferences.Editor editor =  this.condecPreferences.edit();
+                editor.putBoolean("isDetectionServiceManuallyOff", true);
+                editor.apply();
+
+                Intent intentUpdate = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF");
+                sendBroadcast(intentUpdate);
+
                 finish();
 
             }

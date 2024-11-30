@@ -136,8 +136,8 @@ public class CondecSleepService extends Service {
         }
 
         Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Sleep Mode Activated")
-                .setContentText("Blocking all apps except allowed ones.")
+                .setContentTitle("ConDec is Running")
+                .setContentText("ConDec is running on background")
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .build();
 

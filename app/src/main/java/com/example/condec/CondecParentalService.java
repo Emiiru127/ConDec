@@ -147,8 +147,8 @@ public class CondecParentalService extends Service {
         }
 
         return new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Device Discovery Running")
-                .setContentText("Searching for devices on the local network")
+                .setContentTitle("ConDec is Running")
+                .setContentText("ConDec is running on background")
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .build();
@@ -882,7 +882,7 @@ public class CondecParentalService extends Service {
                 requestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(requestIntent);
 
-                editor.putBoolean("isDetectionServiceManuallyOff", true);
+                editor.putBoolean("isDetectionServiceManuallyOff", false);
                 editor.apply();
 
                 Intent broadcastDetectionOnIntent = new Intent("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF");
@@ -891,6 +891,7 @@ public class CondecParentalService extends Service {
                 break;
             case "STOP_DETECTION":
                 stopService(new Intent(this, CondecDetectionService.class));
+
                 editor.putBoolean("isDetectionServiceManuallyOff", true);
                 editor.apply();
 
@@ -934,6 +935,14 @@ public class CondecParentalService extends Service {
                     stopService(new Intent(this, CondecSleepService.class));
                     showToast("Remotely Stopped Sleep Service");
                 }
+                break;
+            case "GO_BACK":
+                Intent intentBack = new Intent("com.example.ACTION_GO_BACK");
+                sendBroadcast(intentBack);
+                break;
+            case "GO_HOME":
+                Intent intentHome = new Intent("com.example.ACTION_GO_HOME");
+                sendBroadcast(intentHome);
                 break;
             default:
                 showToast("Unknown Command: " + command);

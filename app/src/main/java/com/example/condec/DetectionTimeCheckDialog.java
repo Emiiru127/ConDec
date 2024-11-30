@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -13,9 +14,11 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Service Running for 2 Hours")
-                .setMessage("The service has been running for 2 hours. Do you want to stop it?")
+        // Set the background color programmatically
+        getWindow().setBackgroundDrawableResource(R.color.blue_main_background);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setMessage("The ConDec detection service has been running for 2 hours. Do you want to stop it?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -29,11 +32,18 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Just dismiss the dialog and keep the service running
+                        Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
+                        sendBroadcast(homeIntent);
                         finish();
                     }
                 })
                 .setCancelable(false)
                 .show();
+
+        // Access the buttons and set the color
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));   // Set negative button color
+
     }
 
     @Override

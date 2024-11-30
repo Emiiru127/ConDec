@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
@@ -78,10 +79,11 @@ public class CondecDetectionService extends Service {
     private static final long TWO_HOURS_IN_MILLIS = 2 * 60 * 60 * 1000; // 2 hours
 
     private Map<String, Integer> appThresholds = new HashMap<String, Integer>() {{
-        put("com.facebook.katana", 90); // Facebook: 80% threshold
         put("com.google.android.youtube", 85); // YouTube: 85% threshold
+        put("com.facebook.katana", 90); // Facebook: 80% threshold
         put("com.zhiliaoapp.musically", 90); // TikTok: 90% threshold
-        put("com.android.chrome", 50);
+        put("com.instagram.android", 90); // Instagram: 80% threshold
+        put("com.twitter.android", 90); // X/Twitter: 90% threshold
     }};
 
     public class LocalBinder extends Binder {
@@ -177,7 +179,7 @@ public class CondecDetectionService extends Service {
         if (message != null) {
 
             builder = new Notification.Builder(this, "1")
-                    .setContentTitle("CONDEC Warning Detection")
+                    .setContentTitle("ConDec Warning Detection")
                     .setContentText(message)
                     .setSmallIcon(R.mipmap.ic_launcher_round)
                     .setPriority(Notification.PRIORITY_HIGH) // Use high priority for chat notifications
@@ -186,8 +188,8 @@ public class CondecDetectionService extends Service {
         } else {
 
             builder = new Notification.Builder(this, "1")
-                    .setContentTitle("CONDEC Warning Detection")
-                    .setContentText("Warning Detection is running")
+                    .setContentTitle("ConDec is Running")
+                    .setContentText("ConDec is running on background")
                     .setSmallIcon(R.mipmap.ic_launcher_round);
 
         }
@@ -290,7 +292,7 @@ public class CondecDetectionService extends Service {
                                 else {
                                     // Skip AI detection if the current app is not in the monitored list
                                     Log.d("CondecDetectionService", "Skipping AI detection for unmonitored app: " + currentApp);
-                                    notifyUser("AI RESULTS: NOT LISTED TO DETECT Current App: " + currentApp);
+                                    //if (bypassThreshold == true) notifyUser("AI RESULTS: NOT LISTED TO DETECT Current App: " + currentApp);
 
                                 }
 
@@ -414,7 +416,7 @@ public class CondecDetectionService extends Service {
 
             int percentage = Math.round(maxProbability * 100);
             System.out.println("FINAL AI RESULTS (Percentage): " + percentage + "%, Current App: " + currentApp);
-            notifyUser("AI RESULTS: " + percentage + "%");
+            //if (bypassThreshold == true) notifyUser("AI RESULTS: " + percentage + "%");
             //notifyUser("AI RESULTS: " + percentage + "%, Current App: " + currentApp);
 
             // Get the threshold for the current app
@@ -430,7 +432,7 @@ public class CondecDetectionService extends Service {
                 Log.d("CondecDetectionService", "AI Judgement Result: " + (percentage > threshold));
                 // Trigger action if the threshold is exceeded*/
 
-                if (bypassThreshold == true) threshold = 90;
+                if (bypassThreshold == true) threshold = 93;
                 if (percentage > threshold) {
                     Log.d("CondecAccessabilityService", "AI Perform Swipe And Back");
                     Intent intent = new Intent("com.example.ACTION_SWIPE_AND_BACK");
