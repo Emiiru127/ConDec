@@ -6,12 +6,24 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 public class DialogTip extends DialogFragment {
+
+
+    String title;
+    String message;
+
+    public DialogTip(String title, String message){
+
+        this.title = title;
+        this.message = message;
+
+    }
 
     @NonNull
     @Override
@@ -22,6 +34,12 @@ public class DialogTip extends DialogFragment {
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.layout_dialog_info, null);
 
+
+        TextView txtViewTitle = view.findViewById(R.id.dialog_title);
+        TextView txtViewMessage = view.findViewById(R.id.dialog_message);
+
+        txtViewTitle.setText(this.title);
+        txtViewMessage.setText(this.message);
 
         // Set the custom layout
         builder.setView(view);

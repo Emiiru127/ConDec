@@ -13,14 +13,20 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
+import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -35,6 +41,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private static final int REQUEST_CODE_DRAW_OVERLAY = 5469;
     private static final int REQUEST_CODE_USAGE_ACCESS = 5470;
+    private static final int REQUEST_CODE_VPN = 5471;
 
     private SharedPreferences condecPreferences;
 
@@ -44,6 +51,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     //UI
 
+    private SurfaceView surfaceView;
     private ImageView imgViewRename;
     private TextView txtViewRename;
 
@@ -61,7 +69,29 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private CondecParentalService condecParentalService;
     private CondecSecurityService condecSecurityService;
-    private CondecSecurityService condecSleepService;
+    private CondecSleepService condecSleepService;
+
+    private CondecDetectionService condecDetectionService;
+    boolean mBound = false;
+
+    public ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            CondecDetectionService.LocalBinder binder = (CondecDetectionService.LocalBinder) service;
+            condecDetectionService = binder.getService();
+
+            condecDetectionService.setSurfaceView(surfaceView);
+            mBound = true;
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+
+            mBound = false;
+
+        }
+    };
 
     private boolean isToggleSleep;
 
@@ -77,7 +107,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         updateFrameFeatures("Warning Detection");
 
         checkAdminPermission();
-        checkRequiredServices();
+        checkAndRequestPermissions();
         checkSleepService();
 
     }
@@ -111,18 +141,23 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    private void checkRequiredServices(){
-
-        // Start the service only if it's not already running
-        if (!isServiceRunning(CondecParentalService.class)) {
-            Intent serviceIntent = new Intent(this, CondecParentalService.class);
-            startForegroundService(serviceIntent);
+    private void startRequiredServices() {
+        // Check if the device name is set
+        String deviceName = condecPreferences.getString("deviceName", null);
+        if (deviceName == null || deviceName.isEmpty()) {
+            // If the device name is not set, prompt the user to set it
+            showRenameDeviceDialog();
+        } else {
+            // If the device name is set, start the required services
+            if (!isServiceRunning(CondecParentalService.class)) {
+                Intent serviceIntent = new Intent(this, CondecParentalService.class);
+                startForegroundService(serviceIntent);
+            }
+            if (!isServiceRunning(CondecSecurityService.class)) {
+                Intent serviceIntent = new Intent(this, CondecSecurityService.class);
+                startForegroundService(serviceIntent);
+            }
         }
-        if (!isServiceRunning(CondecSecurityService.class)) {
-            Intent serviceIntent = new Intent(this, CondecSecurityService.class);
-            startForegroundService(serviceIntent);
-        }
-
     }
 
     private void checkSleepService(){
@@ -132,46 +167,88 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    private void checkPermissions() {
+    private void checkAndRequestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkOverlayPermission();
-            checkUsageAccessPermission();
+            if (!Settings.canDrawOverlays(this)) {
+                requestOverlayPermission();
+            } else if (!isUsageAccessGranted()) {
+                requestUsageAccessPermission();
+            } else if (!isVPNPermissionGranted()) {
+                requestVPNPermission();
+            } else {
+                showMandatoryRenameDeviceDialog(); // Call the new dialog here
+            }
+        } else {
+            if (!isVPNPermissionGranted()) {
+                requestVPNPermission();
+            } else {
+                showMandatoryRenameDeviceDialog(); // Call the new dialog here
+            }
         }
     }
 
-    private void checkOverlayPermission() {
-        if (!Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
-        }
+    /*
+    private void requestCapturePermission(){
+
+        System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
+        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
+        startActivityForResult(permissionIntent, REQUEST_CAPTURE_CODE);
+
+
+    }*/
+    private void requestOverlayPermission() {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName()));
+        startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
     }
 
-    private void checkUsageAccessPermission() {
+    private void requestUsageAccessPermission() {
+        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+        startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
+    }
+
+    private void requestVPNPermission() {
+        Intent vpnIntent = CondecVPNService.prepare(this);
+        if (vpnIntent != null) {
+            startActivityForResult(vpnIntent, REQUEST_CODE_VPN);
+        } else {
+            // VPN permission is already granted
+            startRequiredServices();
+        }
+    }
+    private boolean isUsageAccessGranted() {
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
-        if (mode != AppOpsManager.MODE_ALLOWED) {
-            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-            startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
-        }
+        return mode == AppOpsManager.MODE_ALLOWED;
     }
 
+    private boolean isVPNPermissionGranted() {
+        return CondecVPNService.prepare(this) == null;
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_DRAW_OVERLAY) {
             if (Settings.canDrawOverlays(this)) {
-                Log.d("OverlayPermission", "Permission granted");
+                checkAndRequestPermissions();
             } else {
-                Log.e("OverlayPermission", "Permission denied");
+                Toast.makeText(this, "Overlay permission is required.", Toast.LENGTH_SHORT).show();
+                requestOverlayPermission();
             }
         } else if (requestCode == REQUEST_CODE_USAGE_ACCESS) {
-            AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-            int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
-            if (mode == AppOpsManager.MODE_ALLOWED) {
-                Log.d("UsageAccessPermission", "Permission granted");
+            if (isUsageAccessGranted()) {
+                checkAndRequestPermissions();
             } else {
-                Log.e("UsageAccessPermission", "Permission denied");
+                Toast.makeText(this, "Usage access permission is required.", Toast.LENGTH_SHORT).show();
+                requestUsageAccessPermission();
+            }
+        } else if (requestCode == REQUEST_CODE_VPN) {
+            if (isVPNPermissionGranted()) {
+                checkAndRequestPermissions();
+            } else {
+                Toast.makeText(this, "VPN permission is required.", Toast.LENGTH_SHORT).show();
+                requestVPNPermission();
             }
         }
     }
@@ -210,8 +287,12 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatureWebsiteBlocking.setOnClickListener(this);
         this.btnFeatureAppUsage.setOnClickListener(this);
 
+        //this.surfaceView = findViewById(R.id.testingSf);
+
         update();
         refreshDeviceName();
+
+
 
     }
 
@@ -350,6 +431,40 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         builder.show();
     }
 
+    private void showMandatoryRenameDeviceDialog() {
+        // Check if a device name is already saved
+        String currentDeviceName = condecPreferences.getString("deviceName", null);
+
+        // If a device name is already set, start the services directly
+        if (currentDeviceName != null && !currentDeviceName.isEmpty()) {
+            startRequiredServices();
+            return;
+        }
+
+        // If no device name is set, show the mandatory dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter your device's name");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setCancelable(false); // Disable canceling the dialog
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String userInput = input.getText().toString().trim();
+            if (!userInput.isEmpty()) {
+                renameDevice(userInput);
+                startRequiredServices(); // Start services after the name is provided
+            } else {
+                Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
+                showMandatoryRenameDeviceDialog(); // Show the dialog again if the input is empty
+            }
+        });
+
+        builder.show();
+    }
+
     private void renameDevice(String name) {
         SharedPreferences.Editor editor = this.condecPreferences.edit();
         editor.putString("oldDeviceName", this.txtViewRename.toString());
@@ -376,6 +491,13 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         String name = this.condecPreferences.getString("deviceName", "My Device");
         this.txtViewRename.setText(name);
+
+    }
+
+    private void showSleepSettings(){
+
+        DialogSleepControl dialogSleepControl = new DialogSleepControl();
+        dialogSleepControl.show(getSupportFragmentManager(), "Sleep Settings");
 
     }
 
@@ -450,7 +572,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         }
         if (this.btnSleep == view){
 
-            toggleSleepMode();
+            showSleepSettings();
             return;
         }
         if (this.btnFeatureWarningDetection == view){

@@ -201,6 +201,7 @@
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewSleepMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
@@ -222,7 +223,7 @@
                         android:layout_height="30dp"
                         android:background="@color/transparent"
                         android:src="@drawable/icon_sleep_time"
-                        app:tint="@color/blue_main_background"/>
+                        app:tint="@color/blue_main_background" />
 
                     <!-- Text -->
                     <TextView
@@ -237,13 +238,6 @@
                         android:textSize="18sp" />
 
                     <!-- Switch -->
-                    <Switch
-                        android:id="@+id/switchSleep"
-                        style="@style/CustomSwitchStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@color/transparent"
-                        android:checked="false" />
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>

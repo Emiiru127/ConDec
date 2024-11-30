@@ -1,6 +1,7 @@
 package com.example.condec;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.condec.Classes.AppBlockAdapter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,20 +54,25 @@ public class AppSelectionActivity extends AppCompatActivity {
         ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         String defaultLauncher = resolveInfo.activityInfo.packageName;
 
-        for (ApplicationInfo app : installedApps) {
-            if (pm.getApplicationIcon(app).getConstantState() != pm.getDefaultActivityIcon().getConstantState()) {
-                if (!app.packageName.startsWith("com.android.overlay") ||
-                        !app.packageName.startsWith("com.android.service") ||
-                        !app.packageName.startsWith("com.android.carrier") ||
-                        !app.packageName.startsWith("com.android.cts") ||
-                        !app.packageName.startsWith("com.android.provider") ||
-                        !app.packageName.startsWith("com.android.server") ||
-                        !app.packageName.startsWith(defaultLauncher)) {
+        Set<String> includePackages = new HashSet<>();
+        includePackages.add("com.android.vending"); // Play Store
+        includePackages.add("com.android.chrome");  // Chrome
+        includePackages.add("com.google.android.youtube"); // YouTube
 
-                    userApps.add(app);
-                }
+        for (ApplicationInfo app : installedApps) {
+            if (!app.packageName.equals(getPackageName())
+                    && !app.packageName.equals(defaultLauncher)
+                    && (pm.getApplicationIcon(app).getConstantState() != pm.getDefaultActivityIcon().getConstantState())
+                    && ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0 || includePackages.contains(app.packageName))) {
+                userApps.add(app);
             }
         }
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        Set<String> previouslySelectedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
+
+        appsAdapter = new AppBlockAdapter(userApps, pm, previouslySelectedApps);
+        appsRecyclerView.setAdapter(appsAdapter);
 
         SearchView searchView = findViewById(R.id.searchView);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -85,34 +92,21 @@ public class AppSelectionActivity extends AppCompatActivity {
         Button selectAllButton = findViewById(R.id.selectAllButton);
         Button deselectAllButton = findViewById(R.id.deselectAllButton);
 
-        selectAllButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (ApplicationInfo app : userApps) {
-                    appsAdapter.getSelectedApps().add(app.packageName);
-                }
-                appsAdapter.notifyDataSetChanged(); // This will toggle all switches on
-            }
-        });
+        selectAllButton.setOnClickListener(v -> appsAdapter.selectAll());
 
-        deselectAllButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                appsAdapter.getSelectedApps().clear();
-                appsAdapter.notifyDataSetChanged(); // This will toggle all switches off
-            }
-        });
-        appsAdapter = new AppBlockAdapter(userApps, pm, this);
-        appsRecyclerView.setAdapter(appsAdapter);
+        deselectAllButton.setOnClickListener(v -> appsAdapter.deselectAll());
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent resultIntent = new Intent();
-                // Add any data you need to pass back
-                setResult(Activity.RESULT_OK, resultIntent);
-                finish();
-            }
+        saveButton.setOnClickListener(v -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            Set<String> selectedApps = appsAdapter.getSelectedApps();
+
+            // Save selected apps to SharedPreferences
+            editor.putStringSet("blockedApps", selectedApps.isEmpty() ? new HashSet<>() : selectedApps);
+            editor.apply();
+
+            Intent resultIntent = new Intent();
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
         });
     }
 
@@ -128,5 +122,4 @@ public class AppSelectionActivity extends AppCompatActivity {
         Bundle result = new Bundle();
         getSupportFragmentManager().setFragmentResult("appSelection", result);
     }
-
 }

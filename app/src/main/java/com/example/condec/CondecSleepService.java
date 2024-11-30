@@ -50,6 +50,22 @@ public class CondecSleepService extends Service {
     };
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && "STOP_SERVICE".equals(intent.getAction())) {
+            Log.d("CondecSleepService", "Stopping service.");
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
+        // Service logic here
+
+        startForegroundService();
+        handler.postDelayed(runnable, 500);
+
+        return START_STICKY;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
 
@@ -72,8 +88,6 @@ public class CondecSleepService extends Service {
         IntentFilter filter = new IntentFilter("com.example.condec.UNLOCK_APP");
         registerReceiver(unlockReceiver, filter);
 
-        startForegroundService();
-        handler.postDelayed(runnable, 500);
     }
 
     private void startForegroundService() {

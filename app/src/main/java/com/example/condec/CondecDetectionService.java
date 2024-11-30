@@ -149,6 +149,14 @@ public class CondecDetectionService extends Service {
         }
     }
 
+    public void setSurfaceView(SurfaceView surfaceView){
+        System.out.println("Adding Surface");
+        SurfaceView surfaceViewUI = surfaceView;
+        this.virtualDisplay.setSurface(surfaceViewUI.getHolder().getSurface());
+        System.out.println("Added Surface");
+
+    }
+
     private void createVirtualDisplay() {
 
         DisplayMetrics metrics = new DisplayMetrics();
@@ -210,7 +218,7 @@ public class CondecDetectionService extends Service {
                     }
                 });
             }
-        }, 0, 2000); // Run every 2 seconds
+        }, 0, 1000); // Run every 1 seconds
 
     }
 

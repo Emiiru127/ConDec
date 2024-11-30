@@ -41,10 +41,6 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.9.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
 
-    //VPN
-    implementation("org.pcap4j:pcap4j-core:1.7.5")
-    implementation("org.pcap4j:pcap4j-packetfactory-static:1.7.5")
-
     annotationProcessor("androidx.room:room-compiler:2.5.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

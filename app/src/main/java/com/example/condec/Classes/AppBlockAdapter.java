@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -19,25 +20,39 @@ import androidx.appcompat.widget.SwitchCompat;
 import com.example.condec.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppViewHolder> implements Filterable {
 
     private List<ApplicationInfo> appList;
-
-    private List<ApplicationInfo> appListFull; // Copy of the full list for filtering
-    private PackageManager packageManager;
+    private List<ApplicationInfo> appListFiltered;
+    private Map<String, Boolean> appSelectionState = new HashMap<>();
     private Set<String> selectedApps;
-    private SharedPreferences sharedPreferences;
+    private PackageManager packageManager;
 
-    public AppBlockAdapter(List<ApplicationInfo> appList, PackageManager packageManager, Context context) {
+    public AppBlockAdapter(List<ApplicationInfo> appList, PackageManager packageManager, Set<String> previouslySelectedApps) {
         this.appList = appList;
         this.packageManager = packageManager;
-        this.appListFull = new ArrayList<>(appList); // Initialize the full list
-        this.sharedPreferences = context.getSharedPreferences("condecPref", Context.MODE_PRIVATE);
-        this.selectedApps = new HashSet<>(sharedPreferences.getStringSet("blockedApps", new HashSet<>()));
+        this.appListFiltered = new ArrayList<>(appList);
+
+        if (previouslySelectedApps == null) {
+            // If no apps were previously selected, block all apps by default
+            this.selectedApps = new HashSet<>();
+            for (ApplicationInfo app : appList) {
+                selectedApps.add(app.packageName);
+            }
+        } else {
+            this.selectedApps = new HashSet<>(previouslySelectedApps);
+        }
+
+        // Initialize appSelectionState based on selectedApps
+        for (ApplicationInfo app : appList) {
+            appSelectionState.put(app.packageName, selectedApps.contains(app.packageName));
+        }
     }
 
     @NonNull
@@ -49,36 +64,32 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
 
     @Override
     public void onBindViewHolder(@NonNull AppViewHolder holder, int position) {
-        ApplicationInfo appInfo = appList.get(position);
-        holder.appName.setText(appInfo.loadLabel(packageManager));
+        ApplicationInfo appInfo = appListFiltered.get(position);
+
         holder.appIcon.setImageDrawable(appInfo.loadIcon(packageManager));
+        holder.appName.setText(appInfo.loadLabel(packageManager));
 
-        // Set the switch state based on whether the app is selected
-        holder.appSwitch.setChecked(selectedApps.contains(appInfo.packageName));
+        // Detach listener before setting checked state
+        holder.appSwitch.setOnCheckedChangeListener(null);
 
+        // Set switch state based on appSelectionState map
+        holder.appSwitch.setChecked(appSelectionState.getOrDefault(appInfo.packageName, false));
+
+        // Reattach listener after setting the checked state
         holder.appSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            appSelectionState.put(appInfo.packageName, isChecked);
+
             if (isChecked) {
                 selectedApps.add(appInfo.packageName);
             } else {
                 selectedApps.remove(appInfo.packageName);
             }
-            saveSelectedApps(); // Save the state if needed
         });
     }
 
     @Override
     public int getItemCount() {
-        return appList.size();
-    }
-
-    private void saveSelectedApps() {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putStringSet("blockedApps", selectedApps);
-        editor.apply();
-    }
-
-    public Set<String> getSelectedApps() {
-        return selectedApps;
+        return appListFiltered.size();
     }
 
     @Override
@@ -86,37 +97,63 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
         return new Filter() {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
-                List<ApplicationInfo> filteredList = new ArrayList<>();
-                if (constraint == null || constraint.length() == 0) {
-                    filteredList.addAll(appListFull);
+                String query = constraint.toString().toLowerCase();
+
+                if (query.isEmpty()) {
+                    appListFiltered = new ArrayList<>(appList);
                 } else {
-                    String filterPattern = constraint.toString().toLowerCase().trim();
-                    for (ApplicationInfo app : appListFull) {
-                        if (app.loadLabel(packageManager).toString().toLowerCase().contains(filterPattern)) {
+                    List<ApplicationInfo> filteredList = new ArrayList<>();
+                    for (ApplicationInfo app : appList) {
+                        if (app.loadLabel(packageManager).toString().toLowerCase().contains(query)) {
                             filteredList.add(app);
                         }
                     }
+                    appListFiltered = filteredList;
                 }
-                FilterResults results = new FilterResults();
-                results.values = filteredList;
-                return results;
+
+                FilterResults filterResults = new FilterResults();
+                filterResults.values = appListFiltered;
+                return filterResults;
             }
 
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
-                appList.clear();
-                appList.addAll((List) results.values);
+                appListFiltered = (List<ApplicationInfo>) results.values;
                 notifyDataSetChanged();
             }
         };
     }
 
-    static class AppViewHolder extends RecyclerView.ViewHolder {
+    public void selectAll() {
+        for (ApplicationInfo app : appListFiltered) {
+            appSelectionState.put(app.packageName, true);
+            selectedApps.add(app.packageName);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void deselectAll() {
+        for (ApplicationInfo app : appListFiltered) {
+            appSelectionState.put(app.packageName, false);
+            selectedApps.remove(app.packageName);
+        }
+        notifyDataSetChanged();
+    }
+
+    public Set<String> getSelectedApps() {
+        return selectedApps;
+    }
+
+    public Map<String, Boolean> getAppSelectionState() {
+        return appSelectionState;
+    }
+
+    public static class AppViewHolder extends RecyclerView.ViewHolder {
         ImageView appIcon;
         TextView appName;
-        SwitchCompat appSwitch;
+        Switch appSwitch;
 
-        public AppViewHolder(@NonNull View itemView) {
+        public AppViewHolder(View itemView) {
             super(itemView);
             appIcon = itemView.findViewById(R.id.appIcon);
             appName = itemView.findViewById(R.id.appName);
@@ -124,3 +161,4 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
         }
     }
 }
+

@@ -1,5 +1,7 @@
 package com.example.condec;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -20,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -50,6 +53,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     private CondecDetectionService condecDetectionService;
     private SharedPreferences condecPreferences;
 
+    private ImageButton btnTipWarning;
     private ImageView imgViewDetectionServiceStatus;
     private Button btnDetectionServiceStatus;
     private TextView txtDetectionServiceStatus;
@@ -121,9 +125,13 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        this.btnTipWarning = view.findViewById(R.id.btnTipWarning);
+
         this.btnDetectionServiceStatus = view.findViewById(R.id.btnDetectionStatus);
         this.imgViewDetectionServiceStatus = view.findViewById(R.id.imgViewDetectionStatus);
         this.txtDetectionServiceStatus = view.findViewById(R.id.txtDetectionStatus);
+
+        this.btnTipWarning.setOnClickListener(this);
 
         this.btnDetectionServiceStatus.setOnClickListener(this);
         this.imgViewDetectionServiceStatus.setOnClickListener(this);
@@ -134,7 +142,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void update(){
 
-        if (this.isServiceActive){
+        if (isServiceRunning(CondecDetectionService.class) == true){
 
             this.imgViewDetectionServiceStatus.setImageResource(R.drawable.power_on_button_icon);
             this.btnDetectionServiceStatus.setText("On");
@@ -171,15 +179,14 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void toggleService(){
 
-        if (this.isServiceActive == false && this.isBinded == false){
+        if (!isServiceRunning(CondecDetectionService.class)){
 
             requestCapturePermission();
 
         }
-        else if(this.isServiceActive == true && this.isBinded == true){
+        else {
 
             stopCondecService();
-            this.isServiceActive = false;
 
         }
 
@@ -195,10 +202,9 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
         //boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
 
-        if (hasAllowedScreenCapture == true){
+        if (screenCaptureResultCode == RESULT_OK){
 
             this.isServiceActive = true;
-            update();
 
             // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
             //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
@@ -213,7 +219,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
             System.out.println("NO PERMISSION");
 
         }
-
+        update();
     }
 
     private void stopCondecService()  {
@@ -279,10 +285,23 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         return false;
     }
 
+    private void showTip(){
+
+        DialogTip dialog = new DialogTip("Warning Detection", "This feature allows you to enable or disable the detection of sensitive content warnings on your child’s social media.");
+        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
+
+    }
+
     @Override
     public void onClick(View view) {
 
-        if (this.btnDetectionServiceStatus == view || this.imgViewDetectionServiceStatus == view){
+        if (this.btnTipWarning == view){
+
+            showTip();
+            return;
+
+        }
+        else if (this.btnDetectionServiceStatus == view || this.imgViewDetectionServiceStatus == view){
 
             toggleService();
 

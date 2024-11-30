@@ -23,21 +23,24 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CondecVPNService extends VpnService {
 
     private static final String TAG = "Condec Vpn Service";
-
-    private boolean isVpnRunning = false;
-    private boolean stopVpnThread = false; // Control variable for VPN thread
-
+    public static final String ACTION_STOP_VPN = "com.example.condec.STOP_VPN";
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
 
     // List of domains to block
     private List<String> blockedDomains = new ArrayList<>();
+
+    private ExecutorService executorService;
 
     @Override
     public void onCreate() {
@@ -48,13 +51,19 @@ public class CondecVPNService extends VpnService {
         editor.putBoolean("condecVPNServiceStatus", true);
         editor.apply();
 
+        executorService = Executors.newSingleThreadExecutor();
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (isVpnRunning) {
-            Log.d(TAG, "VPN is already running, not starting again");
-            return START_STICKY;
+        if (ACTION_STOP_VPN.equals(intent.getAction())) {
+            stopVpn();
+            return START_NOT_STICKY;
+        }
+
+        if (vpnThread != null && vpnThread.isAlive()) {
+            vpnThread.interrupt();
         }
 
         fetchBlockedDomainsAndStartVpn();
@@ -63,15 +72,12 @@ public class CondecVPNService extends VpnService {
 
     private void fetchBlockedDomainsAndStartVpn() {
         // Use AsyncTask to run the database query on a background thread
-        new AsyncTask<Void, Void, List<String>>() {
+        executorService.submit(new Runnable() {
             @Override
-            protected List<String> doInBackground(Void... voids) {
+            public void run() {
                 BlockedURLRepository blockedURLRepository = new BlockedURLRepository(getApplication());
-                return blockedURLRepository.getAllBlockedUrlsSync(); // Synchronous call
-            }
+                List<String> urls = blockedURLRepository.getAllBlockedUrlsSync();
 
-            @Override
-            protected void onPostExecute(List<String> urls) {
                 if (urls != null) {
                     blockedDomains.clear();
                     blockedDomains.addAll(urls);
@@ -81,23 +87,13 @@ public class CondecVPNService extends VpnService {
                         Log.d(TAG, url);
                     }
 
-                    // Start VPN service after domains are updated
                     startVpnService();
                 }
             }
-        }.execute();
+        });
     }
 
     private void startVpnService() {
-        if (isVpnRunning) {
-            Log.d(TAG, "VPN is already running, skipping start");
-            return; // Don't start the VPN again if it's already running
-        }
-
-        if (vpnThread != null) {
-            vpnThread.interrupt();
-        }
-        stopVpnThread = false; // Reset the control flag
         vpnThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -127,13 +123,14 @@ public class CondecVPNService extends VpnService {
                     }
 
                     vpnInterface = builder.establish();
+                    Log.d(TAG, "VPN Interface established");
 
                     FileInputStream in = new FileInputStream(vpnInterface.getFileDescriptor());
                     FileOutputStream out = new FileOutputStream(vpnInterface.getFileDescriptor());
 
                     byte[] packet = new byte[32767];
                     int length;
-                    while (!stopVpnThread && (length = in.read(packet)) > 0) {
+                    while ((length = in.read(packet)) > 0) {
                         out.write(packet, 0, length);
                     }
 
@@ -143,13 +140,16 @@ public class CondecVPNService extends VpnService {
                 }
             }
         });
-
         vpnThread.start();
-        isVpnRunning = true; // Set the flag to true when VPN starts
+
     }
 
     @Override
     public void onDestroy() {
+
+        Log.d(TAG, "VPN is On Destroy");
+        stopVpn();
+        Log.d(TAG, "VPN is On Destroy LAst");
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -157,55 +157,52 @@ public class CondecVPNService extends VpnService {
         editor.apply();
 
         // Properly clean up and stop the VPN
-        Log.d(TAG, "VPN is On Destroy");
-        stopVpn();
-
-        // Stop the VPN interface
-        if (vpnInterface != null) {
-            try {
-                vpnInterface.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        Log.d(TAG, "VPN is On Destroy LAst");
 
         super.onDestroy();
     }
 
     private void stopVpn() {
-        if (!isVpnRunning) {
-            Log.d(TAG, "VPN is already stopped");
-            return;
-        }
 
-        stopVpnThread = true; // Set the flag to stop the thread
+        if (vpnThread != null && vpnThread.isAlive()) {
+            vpnThread.interrupt();
+            try {
+                vpnThread.join(); // Wait for the thread to finish
+                Log.d(TAG, "VPN thread stopped successfully");
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Error waiting for VPN thread to stop", e);
+            }
+        }
 
         if (vpnInterface != null) {
             try {
                 vpnInterface.close();
-                Log.d(TAG, "VPN interface closed");
+                Log.d(TAG, "VPN interface closed successfully");
             } catch (IOException e) {
                 Log.e(TAG, "Error closing VPN interface", e);
             }
-            vpnInterface = null;
         }
 
-        if (vpnThread != null) {
-            try {
-                vpnThread.join(); // Wait for the thread to finish
-            } catch (InterruptedException e) {
-                Log.e(TAG, "Error joining VPN thread", e);
-            }
-            vpnThread = null;
-        }
+        vpnInterface = null;
+        vpnThread = null;
 
-        stopForeground(true);
         stopSelf();
 
-        isVpnRunning = false; // Update the flag
         Log.d(TAG, "VPN service stopped");
+    }
+
+    private String getDomainFromUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            String host = uri.getHost();
+            if (host == null) {
+                return url; // Return the original URL if host is null
+            }
+            return host.startsWith("www.") ? host.substring(4) : host;
+        } catch (URISyntaxException e) {
+            // Handle invalid URL format
+            Log.e(TAG, "Invalid URL format: " + url, e);
+            return url; // Return the original URL if parsing fails
+        }
     }
 
     // Method to resolve the domain to its IP addresses

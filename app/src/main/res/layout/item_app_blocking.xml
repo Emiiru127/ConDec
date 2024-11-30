@@ -5,7 +5,7 @@
     android:layout_marginTop="10dp"
     android:background="@drawable/rounded_background"
     android:orientation="horizontal"
-    android:padding="5dp">
+    android:padding="10dp">
 
     <ImageView
         android:id="@+id/appIcon"
@@ -25,9 +25,11 @@
         android:textColor="@color/blue_main_background"
         android:textSize="16sp" />
 
-    <androidx.appcompat.widget.SwitchCompat
+    <Switch
         android:id="@+id/appSwitch"
+        style="@style/CustomSwitchAppBlockStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical" />
+        android:layout_gravity="center_vertical"
+        android:layout_marginRight="5dp" />
 </LinearLayout>

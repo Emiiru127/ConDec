@@ -112,7 +112,7 @@
             android:name=".RequestAdminPermission"
             android:exported="false" />
         <activity
-            android:name=".RequestDetectionPermission"
+            android:name=".RequestVpnPermission"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

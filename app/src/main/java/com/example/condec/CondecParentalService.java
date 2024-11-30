@@ -225,7 +225,7 @@ public class CondecParentalService extends Service {
     private void registerService() {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(localDeviceName);
-        serviceInfo.setServiceType("_http._tcp.");
+        serviceInfo.setServiceType("_condec._tcp.");
         serviceInfo.setPort(serverPort);
 
         registrationListener = new NsdManager.RegistrationListener() {
@@ -399,7 +399,8 @@ public class CondecParentalService extends Service {
                 break;
             case "STOP_WEBSITE_BLOCKING":
                 Intent serviceIntent = new Intent(this, CondecVPNService.class);
-                stopService(serviceIntent);
+                serviceIntent.setAction(CondecVPNService.ACTION_STOP_VPN);
+                startService(serviceIntent);
                 showToast("Remotely Stopped Website Blocking Service");
                 break;
             case "START_SLEEP":
@@ -409,6 +410,16 @@ public class CondecParentalService extends Service {
             case "STOP_SLEEP":
                 stopService(new Intent(this, CondecSleepService.class));
                 showToast("Remotely Stopped Sleep Service");
+                break;
+            case "TOGGLE_SLEEP":
+                if (!isServiceRunning(CondecSleepService.class)){
+                    startForegroundService(new Intent(this, CondecSleepService.class));
+                    showToast("Remotely Started Sleep Service");
+                }
+                else {
+                    stopService(new Intent(this, CondecSleepService.class));
+                    showToast("Remotely Stopped Sleep Service");
+                }
                 break;
             default:
                 showToast("Unknown Command: " + command);
@@ -574,7 +585,7 @@ public class CondecParentalService extends Service {
             stopDiscovery(); // Stop any ongoing discovery
         }
         initializeDiscoveryListener(); // Reinitialize listener
-        nsdManager.discoverServices("_http._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        nsdManager.discoverServices("_condec._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
 
     private void stopDiscovery() {

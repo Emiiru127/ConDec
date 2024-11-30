@@ -6,6 +6,16 @@
     android:orientation="vertical"
     android:padding="10dp">
 
+    <TextView
+        android:id="@+id/textView24"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/transparent"
+        android:gravity="center"
+        android:text="Manage Blocked Apps"
+        android:textColor="@color/blue_main_background"
+        android:textSize="24sp" />
+
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
@@ -31,12 +41,14 @@
             android:id="@+id/selectAllButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/blue_main_background"
             android:text="Select All" />
 
         <Button
             android:id="@+id/deselectAllButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/blue_main_background"
             android:text="Deselect All" />
 
     </LinearLayout>
@@ -45,6 +57,7 @@
         android:id="@+id/saveButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/blue_main_background"
         android:text="Save" />
 
 </LinearLayout>

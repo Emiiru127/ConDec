@@ -16,7 +16,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.condec.Classes.DeviceAdapter;
@@ -28,7 +31,15 @@ import java.util.Map;
 
 public class SettingsActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private RecyclerView rvDevices;
+    private Button btnReadTermsConditions;
+    private Button btnChangePin;
+    private Button btnAboutCondec;
+    private Button btnParentMode;
+
+    private TextView txtviewAvailableDevices;
+    private RecyclerView recycleViewDevices;
+
+    private Switch switchParentMode;
     private DeviceAdapter deviceAdapter;
     private List<String> deviceList = new ArrayList<>();
     private CondecParentalService condecParentalService;
@@ -79,12 +90,20 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_settings);
 
-        rvDevices = findViewById(R.id.rv_devices);
+        switchParentMode = findViewById(R.id.switchParentMode);
+        btnParentMode = findViewById(R.id.btnParentMode);
+        txtviewAvailableDevices = findViewById(R.id.txtviewAvailableDevices);
+        recycleViewDevices = findViewById(R.id.recycleViewDevices);
         deviceAdapter = new DeviceAdapter(deviceList, this::onDeviceClicked);
-        rvDevices.setAdapter(deviceAdapter);
-        rvDevices.setLayoutManager(new LinearLayoutManager(this));
+        recycleViewDevices.setAdapter(deviceAdapter);
+        recycleViewDevices.setLayoutManager(new LinearLayoutManager(this));
 
         condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+
+        // Restore the last state of the switch
+        boolean isParentModeOn = condecPreferences.getBoolean("parentModeState", false);
+        switchParentMode.setChecked(isParentModeOn);
+        toggleParentModeUI(isParentModeOn);
 
         // Bind to the service
         Intent serviceIntent = new Intent(this, CondecParentalService.class);
@@ -93,6 +112,52 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         // Set up click listener for the back button
         ImageButton btnBack = findViewById(R.id.btnSettingsBack);
         btnBack.setOnClickListener(this);
+
+        // Set the switch listener
+        switchParentMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            toggleParentModeUI(isChecked);
+            // Save the state of the switch
+            SharedPreferences.Editor editor = condecPreferences.edit();
+            editor.putBoolean("parentModeState", isChecked);
+            editor.apply();
+        });
+
+        // Set the button listener to toggle the switch
+        btnParentMode.setOnClickListener(view -> {
+            boolean isChecked = !switchParentMode.isChecked();
+            switchParentMode.setChecked(isChecked);
+        });
+    }
+
+    private void toggleParentModeUI(boolean isChecked) {
+        if (isChecked) {
+            // Restart the service when Parent Mode is turned on
+            restartService();
+
+            txtviewAvailableDevices.setVisibility(View.VISIBLE);
+            recycleViewDevices.setVisibility(View.VISIBLE);
+            switchParentMode.setText("ON");
+            updateDeviceList(); // Refresh list when turned on
+        } else {
+            txtviewAvailableDevices.setVisibility(View.GONE);
+            recycleViewDevices.setVisibility(View.GONE);
+            switchParentMode.setText("OFF");
+            deviceList.clear(); // Clear the list when hidden
+            deviceAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void restartService() {
+        // Stop the service
+        Intent stopServiceIntent = new Intent(this, CondecParentalService.class);
+        stopService(stopServiceIntent);
+
+        // Start the service again
+        Intent startServiceIntent = new Intent(this, CondecParentalService.class);
+        startService(startServiceIntent);
+
+        // Re-bind to the service
+        bindService(startServiceIntent, connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override

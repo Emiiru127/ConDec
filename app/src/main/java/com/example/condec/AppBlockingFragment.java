@@ -150,7 +150,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
 
         ImageView appIcon = appView.findViewById(R.id.appIcon);
         TextView appName = appView.findViewById(R.id.appName);
-        SwitchCompat appToggle = appView.findViewById(R.id.appSwitch);
+        Switch appToggle = appView.findViewById(R.id.appSwitch);
 
         PackageManager pm = getActivity().getPackageManager();
         appIcon.setImageDrawable(app.loadIcon(pm));
@@ -177,10 +177,10 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
 
     public void refresh() {
         // Reload the selected apps from SharedPreferences
-        blockedAppsContainer.removeAllViews();
-
-        // Reload the selected apps from SharedPreferences
         lockedApps = getLockedAppsFromPreferences();
+
+        // Clear the existing views in the container
+        blockedAppsContainer.removeAllViews();
 
         // Get the list of installed apps
         List<ApplicationInfo> installedApps = getInstalledApps();
@@ -220,7 +220,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip();
+        DialogTip dialog = new DialogTip("Blocked Apps", "Manage which apps can be accessed on your device. Blocked apps require a password or authentication to open.");
         dialog.show(requireActivity().getSupportFragmentManager(), "BlockedAppsInfoDialog");
 
     }

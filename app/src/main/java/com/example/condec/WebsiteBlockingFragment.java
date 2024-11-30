@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -52,9 +53,10 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     private String mParam1;
     private String mParam2;
 
+
+    private ImageButton btnTipWebsiteBlock;
     private Button btnAddWebsite;
 
-    private static final int VPN_REQUEST_CODE = 0x0F;
 
     public WebsiteBlockingFragment() {
         // Required empty public constructor
@@ -99,6 +101,9 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        this.btnTipWebsiteBlock = getView().findViewById(R.id.btnTipWebsiteBlock);
+        this.btnTipWebsiteBlock.setOnClickListener(this);
 
         this.btnAddWebsite = getView().findViewById(R.id.btnAddWebsite);
         this.btnAddWebsite.setOnClickListener(this);
@@ -153,21 +158,9 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     }
     private void stopVpnService() {
         // Stop the VPN service if it is running
-        Intent serviceIntent = new Intent(getActivity(), CondecVPNService.class);
-        getActivity().stopService(serviceIntent);
-
-        // Revoke the VPN connection using a valid context
-        Context context = getActivity(); // Ensure we have a valid context
-        if (context != null) {
-            Intent revokeIntent = VpnService.prepare(context);  // Use the valid context
-            if (revokeIntent != null) {
-                startActivityForResult(revokeIntent, VPN_REQUEST_CODE);
-            } else {
-                Log.d("VPN", "VPN successfully revoked");
-            }
-        } else {
-            Log.e("VPN", "Context is null, cannot revoke VPN");
-        }
+        Intent intent = new Intent(getActivity(), CondecVPNService.class);
+        intent.setAction(CondecVPNService.ACTION_STOP_VPN);
+        getActivity().startService(intent);
     }
 
 
@@ -183,18 +176,9 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     private void showTip(){
 
-        DialogTip dialog = new DialogTip();
-        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedAppsInfoDialog");
+        DialogTip dialog = new DialogTip("Blocked Websites", "Restrict access to certain websites on your device. Blocked sites are automatically inaccessible.");
+        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
 
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == VPN_REQUEST_CODE && resultCode == getActivity().RESULT_OK) {
-            Intent intent = new Intent(getActivity(), CondecVPNService.class);
-            getActivity().startService(intent);
-        }
     }
 
     private void showAddUrlDialog() {
@@ -237,17 +221,20 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     private void startVpnService(){
 
-        Intent intent = CondecVPNService.prepare(getActivity());
-        if (intent != null) {
-            startActivityForResult(intent, VPN_REQUEST_CODE);
-        } else {
-            onActivityResult(VPN_REQUEST_CODE, getActivity().RESULT_OK, null);
-        }
+        Intent intent = new Intent(getActivity(), CondecVPNService.class);
+        getActivity().startService(intent);
 
     }
 
     @Override
     public void onClick(View view) {
+
+        if (this.btnTipWebsiteBlock == view){
+
+            showTip();
+            return;
+
+        }
 
         if (this.btnAddWebsite == view){
 

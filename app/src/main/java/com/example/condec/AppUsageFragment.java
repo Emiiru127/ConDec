@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,15 +30,17 @@ import com.example.condec.Classes.AppUsageInfo;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link AppUsageFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AppUsageFragment extends Fragment {
+public class AppUsageFragment extends Fragment implements View.OnClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -71,6 +75,9 @@ public class AppUsageFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private AppUsageAdapter adapter;
+
+    private ImageButton btnTipAppUsage;
+
     private List<AppUsageInfo> appUsageList;
 
     @Override
@@ -94,6 +101,9 @@ public class AppUsageFragment extends Fragment {
         recyclerView = view.findViewById(R.id.appUsages);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        this.btnTipAppUsage = view.findViewById(R.id.btnTipAppUsage);
+        this.btnTipAppUsage.setOnClickListener(this);
+
         appUsageList = new ArrayList<>();
         adapter = new AppUsageAdapter(appUsageList);
         recyclerView.setAdapter(adapter);
@@ -105,49 +115,78 @@ public class AppUsageFragment extends Fragment {
     private void loadAppUsageData() {
         UsageStatsManager usageStatsManager = (UsageStatsManager) getContext().getSystemService(Context.USAGE_STATS_SERVICE);
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -7); // Query usage stats for the last 7 days
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
         long startTime = calendar.getTimeInMillis();
         long endTime = System.currentTimeMillis();
 
-        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
+        // Query usage stats for the current day only
+        List<UsageStats> usageStatsList = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
         if (usageStatsList == null || usageStatsList.isEmpty()) {
             Toast.makeText(getContext(), "No usage data available", Toast.LENGTH_SHORT).show();
             return;
         }
 
         List<AppUsageInfo> tempAppUsageList = new ArrayList<>();
+        Set<String> addedPackages = new HashSet<>();
+        String myPackageName = getContext().getPackageName();
+        PackageManager pm = getContext().getPackageManager();
+
+        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
+        launcherIntent.addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolveInfo = pm.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        String defaultLauncherPackage = resolveInfo.activityInfo.packageName;
+
         for (UsageStats usageStats : usageStatsList) {
             String packageName = usageStats.getPackageName();
             long usageTime = usageStats.getTotalTimeInForeground();
             long lastTimeUsed = usageStats.getLastTimeUsed();
 
-            Log.d("AppUsageFragment", "Package: " + packageName + ", Usage Time: " + usageTime + ", Last Time Used: " + lastTimeUsed);
-
             if (usageTime > 0 || lastTimeUsed > 0) {
                 try {
-                    ApplicationInfo appInfo = getContext().getPackageManager().getApplicationInfo(packageName, 0);
-                    String appName = getContext().getPackageManager().getApplicationLabel(appInfo).toString();
-                    Drawable appIcon = getContext().getPackageManager().getApplicationIcon(appInfo);
-                    tempAppUsageList.add(new AppUsageInfo(packageName, appName, appIcon, usageTime, lastTimeUsed));
+                    ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+
+                    if (packageName.equals(myPackageName) || packageName.equals(defaultLauncherPackage)) {
+                        continue;
+                    }
+
+                    if (isSystemApp(appInfo) && !isAllowedSystemApp(packageName)) {
+                        continue;
+                    }
+
+                    // Ensure no duplicate entries
+                    if (!addedPackages.contains(packageName)) {
+                        String appName = pm.getApplicationLabel(appInfo).toString();
+                        Drawable appIcon = pm.getApplicationIcon(appInfo);
+                        tempAppUsageList.add(new AppUsageInfo(packageName, appName, appIcon, usageTime, lastTimeUsed));
+                        addedPackages.add(packageName);
+                    }
                 } catch (PackageManager.NameNotFoundException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        Log.d("AppUsageFragment", "Total apps found: " + tempAppUsageList.size());
-
-        // Sort the list by last time used
         tempAppUsageList.sort((app1, app2) -> Long.compare(app2.getLastTimeUsed(), app1.getLastTimeUsed()));
 
-        // Limit the list to the top 20 recently used apps
         appUsageList.clear();
         int limit = 20;
         appUsageList.addAll(tempAppUsageList.subList(0, Math.min(tempAppUsageList.size(), limit)));
 
-        Log.d("AppUsageFragment", "Total apps added: " + appUsageList.size());
-
         adapter.notifyDataSetChanged();
+    }
+
+
+    private boolean isSystemApp(ApplicationInfo appInfo) {
+        return ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) && ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0);
+    }
+
+    private boolean isAllowedSystemApp(String packageName) {
+        return packageName.equals("com.android.vending") // Play Store
+                || packageName.equals("com.google.android.youtube") // YouTube
+                || packageName.equals("com.android.chrome"); // Your own app
     }
 
     private boolean hasUsageStatsPermission() {
@@ -171,5 +210,23 @@ public class AppUsageFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_app_usage, container, false);
+    }
+
+    private void showTip(){
+
+        DialogTip dialog = new DialogTip("App Usage", "This feature displays the list of apps your child has recently used, along with the amount of time spent on each app.");
+        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedWebsitesInfoDialog");
+
+    }
+
+    @Override
+    public void onClick(View view) {
+
+        if (this.btnTipAppUsage == view){
+
+            showTip();
+
+        }
+
     }
 }

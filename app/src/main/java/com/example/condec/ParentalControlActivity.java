@@ -1,6 +1,7 @@
 package com.example.condec;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -27,7 +28,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
     private Switch switchDetection;
     private Switch switchAppBlocking;
     private Switch switchWebsiteBlocking;
-    private Switch switchSleep;
+    private CardView cardViewSleepMode;
     private CondecParentalService parentalService;
     private boolean isBound = false;
 
@@ -62,7 +63,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         this.switchDetection = findViewById(R.id.switchWarning);
         this.switchAppBlocking = findViewById(R.id.switchBlockingApps);
         this.switchWebsiteBlocking = findViewById(R.id.switchBlockingWebsites);
-        this.switchSleep = findViewById(R.id.switchSleep);
+        this.cardViewSleepMode = findViewById(R.id.cardViewSleepMode);
 
         ArrayList<String> receivedData = getIntent().getStringArrayListExtra("receivedData");
 
@@ -90,7 +91,7 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         this.switchDetection.setChecked(isDetecting);
         this.switchAppBlocking.setChecked(isAppBlocking);
         this.switchWebsiteBlocking.setChecked(isWebsiteBlocking);
-        this.switchSleep.setChecked(isSleeping);
+        //this.switchSleep.setChecked(isSleeping);
 
         switchDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Save the switch state
@@ -119,13 +120,12 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
                 parentalService.sendCommandToDevice(deviceInfo, "STOP_WEBSITE_BLOCKING");
             }
         });
-        switchSleep.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save the switch state
-            if (isChecked) {
-                // Start the service
-                parentalService.sendCommandToDevice(deviceInfo, "START_SLEEP");
-            } else {
-                parentalService.sendCommandToDevice(deviceInfo, "STOP_SLEEP");
+        cardViewSleepMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                parentalService.sendCommandToDevice(deviceInfo, "TOGGLE_SLEEP");
+
             }
         });
     }

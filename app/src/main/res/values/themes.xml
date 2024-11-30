@@ -33,6 +33,19 @@
         <item name="android:switchTextAppearance">@style/CustomSwitchTextAppearance</item>
     </style>
 
+    <style name="CustomSwitchAppBlockStyle" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/custom_switch_thumb_app_block</item>
+        <item name="android:track">@drawable/custom_switch_track_app_block</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:switchMinWidth">50dp</item>
+        <item name="android:switchPadding">8dp</item> <!-- Less padding for compact size -->
+        <item name="android:textOn">On</item>
+        <item name="android:textOff">Off</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">12sp</item> <!-- Text size for "On" and "Off" -->
+        <item name="android:switchTextAppearance">@style/CustomSwitchTextAppearance</item>
+    </style>
+
     <style name="CustomSwitchTextAppearance" parent="TextAppearance.AppCompat">
         <item name="android:textSize">12sp</item> <!-- Smaller text size for better fit -->
         <item name="android:textStyle">bold</item>
