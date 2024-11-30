@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.nsd.NsdManager;
@@ -29,11 +30,19 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
 import com.example.condec.Classes.ParentalAppUsageInfo;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -66,6 +75,8 @@ public class CondecParentalService extends Service {
     private int serverPort = 12345;
     private boolean isRunning = true;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private WindowManager windowManager;
+    private View dialogView;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -546,6 +557,7 @@ public class CondecParentalService extends Service {
                 boolean isAppBlocking = isServiceRunning(CondecBlockingService.class);
                 boolean isWebsiteBlocking = isServiceRunning(CondecVPNService.class);
                 boolean isSleeping = isServiceRunning(CondecSleepService.class);
+                boolean isPreventing = isServiceRunning(CondecSecurityService.class);
 
                 Log.d("Condec Parental", "Received Request from: " + senderDeviceName);
 
@@ -554,6 +566,7 @@ public class CondecParentalService extends Service {
                 Log.d("Condec Parental", "sending isAppBlocking: " + isAppBlocking);
                 Log.d("Condec Parental", "sending isWebsiteBlocking: " + isWebsiteBlocking);
                 Log.d("Condec Parental", "sending isSleeping: " + isSleeping);
+                Log.d("Condec Parental", "sending isPreventing: " + isPreventing);
 
                 String[] dataToSend = {
                         "DeviceName:" + deviceName,
@@ -561,6 +574,7 @@ public class CondecParentalService extends Service {
                         "BlockingApp:" + isAppBlocking,
                         "BlockingWebsite:" + isWebsiteBlocking,
                         "Sleeping:" + isSleeping,
+                        "Prevention:" + isPreventing,
                 };
                 for (String data : dataToSend) {
                     out.println(data);
@@ -850,6 +864,24 @@ public class CondecParentalService extends Service {
         SharedPreferences sharedPref = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor =  sharedPref.edit();
 
+        int indexOfColonCommand = command.indexOf("|");
+        String data = "";
+
+        if (indexOfColonCommand != -1){
+
+            String formattedCommand = command.substring(0, indexOfColonCommand);
+            String formattedData = command.substring(indexOfColonCommand + 1, command.length());
+            Log.d("Condec Parental", "Formatted Command:" + formattedCommand);
+            Log.d("Condec Parental", "Formatted Data:" + formattedData);
+
+            if(formattedCommand.equals("DISPLAY_MESSAGE")){
+
+                command = formattedCommand;
+                data = formattedData;
+
+            }
+        }
+
         switch (command) {
             case "START_DETECTION":
                 Intent requestIntent = new Intent(this, RequestDetectionPermission.class);
@@ -910,6 +942,27 @@ public class CondecParentalService extends Service {
                     showToast("Remotely Stopped Sleep Service");
                 }
                 break;
+            case "DISPLAY_MESSAGE":
+
+                int indexOfColonParent = data.indexOf("|");
+                String parent = "";
+                String message = "";
+
+                if (indexOfColonParent != -1){
+
+                    String formattedParent = data.substring(0, indexOfColonParent);
+                    String formattedMessage = data.substring(indexOfColonParent + 1, data.length());
+
+                    Log.d("Condec Parental", "Formatted Parent:" + formattedParent);
+                    Log.d("Condec Parental", "Formatted Message:" + formattedMessage);
+
+                    parent = formattedParent;
+                    message = formattedMessage;
+                    displayMessageFromParent(parent, message);
+
+                }
+
+                break;
             case "GO_BACK":
                 Intent intentBack = new Intent("com.example.ACTION_GO_BACK");
                 sendBroadcast(intentBack);
@@ -917,6 +970,14 @@ public class CondecParentalService extends Service {
             case "GO_HOME":
                 Intent intentHome = new Intent("com.example.ACTION_GO_HOME");
                 sendBroadcast(intentHome);
+                break;
+            case "START_SECURITY":
+                startForegroundService(new Intent(this, CondecSecurityService.class));
+                showToast("Remotely Started Security Service");
+                break;
+            case "STOP_SECURITY":
+                stopService(new Intent(this, CondecSecurityService.class));
+                showToast("Remotely Stopped Security Service");
                 break;
             default:
                 showToast("Unknown Command: " + command);
@@ -1120,5 +1181,54 @@ public class CondecParentalService extends Service {
             nsdManager.stopServiceDiscovery(discoveryListener);
             discoveryListener = null;
         }
+    }
+
+    private void displayMessageFromParent(String parent, String message) {
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+                dialogView = inflater.inflate(R.layout.layout_dialog_info, null);
+
+                TextView txtViewTitle = dialogView.findViewById(R.id.dialog_title);
+                TextView txtViewMessage = dialogView.findViewById(R.id.dialog_message);
+
+                Button okButton = dialogView.findViewById(R.id.btnDialogBack);
+
+                txtViewTitle.setText("Message from " + parent + " (Parent)");
+                txtViewMessage.setText(message);
+                okButton.setText("Ok");
+                okButton.setTextColor(getColor(R.color.white));
+                okButton.setBackgroundColor(getColor(R.color.blue_main_background));
+
+                okButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        if (dialogView != null) {
+                            windowManager.removeView(dialogView);
+                            dialogView = null;
+                        }
+                    }
+                });
+
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.WRAP_CONTENT,
+                        WindowManager.LayoutParams.WRAP_CONTENT,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_DIM_BEHIND |
+                                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                        PixelFormat.TRANSLUCENT);
+
+                params.dimAmount = 0.6f;
+
+                params.gravity = Gravity.CENTER;
+
+                windowManager.addView(dialogView, params);
+            }
+        });
     }
 }

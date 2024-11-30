@@ -409,6 +409,7 @@ public class CondecDetectionService extends Service {
                 Log.d("CondecDetectionService", "AI Judgement Result: " + (percentage > threshold));
 
                 if (bypassThreshold == true) threshold = 93;
+
                 if (percentage > threshold) {
                     Log.d("CondecAccessabilityService", "AI Perform Swipe And Back");
                     Intent intent = new Intent("com.example.ACTION_SWIPE_AND_BACK");

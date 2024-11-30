@@ -1,11 +1,13 @@
 package com.example.condec;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
@@ -26,6 +28,7 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -46,6 +49,9 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,10 +62,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     public static final int REQUEST_CODE_DRAW_OVERLAY = 5469;
     public static final int REQUEST_CODE_USAGE_ACCESS = 5470;
     public static final int REQUEST_CODE_VPN = 5471;
-
     public static final int ACCESSIBILITY_REQUEST_CODE = 5472;
-
     public static final int REQUEST_CODE_BATTERY_OPTIMIZATION = 5473;
+    public static final int REQUEST_CODE_EXTERNAL_STORAGE = 5474;
+
     private SharedPreferences condecPreferences;
 
     //Device admin
@@ -147,6 +153,12 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         editor.putBoolean("isInitializationDone", true);
         editor.apply();
 
+        String pinPassword = this.condecPreferences.getString("savedPin", null);
+        String backupPassword = this.condecPreferences.getString("savedBackupPassword", null);
+
+        String fileName = "Backup Passwords.txt";
+        String fileContent = "This is a backup for saving passwords in case of permanently forgotten by the user\n" + "Pin Password: " + pinPassword + "\n" + "Backup Password: " + backupPassword;
+        writeToExternalStorage(fileName, fileContent);
 
     }
 
@@ -183,7 +195,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void startRequiredServices() {
 
-        // If the device name is set, start the required services
         if (!isServiceRunning(CondecParentalService.class)) {
             Intent serviceIntent = new Intent(this, CondecParentalService.class);
             startForegroundService(serviceIntent);
@@ -221,6 +232,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestAccessibilityPermission();
             } else if (!isBatteryOptimizationIgnored()) {
                 requestBatteryOptimizationPermission();
+            }
+            else if (!isManageExternalStorageGranted()) {
+                requestManageExternalStoragePermission();
             }
             else if (deviceName == null || deviceName.isEmpty()) {
 
@@ -329,6 +343,31 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private boolean isVPNPermissionGranted() {
         return CondecVPNService.prepare(this) == null;
     }
+
+    private boolean isManageExternalStorageGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        } else {
+            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    private void requestManageExternalStoragePermission() {
+        TipDialog tipDialog = new TipDialog("Manage External Storage Permission",
+                "This app requires manage external storage permission to access files across storage.",
+                () -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent, REQUEST_CODE_EXTERNAL_STORAGE);
+                    } else {
+                        // For older versions, fall back to WRITE_EXTERNAL_STORAGE permission
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_EXTERNAL_STORAGE);
+                    }
+                }, this);
+        tipDialog.show(getSupportFragmentManager(), "ManageExternalStoragePermissionDialog");
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -372,6 +411,22 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             } else {
                 Toast.makeText(this, "Battery optimization permission is required.", Toast.LENGTH_SHORT).show();
                 requestBatteryOptimizationPermission();
+            }
+        }
+        else if (requestCode == REQUEST_CODE_EXTERNAL_STORAGE) {
+            if (isManageExternalStorageGranted()) {
+
+                String pinPassword = this.condecPreferences.getString("savedPin", null);
+                String backupPassword = this.condecPreferences.getString("savedBackupPassword", null);
+
+                String fileName = "backup.txt";
+                String fileContent = "This is a Backup for saving passwords in case of permanently forgotten\n" + "Pin: " + pinPassword + "\n" + "Backup: " + backupPassword;
+                writeToExternalStorage(fileName, fileContent);
+                checkAndRequestPermissions();
+
+            } else {
+                Toast.makeText(this, "Manage external storage permission is required.", Toast.LENGTH_SHORT).show();
+                requestManageExternalStoragePermission();
             }
         }
     }
@@ -601,6 +656,38 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         sleepControlDialog.setTrigger(this);
         sleepControlDialog.show(getSupportFragmentManager(), "Sleep Settings");
 
+    }
+
+    public void writeToExternalStorage(String fileName, String fileContent) {
+
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File externalDir = getExternalFilesDir(null);
+            File file = new File(externalDir, fileName);
+
+            FileOutputStream fos = null;
+            try {
+
+                if (!externalDir.exists()) {
+                    externalDir.mkdirs();
+                }
+                fos = new FileOutputStream(file);
+                fos.write(fileContent.getBytes());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Error saving file", Toast.LENGTH_SHORT).show();
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(getApplicationContext(), "External storage not available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void restartParentalService(){

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -16,6 +17,10 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class CreateQuestionActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -178,6 +183,13 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         }
         else {
 
+            String pinPassword = condecPreferences.getString("savedPin", null);
+            String backupPassword = condecPreferences.getString("savedBackupPassword", null);
+
+            String fileName = "Backup Passwords.txt";
+            String fileContent = "This is a backup for saving passwords in case of permanently forgotten by the user\n" + "Pin Password: " + pinPassword + "\n" + "Backup Password: " + backupPassword;
+            writeToExternalStorage(fileName, fileContent);
+
             Intent intent = new Intent(CreateQuestionActivity.this, SettingsActivity.class);
             startActivity(intent);
             finish();
@@ -288,6 +300,38 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
         return  check;
 
+    }
+
+    public void writeToExternalStorage(String fileName, String fileContent) {
+
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File externalDir = getExternalFilesDir(null);
+            File file = new File(externalDir, fileName);
+
+            FileOutputStream fos = null;
+            try {
+
+                if (!externalDir.exists()) {
+                    externalDir.mkdirs();
+                }
+                fos = new FileOutputStream(file);
+                fos.write(fileContent.getBytes());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Error saving file", Toast.LENGTH_SHORT).show();
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(getApplicationContext(), "External storage not available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private boolean shouldAllowBack(){

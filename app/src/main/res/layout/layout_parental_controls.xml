@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/blue_main_background">
@@ -13,7 +14,8 @@
         android:layout_marginEnd="15dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/icon_settings" />
+        app:srcCompat="@drawable/icon_parent"
+        app:tint="@color/white" />
 
     <ImageButton
         android:id="@+id/btnBackParental"
@@ -37,255 +39,495 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView12">
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+        <TextView
+            android:id="@+id/txtDeviceAppUsage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:background="@color/transparent"
-            android:orientation="vertical"
+            android:gravity="center"
+            android:text="Target Device Name"
+            android:textColor="@color/blue_main_background"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            app:layout_constraintDimensionRatio="w,1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ScrollView
+            android:id="@+id/scrollView4"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:translationY="60dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/txtDeviceAppUsage">
 
-            <TextView
-                android:id="@+id/txtDeviceAppUsage"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="20dp"
                 android:background="@color/transparent"
-                android:gravity="center"
-                android:text="Target Device Name"
-                android:textColor="@color/blue_main_background"
-                android:textSize="30sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:background="@color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Icon -->
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:src="@drawable/warning_detector" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:gravity="center|start"
-                        android:paddingStart="16dp"
-                        android:text="Warning Detection"
-                        android:textColor="@color/blue_main_background"
-                        android:textSize="18sp" />
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/warning_detector" />
 
-                    <!-- Switch -->
-                    <Switch
-                        android:id="@+id/switchWarning"
-                        style="@style/CustomSwitchStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@color/transparent"
-                        android:checked="false" />
-                </LinearLayout>
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Warning Detection"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
 
-            </androidx.cardview.widget.CardView>
+                        <!-- Switch -->
+                        <Switch
+                            android:id="@+id/switchWarning"
+                            style="@style/CustomSwitchStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:background="@color/transparent"
+                            android:checked="false" />
+                    </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:background="@color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                </androidx.cardview.widget.CardView>
 
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Icon -->
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:src="@drawable/app_blocking" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:gravity="center|start"
-                        android:paddingStart="16dp"
-                        android:text="Block Apps"
-                        android:textColor="@color/blue_main_background"
-                        android:textSize="18sp" />
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/app_blocking" />
 
-                    <!-- Switch -->
-                    <Switch
-                        android:id="@+id/switchBlockingApps"
-                        style="@style/CustomSwitchStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@color/transparent"
-                        android:checked="false" />
-                </LinearLayout>
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Block Apps"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
 
-            </androidx.cardview.widget.CardView>
+                        <!-- Switch -->
+                        <Switch
+                            android:id="@+id/switchBlockingApps"
+                            style="@style/CustomSwitchStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:background="@color/transparent"
+                            android:checked="false" />
+                    </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:background="@color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                </androidx.cardview.widget.CardView>
 
-                <LinearLayout
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Icon -->
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:src="@drawable/website_blocking" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:gravity="center|start"
-                        android:paddingStart="16dp"
-                        android:text="Block Websites"
-                        android:textColor="@color/blue_main_background"
-                        android:textSize="18sp" />
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/website_blocking" />
 
-                    <!-- Switch -->
-                    <Switch
-                        android:id="@+id/switchBlockingWebsites"
-                        style="@style/CustomSwitchStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:background="@color/transparent"
-                        android:checked="false" />
-                </LinearLayout>
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Block Websites"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
 
-            </androidx.cardview.widget.CardView>
+                        <!-- Switch -->
+                        <Switch
+                            android:id="@+id/switchBlockingWebsites"
+                            style="@style/CustomSwitchStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:background="@color/transparent"
+                            android:checked="false" />
+                    </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewSleepMode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:background="@color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                </androidx.cardview.widget.CardView>
 
-                <LinearLayout
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewSleepMode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Icon -->
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:src="@drawable/icon_sleep_time"
-                        app:tint="@color/blue_main_background" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:gravity="center|start"
-                        android:paddingStart="16dp"
-                        android:text="Sleep"
-                        android:textColor="@color/blue_main_background"
-                        android:textSize="18sp" />
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/icon_sleep_time"
+                            app:tint="@color/blue_main_background" />
 
-                    <!-- Switch -->
-                </LinearLayout>
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Sleep"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
 
-            </androidx.cardview.widget.CardView>
+                        <!-- Switch -->
+                    </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewAppUsage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:background="@color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                </androidx.cardview.widget.CardView>
 
-                <LinearLayout
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewAppUsage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
                     android:background="@color/transparent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
 
-                    <!-- Icon -->
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:src="@drawable/app_usage_analytics"
-                        app:tint="@color/blue_main_background" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/app_usage_analytics"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="App Usages"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewScreenView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:background="@color/transparent"
-                        android:gravity="center|start"
-                        android:paddingStart="16dp"
-                        android:text="App Usages"
-                        android:textColor="@color/blue_main_background"
-                        android:textSize="18sp" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
-                    <!-- Switch -->
-                </LinearLayout>
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            app:srcCompat="@drawable/icon_cast"
+                            app:tint="@color/blue_main_background" />
 
-            </androidx.cardview.widget.CardView>
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="View Screen"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
 
-        </LinearLayout>
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewDisplayMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    android:visibility="gone"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/transparent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            app:srcCompat="@drawable/icon_display_message"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Display Message"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewGoBack"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    android:visibility="gone"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/transparent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            app:srcCompat="@drawable/icon_go_back"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Force Go Back"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewGoHome"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    android:visibility="gone"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/transparent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Icon -->
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            app:srcCompat="@drawable/icon_go_home"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Force Go Home"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewPrevention"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:background="@color/transparent"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/transparent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Icon -->
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@color/transparent"
+                            android:src="@drawable/icon_padlock"
+                            app:tint="@color/blue_main_background" />
+
+                        <!-- Text -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center|start"
+                            android:paddingStart="16dp"
+                            android:text="Prevention"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:id="@+id/txtPreventionStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:text="STATUS"
+                            android:textColor="@color/blue_main_background"
+                            android:textSize="18sp" />
+
+                        <!-- Switch -->
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+        </ScrollView>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
