@@ -98,30 +98,29 @@ public class ParentalControlActivity extends AppCompatActivity implements View .
         this.switchDetection.setChecked(isDetecting);
         this.switchAppBlocking.setChecked(isAppBlocking);
         this.switchWebsiteBlocking.setChecked(isWebsiteBlocking);
-        //this.switchSleep.setChecked(isSleeping);
 
         switchDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save the switch state
+
             if (isChecked) {
-                // Start the service
+
                 parentalService.sendCommandToDevice(deviceInfo, "START_DETECTION");
             } else {
                 parentalService.sendCommandToDevice(deviceInfo, "STOP_DETECTION");
             }
         });
         switchAppBlocking.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save the switch state
+
             if (isChecked) {
-                // Start the service
+
                 parentalService.sendCommandToDevice(deviceInfo, "START_APP_BLOCKING");
             } else {
                 parentalService.sendCommandToDevice(deviceInfo, "STOP_APP_BLOCKING");
             }
         });
         switchWebsiteBlocking.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save the switch state
+
             if (isChecked) {
-                // Start the service
+
                 parentalService.sendCommandToDevice(deviceInfo, "START_WEBSITE_BLOCKING");
             } else {
                 parentalService.sendCommandToDevice(deviceInfo, "STOP_WEBSITE_BLOCKING");

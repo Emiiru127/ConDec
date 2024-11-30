@@ -29,7 +29,6 @@ public class ParentalAppUsageActivity extends AppCompatActivity implements View.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_parental_app_usage);
 
-        // Initialize views
         this.btnParentalAppUsageBack = findViewById(R.id.btnParentalAppUsageBack);
         this.txtDeviceAppUsage = findViewById(R.id.txtDeviceAppUsage);
         this.rvParentalAppUsages = findViewById(R.id.rvParentalAppUsages);
@@ -38,15 +37,12 @@ public class ParentalAppUsageActivity extends AppCompatActivity implements View.
 
         this.txtDeviceAppUsage.setText(targetDevice + "'s App Usages");
 
-        // Retrieve the app usage data from the Intent
         appUsageList = getIntent().getParcelableArrayListExtra("appUsageList");
 
-        // Initialize and set up the RecyclerView with the existing adapter
-        adapter = new ParentalAppUsageAdapter(appUsageList); // Assuming AppUsageAdapter is your existing adapter
+        adapter = new ParentalAppUsageAdapter(appUsageList);
         rvParentalAppUsages.setLayoutManager(new LinearLayoutManager(this));
         rvParentalAppUsages.setAdapter(adapter);
 
-        // Handle back button click
         btnParentalAppUsageBack.setOnClickListener(this);
     }
 

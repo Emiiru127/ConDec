@@ -19,22 +19,18 @@ public class SleepTimeReceiver extends BroadcastReceiver {
         boolean alarmSetForToday = preferences.getBoolean("alarmSetForToday", false);
 
         if (!alarmSetForToday) {
-            // Schedule the alarms for the day
             scheduleService(context);
 
-            // Update the flag to indicate that alarms have been set for today
             preferences.edit().putBoolean("alarmSetForToday", true).apply();
 
             Log.d("SleepTimeReceiver", "Alarms scheduled for the day.");
         }
 
-        // Reschedule the midnight checker for the next day
         scheduleMidnightChecker(context);
     }
 
     @SuppressLint("ScheduleExactAlarm")
     private void scheduleService(Context context) {
-        // Schedule the start/stop alarms for the day using AlarmManager
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         SharedPreferences preferences = context.getSharedPreferences("condecPref", Context.MODE_PRIVATE);
@@ -54,7 +50,6 @@ public class SleepTimeReceiver extends BroadcastReceiver {
         stopIntent.setAction("STOP_SERVICE");
         PendingIntent stopPendingIntent = PendingIntent.getForegroundService(context, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Schedule the service start and stop
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTime, startPendingIntent);
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTime, stopPendingIntent);
 
@@ -63,7 +58,7 @@ public class SleepTimeReceiver extends BroadcastReceiver {
 
     @SuppressLint("ScheduleExactAlarm")
     private void scheduleMidnightChecker(Context context) {
-        // Schedule the receiver to be triggered again at midnight for the next day's checks
+
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent midnightIntent = new Intent(context, SleepTimeReceiver.class);
         PendingIntent midnightPendingIntent = PendingIntent.getBroadcast(context, 0, midnightIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -72,7 +67,7 @@ public class SleepTimeReceiver extends BroadcastReceiver {
         midnightCalendar.set(Calendar.HOUR_OF_DAY, 0);
         midnightCalendar.set(Calendar.MINUTE, 0);
         midnightCalendar.set(Calendar.SECOND, 0);
-        midnightCalendar.add(Calendar.DAY_OF_MONTH, 1); // Set for the next day
+        midnightCalendar.add(Calendar.DAY_OF_MONTH, 1);
 
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnightCalendar.getTimeInMillis(), midnightPendingIntent);
 

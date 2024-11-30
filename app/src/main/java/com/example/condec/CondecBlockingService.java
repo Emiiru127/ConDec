@@ -35,7 +35,6 @@ public class CondecBlockingService extends Service {
     private Set<String> blockedApps;
     private Map<String, Long> appLastSeenTime = new HashMap<>();
     private Map<String, Boolean> authenticatedApps = new HashMap<>();
-    private String lastAuthenticatedApp = null;
     private String lastForegroundPackage = null;
 
     private BroadcastReceiver unlockReceiver = new BroadcastReceiver() {
@@ -126,23 +125,20 @@ public class CondecBlockingService extends Service {
                 String currentPackageName = recentStats.getPackageName();
 
                 if (currentPackageName.equals(getPackageName())) {
-                    return; // Skip self
+                    return;
                 }
 
                 if (!currentPackageName.equals(getPackageName())) {
                     isLockActivityRunning = false;
                 }
 
-                // Update the last seen time for the current app
                 appLastSeenTime.put(currentPackageName, time);
                 Log.d("Condec App Block", "appLastSeenTime: " + appLastSeenTime);
                 Log.d("Condec App Block", "lastForegroundPackage: " + lastForegroundPackage);
                 Log.d("Condec App Block", "currentPackageName: " + currentPackageName);
 
-                // Check if the previously foreground app has been exited
                 if (lastForegroundPackage != null && !lastForegroundPackage.equals(currentPackageName)) {
                     if (blockedApps.contains(lastForegroundPackage)) {
-                        // Reset authentication for the previous foreground app
                         System.out.println("Removed: " + lastForegroundPackage);
                         authenticatedApps.remove(lastForegroundPackage);
                     }
@@ -177,7 +173,6 @@ public class CondecBlockingService extends Service {
     public void onPasswordCorrect(String packageName) {
         if (packageName != null && blockedApps.contains(packageName)) {
             authenticatedApps.put(packageName, true);
-            lastAuthenticatedApp = packageName;
             resetLockState();
         } else {
             System.out.println("Package name is null or not blocked. Authentication failed.");

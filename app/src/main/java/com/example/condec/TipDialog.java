@@ -66,7 +66,6 @@ public class TipDialog extends DialogFragment {
 
         builder.setView(view);
 
-        // Find the back button and set its click listener
         Button backButton = view.findViewById(R.id.btnDialogBack);
 
         if (isPermission == true){
@@ -79,7 +78,7 @@ public class TipDialog extends DialogFragment {
             if (listener != null) {
 
                 this.isPermitting = true;
-                listener.onDialogConfirmed();  // Notify listener when the dialog is dismissed with back button
+                listener.onDialogConfirmed();
             }
             dismiss();
         });

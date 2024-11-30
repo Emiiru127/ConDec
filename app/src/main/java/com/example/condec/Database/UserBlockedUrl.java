@@ -13,7 +13,6 @@ public class UserBlockedUrl {
         this.url = url;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }

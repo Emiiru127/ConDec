@@ -69,26 +69,26 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Not needed for this example
+
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Not needed for this example
+
             }
 
             @Override
             public void afterTextChanged(Editable s) {
                 handler.removeCallbacks(workRunnable);
                 workRunnable = () -> {
-                    // User has stopped typing. Perform your action here
+
                     performAction(s.toString());
                 };
-                handler.postDelayed(workRunnable, 500); // Set delay as per your need
+                handler.postDelayed(workRunnable, 500);
             }
 
             private void performAction(String text) {
-                // This method is called when we assume user has finished typing.
+
                 update();
             }
         });
@@ -99,26 +99,26 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Not needed for this example
+
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Not needed for this example
+
             }
 
             @Override
             public void afterTextChanged(Editable s) {
                 handler.removeCallbacks(workRunnable);
                 workRunnable = () -> {
-                    // User has stopped typing. Perform your action here
+
                     performAction(s.toString());
                 };
-                handler.postDelayed(workRunnable, 500); // Set delay as per your need
+                handler.postDelayed(workRunnable, 500);
             }
 
             private void performAction(String text) {
-                // This method is called when we assume user has finished typing.
+
                 update();
             }
         });
@@ -129,26 +129,26 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Not needed for this example
+
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Not needed for this example
+
             }
 
             @Override
             public void afterTextChanged(Editable s) {
                 handler.removeCallbacks(workRunnable);
                 workRunnable = () -> {
-                    // User has stopped typing. Perform your action here
+
                     performAction(s.toString());
                 };
-                handler.postDelayed(workRunnable, 500); // Set delay as per your need
+                handler.postDelayed(workRunnable, 500);
             }
 
             private void performAction(String text) {
-                // This method is called when we assume user has finished typing.
+
                 update();
             }
         });
@@ -298,7 +298,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
     @Override
     public void onBackPressed() {
-        if (shouldAllowBack()) { // true for allow back
+        if (shouldAllowBack()) {
             super.onBackPressed();
         } else {
 

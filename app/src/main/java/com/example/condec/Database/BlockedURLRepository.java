@@ -30,7 +30,7 @@ public class BlockedURLRepository {
         return userBlockedUrlDao.getAllUrls();
     }
     public void removeUserBlockedUrl(UserBlockedUrl userBlockedUrl) {
-        // Delete URL from the database
+
         userBlockedUrlDao.delete(userBlockedUrl);
 
     }
@@ -59,11 +59,11 @@ public class BlockedURLRepository {
     }
 
     public LiveData<List<String>> getAllBlockedUrls() {
-        // Transform LiveData<List<DefaultBlockedUrl>> and LiveData<List<UserBlockedUrl>> to LiveData<List<String>>
+
         LiveData<List<DefaultBlockedUrl>> defaultUrls = defaultBlockedUrlDao.getAllUrls();
         LiveData<List<UserBlockedUrl>> userUrls = userBlockedUrlDao.getAllUrls();
 
-        // Use MediatorLiveData to combine the two LiveData sources
+
         MediatorLiveData<List<String>> result = new MediatorLiveData<>();
 
         result.addSource(defaultUrls, urls -> {

@@ -13,19 +13,18 @@ public class ParentalAppUsageInfo implements Parcelable {
 
     private String packageName;
     private String appName;
-    private Bitmap appIconBitmap;  // Use Bitmap instead of Drawable for Parcelable
+    private Bitmap appIconBitmap;
     private long usageTime;
     private long lastTimeUsed;
 
     public ParentalAppUsageInfo(String packageName, String appName, Drawable appIcon, long usageTime, long lastTimeUsed) {
         this.packageName = packageName;
         this.appName = appName;
-        this.appIconBitmap = drawableToBitmap(appIcon);  // Convert Drawable to Bitmap
+        this.appIconBitmap = drawableToBitmap(appIcon);
         this.usageTime = usageTime;
         this.lastTimeUsed = lastTimeUsed;
     }
 
-    // Convert Drawable to Bitmap
     private Bitmap drawableToBitmap(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
@@ -41,7 +40,7 @@ public class ParentalAppUsageInfo implements Parcelable {
         return appName;
     }
     public Drawable getAppIcon() {
-        return new BitmapDrawable(null, appIconBitmap);  // Convert Bitmap back to Drawable
+        return new BitmapDrawable(null, appIconBitmap);
     }
     public long getUsageTime() {
         return usageTime;
@@ -50,7 +49,6 @@ public class ParentalAppUsageInfo implements Parcelable {
         return lastTimeUsed;
     }
 
-    // Parcelable implementation
     protected ParentalAppUsageInfo(Parcel in) {
         packageName = in.readString();
         appName = in.readString();

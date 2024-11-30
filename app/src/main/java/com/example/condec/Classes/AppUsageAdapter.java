@@ -84,5 +84,4 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
             return "just now";
         }
     }
-
 }

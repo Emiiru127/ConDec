@@ -19,8 +19,6 @@ public class CondecAccessibilityService extends AccessibilityService {
 
     private int screenHeight;
     private int screenWidth;
-    private Runnable scrollRunnable;
-
     private BroadcastReceiver swipeAndBackReceiver;
 
     private BroadcastReceiver goBackReceiver;
@@ -36,31 +34,6 @@ public class CondecAccessibilityService extends AccessibilityService {
         Log.d("CondecAccessibilityService", "Accessibility Service Connected");
         getScreenDimensions();
 
-        // Start a repeating task to check the SharedPreferences flag
-        /*Handler handler = new Handler();
-        Runnable checkSwipeAndBackTask = new Runnable() {
-            @Override
-            public void run() {
-                SharedPreferences sharedPreferences = getSharedPreferences("condecPref", MODE_PRIVATE);
-                boolean shouldSwipeAndBack = sharedPreferences.getBoolean("ShouldSwipeAndBack", false);
-
-                if (shouldSwipeAndBack && isSwippingAndBacking == false) {
-
-
-                    Log.d("CondecAccessibilityService", "Triggering Swipe and Back Action");
-                    performSwipeAndBack();  // Perform the swipe and back actions
-
-
-                }
-
-                // Repeat every second (you can adjust the interval as needed)
-                handler.postDelayed(this, 1000);
-            }
-        };
-
-        handler.post(checkSwipeAndBackTask);*/
-
-        // Register the broadcast receiver
         swipeAndBackReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -128,7 +101,6 @@ public class CondecAccessibilityService extends AccessibilityService {
                 return;
             }
 
-            // Define the path for swipe down gesture
             dispatchGesture(AccessibilityUtils.getSwipeUpGesture(this.screenWidth, this.screenHeight), null, null);
         }
         catch (Exception e){
@@ -139,7 +111,6 @@ public class CondecAccessibilityService extends AccessibilityService {
     }
 
     private void pressBackButtonWithDelay() {
-        // Post a delayed action on the main thread to allow the swipe to complete
 
         if(this.isBacking){
 
@@ -156,7 +127,7 @@ public class CondecAccessibilityService extends AccessibilityService {
             if (!result) {
                 Log.e("CondecAccessibilityService", "Failed to press back button");
             }
-        }, 750); // 500ms delay to allow the swipe to complete before pressing back
+        }, 750);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
@@ -164,7 +135,7 @@ public class CondecAccessibilityService extends AccessibilityService {
             this.isBacking = false;
             this.isSwippingAndBacking = false;
 
-        }, 2000); // 500ms delay to allow the swipe to complete before pressing back
+        }, 2000);
 
 
     }
@@ -188,7 +159,6 @@ public class CondecAccessibilityService extends AccessibilityService {
 
     }
 
-    // If you want to scroll using ACTION_SCROLL_BACKWARD
     public void goHome() {
         performGlobalAction(GLOBAL_ACTION_HOME);
     }
@@ -208,23 +178,6 @@ public class CondecAccessibilityService extends AccessibilityService {
         } else {
             Log.e("CondecAccessibilityService", "Unable to get WindowManager service");
         }
-    }
-
-    private AccessibilityNodeInfo findScrollableNode(AccessibilityNodeInfo node) {
-        if (node.isScrollable()) {
-            return node;
-        }
-
-        for (int i = 0; i < node.getChildCount(); i++) {
-            AccessibilityNodeInfo child = node.getChild(i);
-            if (child != null) {
-                AccessibilityNodeInfo scrollableNode = findScrollableNode(child);
-                if (scrollableNode != null) {
-                    return scrollableNode;
-                }
-            }
-        }
-        return null;
     }
 
 }

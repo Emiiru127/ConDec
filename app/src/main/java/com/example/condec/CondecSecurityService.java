@@ -27,11 +27,10 @@ import java.util.Map;
 
 public class CondecSecurityService extends Service {
 
-    private static final int REQUEST_CODE_VPN = 5471;
     private SharedPreferences condecPreferences;
     private boolean isLockActivityRunning = false;
-    private Handler handlerAppCheck = new Handler(); // For app checking every 500ms
-    private Handler handlerServiceCheck = new Handler(); // For service checking every 5000ms
+    private Handler handlerAppCheck = new Handler();
+    private Handler handlerServiceCheck = new Handler();
     private String settingsPackage = "com.android.settings";
 
     private String packageInstaller = "com.android.packageinstaller";
@@ -40,7 +39,7 @@ public class CondecSecurityService extends Service {
 
     private Boolean isDetectionServiceManualOff = true;
 
-    public static boolean isRequestPermissionActivityRunning = false; // Track the state
+    public static boolean isRequestPermissionActivityRunning = false;
 
     private boolean isDetectionServiceManuallyOff = true;
     private boolean isVPNServiceManuallyOff = true;
@@ -51,7 +50,7 @@ public class CondecSecurityService extends Service {
             if ("com.example.condec.UNLOCK_APP".equals(intent.getAction())) {
                 String packageName = intent.getStringExtra("PACKAGE_NAME");
                 if (packageName != null && packageName.equals(settingsPackage)) {
-                    authenticatedApps.put(packageName, true); // Mark as authenticated
+                    authenticatedApps.put(packageName, true);
                     isLockActivityRunning = false;
                 }
             }
@@ -75,28 +74,28 @@ public class CondecSecurityService extends Service {
                 isDetectionServiceManuallyOff = false;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);
             }
             else if ("com.example.condec.UPDATE_SECURITY_FLAGS_DETECTION_OFF".equals(intent.getAction())) {
                 Log.d("Condec Security", "RECEIVED REQUEST TO CHECK FLAGS");
                 isDetectionServiceManuallyOff = true;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);
             }
             else if ("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_ON".equals(intent.getAction())) {
                 Log.d("Condec Security", "RECEIVED REQUEST TO CHECK FLAGS");
                /* isVPNServiceManuallyOff = false;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check*/
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);*/
             }
             else if ("com.example.condec.UPDATE_SECURITY_FLAGS_VPN_OFF".equals(intent.getAction())) {
                 Log.d("Condec Security", "RECEIVED REQUEST TO CHECK FLAGS");
                /* isVPNServiceManuallyOff = true;
                 stopRunnableServiceCheck();
                 checkFlags();
-                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);  // Restart service check*/
+                handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);*/
             }
         }
     };
@@ -127,9 +126,8 @@ public class CondecSecurityService extends Service {
         Log.d("Condec Security", "Condec Security Running");
         startForegroundService();
 
-        // Start both Runnables
-        handlerAppCheck.postDelayed(runnableAppCheck, 500); // 500ms app check
-        handlerServiceCheck.postDelayed(runnableServiceCheck, 5000); // 5000ms service check
+        handlerAppCheck.postDelayed(runnableAppCheck, 500);
+        handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);
 
         this.isDetectionServiceManualOff = this.condecPreferences.getBoolean("isDetectionServiceManualOff", true);
         this.isVPNServiceManuallyOff = this.condecPreferences.getBoolean("isVPNServiceManuallyOff", true);
@@ -138,13 +136,13 @@ public class CondecSecurityService extends Service {
     }
 
     private void stopRunnableServiceCheck() {
-        handlerServiceCheck.removeCallbacks(runnableServiceCheck); // Remove any callbacks to stop the thread
+        handlerServiceCheck.removeCallbacks(runnableServiceCheck);
     }
 
     private void restartRunnableServiceCheck() {
         Log.d("Condec Security", "Service Check Restarting");
-        handlerServiceCheck.removeCallbacks(runnableServiceCheck); // Remove any callbacks to stop the thread
-        handlerServiceCheck.postDelayed(runnableServiceCheck, 5000); // 5000ms service check
+        handlerServiceCheck.removeCallbacks(runnableServiceCheck);
+        handlerServiceCheck.postDelayed(runnableServiceCheck, 5000);
     }
 
     private void checkFlags(){
@@ -180,22 +178,20 @@ public class CondecSecurityService extends Service {
         startForeground(1, notification);
     }
 
-    // Runnable for checking running apps every 500ms
     private Runnable runnableAppCheck = new Runnable() {
         @Override
         public void run() {
             checkRunningApps();
-            handlerAppCheck.postDelayed(this, 500); // Re-run every 500ms
+            handlerAppCheck.postDelayed(this, 500);
         }
     };
 
-    // Runnable for checking services every 5000ms
     private Runnable runnableServiceCheck = new Runnable() {
         @Override
         public void run() {
 
             checkOtherServices();
-            handlerServiceCheck.postDelayed(this, 5000); // Re-run every 5000ms
+            handlerServiceCheck.postDelayed(this, 5000);
         }
     };
 
@@ -215,18 +211,16 @@ public class CondecSecurityService extends Service {
                 String currentPackageName = recentStats.getPackageName();
 
                 if (currentPackageName.equals(getPackageName())) {
-                    return; // Skip self
+                    return;
                 }
 
-                // Reset authentication if the app has changed
                 if (lastForegroundPackage != null && !lastForegroundPackage.equals(currentPackageName)) {
                     authenticatedApps.remove(lastForegroundPackage);
                     isLockActivityRunning = false;
                 }
 
-                lastForegroundPackage = currentPackageName; // Update last foreground package
+                lastForegroundPackage = currentPackageName;
 
-                // Check if the current app needs to be locked
                 if (settingsPackage.equals(currentPackageName) || packageInstaller.equals(currentPackageName)) {
                     Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
 

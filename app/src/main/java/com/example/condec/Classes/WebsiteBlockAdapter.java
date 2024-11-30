@@ -26,12 +26,12 @@ public class WebsiteBlockAdapter extends RecyclerView.Adapter<WebsiteBlockAdapte
 
     private List<UserBlockedUrl> userBlockedUrls;
     private BlockedURLRepository repository;
-    private Context context; // Add context to handle UI updates
+    private Context context;
 
     public WebsiteBlockAdapter(List<UserBlockedUrl> userBlockedUrls, BlockedURLRepository repository, Context context) {
         this.userBlockedUrls = userBlockedUrls;
         this.repository = repository;
-        this.context = context; // Initialize context
+        this.context = context;
     }
 
     @NonNull
@@ -61,7 +61,6 @@ public class WebsiteBlockAdapter extends RecyclerView.Adapter<WebsiteBlockAdapte
             repository.removeUserBlockedUrl(userBlockedUrl);
             userBlockedUrls.remove(position);
 
-            // Ensure the UI update happens on the main thread
             ((Activity) context).runOnUiThread(() -> notifyItemRemoved(position));
 
             if (isServiceRunning(CondecVPNService.class)){

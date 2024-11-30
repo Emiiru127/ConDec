@@ -67,8 +67,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private ComponentName mAdminName;
 
     //UI
-
-    private SurfaceView surfaceView;
     private ImageView imgViewRename;
     private TextView txtViewRename;
 
@@ -83,13 +81,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private MaterialButton btnFeatureAppUsage;
 
     private MaterialButton[] btnFeatures;
-
-    private CondecParentalService condecParentalService;
-    private CondecSecurityService condecSecurityService;
-    private CondecSleepService condecSleepService;
-
-    private CondecDetectionService condecDetectionService;
-    boolean mBound = false;
 
     private boolean isToggleSleep;
 
@@ -128,11 +119,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         String defaultLauncher = resolveInfo.activityInfo.packageName;
 
-        // Add packages to include
         Set<String> includePackages = new HashSet<>();
-        includePackages.add("com.android.vending"); // Play Store
-        includePackages.add("com.android.chrome");  // Chrome
-        includePackages.add("com.google.android.youtube"); // YouTube
+        includePackages.add("com.android.vending");
+        includePackages.add("com.android.chrome");
+        includePackages.add("com.google.android.youtube");
 
         for (ApplicationInfo app : installedApps) {
             if (!app.packageName.equals(getPackageName())
@@ -147,68 +137,17 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         Set<String> previouslySelectedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
         boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
 
-        // On first launch, select all apps by default and save them as blocked apps
         previouslySelectedApps = new HashSet<>();
         for (ApplicationInfo app : userApps) {
-            previouslySelectedApps.add(app.packageName); // Select all user apps on first launch
+            previouslySelectedApps.add(app.packageName);
         }
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putStringSet("blockedApps", previouslySelectedApps);
-        editor.putBoolean("isInitializationDone", true); // Mark initialization as done
+        editor.putBoolean("isInitializationDone", true);
         editor.apply();
 
 
-    }
-
-   /* private void requestPermissions() {
-        if (!Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
-        }
-
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), getPackageName());
-        if (mode != AppOpsManager.MODE_ALLOWED) {
-            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-            startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
-        }
-    }*/
-
-    private void checkAdminPermission(){
-
-        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mAdminName = new ComponentName(this, AdminReceiver.class);
-
-        if (!mDPM.isAdminActive(mAdminName)) {
-            Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
-            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
-            startActivity(intent);
-            finish();
-        }
-
-    }
-
-    private void checkBatteryPermission(){
-
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        String packageName = getPackageName();
-        if (pm.isIgnoringBatteryOptimizations(packageName)) {
-            // Battery optimizations are disabled for this app
-        } else {
-            // Battery optimizations are enabled, prompt the user to disable it
-            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-        }
-
-    }
-
-
-    private void openAccessibilitySettings() {
-        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-        startActivity(intent);
     }
 
     private boolean isAccessibilityServiceEnabled() {
@@ -263,7 +202,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    // Check and request all necessary permissions
     public void checkAndRequestPermissions() {
         mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         mAdminName = new ComponentName(this, AdminReceiver.class);
@@ -285,7 +223,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 requestBatteryOptimizationPermission();
             }
             else if (deviceName == null || deviceName.isEmpty()) {
-                // If the device name is not set, prompt the user to set it
+
                 showMandatoryRenameDeviceDialog();
             }
             else {
@@ -308,7 +246,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         return pm.isIgnoringBatteryOptimizations(getPackageName());
     }
-    // Continuously request Accessibility Permission until granted
+
     private void requestAccessibilityPermission() {
         TipDialog tipDialog = new TipDialog("Accessibility Permission",
                 "This app requires accessibility permission to monitor and control app activities.",
@@ -350,18 +288,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         tipDialog.show(getSupportFragmentManager(), "BatteryOptimizationPermissionDialog");
     }
 
-
-
-    /*
-    private void requestCapturePermission(){
-
-        System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
-        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
-        startActivityForResult(permissionIntent, REQUEST_CAPTURE_CODE);
-
-
-    }*/
     private void requestOverlayPermission() {
         TipDialog tipDialog = new TipDialog("Overlay Permission", "This app requires overlay permission to display content on top of other apps.",
                 () -> {
@@ -432,11 +358,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         }
         else if (requestCode == ACCESSIBILITY_REQUEST_CODE) {
             if (isAccessibilityServiceEnabled()) {
-                // Accessibility service enabled, proceed with starting services
                 checkAndRequestPermissions();
 
             } else {
-                // Accessibility not enabled, ask again
+
                 checkAndRequestPermissions();
             }
         }
@@ -485,12 +410,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatureWebsiteBlocking.setOnClickListener(this);
         this.btnFeatureAppUsage.setOnClickListener(this);
 
-        //this.surfaceView = findViewById(R.id.testingSf);
-
         update();
         refreshDeviceName();
-
-
 
     }
 
@@ -550,56 +471,6 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-/*
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_DRAW_OVERLAY) {
-            if (Settings.canDrawOverlays(this)) {
-                // Overlay permission granted
-            } else {
-                // Overlay permission denied
-            }
-        } else if (requestCode == REQUEST_CODE_USAGE_ACCESS) {
-            AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-            int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), getPackageName());
-            if (mode == AppOpsManager.MODE_ALLOWED) {
-                // Usage access permission granted
-            } else {
-                // Usage access permission denied
-            }
-        }
-    }*/
-
-/*
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CAPTURE_CODE) {
-            if (resultCode == RESULT_OK) {
-                // Get the MediaProjection
-                this.hasAllowedScreenCapture = true;
-                boolean hasAllowedScreenCapture = false; // FORCED CODE
-                int screenCaptureResultCode = resultCode;
-                String serializedIntent = data.toUri(Intent.URI_INTENT_SCHEME);
-
-                startService(resultCode, data);
-
-
-                SharedPreferences.Editor editor = condecPreferences.edit();
-                editor.putBoolean("hasAllowedScreenCapture", hasAllowedScreenCapture);
-                editor.putInt("screenCaptureResultCode", screenCaptureResultCode);
-                editor.putString("savedScreenCaptureIntent", serializedIntent);
-                editor.apply();
-
-                // Continue with using the mediaProjection object
-            } else {
-                // User denied permission
-                this.hasAllowedScreenCapture = false;
-            }
-        }
-    }
-*/
-
     private boolean isServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
@@ -613,15 +484,14 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private void showRenameDeviceDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        // Create a custom TextView for the dialog title
         TextView title = new TextView(this);
         title.setText("Enter the name of this Device");
         title.setPadding(10, 20, 10, 10);
         title.setTextSize(20F);
-        title.setTextColor(getColor(R.color.blue_main_background)); // Set your desired color here
-        title.setGravity(Gravity.CENTER); // Optional: Center the title
+        title.setTextColor(getColor(R.color.blue_main_background));
+        title.setGravity(Gravity.CENTER);
 
-        builder.setCustomTitle(title); // Set custom title
+        builder.setCustomTitle(title);
 
         EditText input = new EditText(this);
         input.setHint("Enter Device Name");
@@ -634,21 +504,20 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         AlertDialog dialog = builder.create();
-        dialog.show(); // Show the dialog first to access buttons
+        dialog.show();
 
-        // Access the buttons and set the color
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));   // Set negative button color
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));
 
-        // Set a custom click listener for the "OK" button
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String userInput = input.getText().toString().trim();
 
             if (userInput.isEmpty()) {
-                // Show a toast if the input is empty
+
                 Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
+
             } else {
-                // If input is valid, rename the device and close the dialog
+
                 renameDevice(userInput);
                 dialog.dismiss();
             }
@@ -657,25 +526,22 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void showMandatoryRenameDeviceDialog() {
-        // Check if a device name is already saved
+
         String currentDeviceName = condecPreferences.getString("deviceName", "My Device");
 
-        // If a device name is already set, start the services directly
         if (currentDeviceName != null && !currentDeviceName.isEmpty() && currentDeviceName != "My Device") {
             startRequiredServices();
             return;
         }
 
-        // If no device name is set, show the mandatory dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        // Create a custom TextView for the dialog title
         TextView title = new TextView(this);
         title.setText("Enter the name of this Device");
         title.setPadding(10, 20, 10, 10);
         title.setTextSize(20F);
-        title.setTextColor(getColor(R.color.blue_main_background)); // Set your desired color here
-        title.setGravity(Gravity.CENTER); // Optional: Center the title
+        title.setTextColor(getColor(R.color.blue_main_background));
+        title.setGravity(Gravity.CENTER);
         builder.setCustomTitle(title);
 
         EditText input = new EditText(this);
@@ -684,25 +550,25 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        builder.setCancelable(false); // Disable canceling the dialog
+        builder.setCancelable(false);
 
         builder.setPositiveButton("OK", null);
 
         AlertDialog dialog = builder.create();
-        dialog.show(); // Show the dialog first to access buttons
+        dialog.show();
 
-        // Access the buttons and set the color
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
 
-        // Set a custom click listener for the "OK" button
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background));
+
+
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String userInput = input.getText().toString().trim();
 
             if (userInput.isEmpty()) {
-                // Show a toast if the input is empty
+
                 Toast.makeText(MainMenuActivity.this, "Device name cannot be empty!", Toast.LENGTH_SHORT).show();
             } else {
-                // If input is valid, rename the device and close the dialog
+
                 renameDevice(userInput);
                 dialog.dismiss();
             }
@@ -718,21 +584,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         editor.apply();
         Toast.makeText(MainMenuActivity.this, "Device Renamed: " + name, Toast.LENGTH_SHORT).show();
         refreshDeviceName();
-
-        // Notify discovery process or UI to update the device list
-        refreshDeviceListWithNewName();
         restartParentalService();
 
-    }
-
-    private void refreshDeviceListWithNewName() {
-        // If the discovery process is ongoing, re-run or update the list
-        if (condecParentalService != null) {
-            condecParentalService.refreshDiscoveredDevices();
-        }
-
-        // Optionally, directly update the UI here if necessary
-        // updateDeviceListInUI();
     }
 
     private void refreshDeviceName(){
@@ -750,37 +603,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    private void toggleSleepMode(){
-
-        Intent intent = new Intent(MainMenuActivity.this, CondecSleepService.class);
-
-
-        if (this.isToggleSleep == true){
-
-            this.isToggleSleep = false;
-            stopService(intent);
-
-
-        }
-        else if (this.isToggleSleep == false){
-
-            this.isToggleSleep = true;
-            startService(intent);
-
-
-        }
-        Log.d("Condec Sleep", "Sleep Mode Status: " + this.isToggleSleep);
-
-        update();
-    }
-
     private void restartParentalService(){
 
-        // Stop the service
         Intent stopIntent = new Intent(this, CondecParentalService.class);
         stopService(stopIntent);
 
-        // Start the service
         Intent startIntent = new Intent(this, CondecParentalService.class);
         startForegroundService(startIntent);
 

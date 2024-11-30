@@ -65,7 +65,7 @@ public class CondecParentalService extends Service {
     private ServerSocket serverSocket;
     private int serverPort = 12345;
     private boolean isRunning = true;
-    private final ExecutorService executorService = Executors.newCachedThreadPool(); // ExecutorService for background tasks
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -83,7 +83,6 @@ public class CondecParentalService extends Service {
         super.onCreate();
         startForeground(1, createNotification());
 
-        // Retrieve the custom device name from SharedPreferences
         SharedPreferences sharedPref = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         localDeviceName = sharedPref.getString("deviceName", "My Device");
 
@@ -92,20 +91,16 @@ public class CondecParentalService extends Service {
         editor.apply();
 
         nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
-        registerService();  // Register and start discovery
+        registerService();
 
-        // Start server to listen for incoming connections
         new Thread(this::startServer).start();
-
-        // Listen for changes in the device name
-        // Listen for changes in the device name
 
         sharedPref.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
             if (key.equals("deviceName")) {
                 String newDeviceName = sharedPreferences.getString("deviceName", "My Device");
                 if (!newDeviceName.equals(localDeviceName)) {
                     localDeviceName = newDeviceName;
-                    restartService(); // Restart the service to apply new device name
+                    restartService();
                 }
             }
         });
@@ -114,7 +109,7 @@ public class CondecParentalService extends Service {
     @Override
     public void onDestroy() {
         isRunning = false;
-        executorService.shutdown(); // Shut down the ExecutorService
+        executorService.shutdown();
         try {
             if (serverSocket != null) {
                 serverSocket.close();
@@ -222,17 +217,16 @@ public class CondecParentalService extends Service {
     }
 
     private void restartService() {
-        unregisterService(); // Unregister current service
-        stopDiscovery();     // Stop discovering services
-        // Add delay here if necessary to ensure full reset
-        registerService();   // Register with the new name
-        refreshDiscoveredDevices(); // Refresh and notify about the updated list
+        unregisterService();
+        stopDiscovery();
+        registerService();
+        refreshDiscoveredDevices();
     }
 
     private void unregisterService() {
         if (registrationListener != null) {
             nsdManager.unregisterService(registrationListener);
-            registrationListener = null; // Clear reference to avoid reuse
+            registrationListener = null;
         }
     }
 
@@ -281,7 +275,7 @@ public class CondecParentalService extends Service {
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
                 Log.d("CondecServer", "Client connected");
-                executorService.execute(() -> handleClient(clientSocket)); // Use executor for client handling
+                executorService.execute(() -> handleClient(clientSocket));
             }
         } catch (IOException e) {
             Log.e("CondecServer", "Error starting server: " + e.getMessage());
@@ -301,7 +295,6 @@ public class CondecParentalService extends Service {
         try {
             Log.d("CondecServer", "Handling client");
 
-            // Read the incoming message from Device A
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             String message = in.readLine();
 
@@ -310,14 +303,12 @@ public class CondecParentalService extends Service {
 
                 Log.d("CondecParentalService", "Message length: " + parts.length);
 
-                // Decide which method to call based on the number of parts in the message
                 if (parts.length == 2) {
                     Log.d("CondecParentalService", "Getting Service Statuses");
-                    // Call the first handleClient method for data exchange
+
                     handleClientData(clientSocket, parts);
                 } else if (parts.length >= 3) {
                     Log.d("CondecParentalService", "Command Recieved");
-                    // Call the second handleClientCommand method for command handling
 
                     if (!parts[2].equals("SLEEP_CONTROL") && parts.length == 3){
 
@@ -352,7 +343,7 @@ public class CondecParentalService extends Service {
     private List<ParentalAppUsageInfo> collectAppUsageData() {
         UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0); // Start of the current day
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
@@ -407,7 +398,6 @@ public class CondecParentalService extends Service {
 
         Log.d("CondecParentalService", "Total apps found: " + appUsageList.size());
 
-        // Now send this app usage data to the target device
         return appUsageList;
     }
 
@@ -416,31 +406,30 @@ public class CondecParentalService extends Service {
     }
 
     private boolean isAllowedSystemApp(String packageName) {
-        return packageName.equals("com.android.vending") // Play Store
-                || packageName.equals("com.google.android.youtube") // YouTube
-                || packageName.equals("com.android.chrome"); // Chrome
+        return packageName.equals("com.android.vending")
+                || packageName.equals("com.google.android.youtube")
+                || packageName.equals("com.android.chrome");
     }
 
     private void handleRequestAppUsageData(Socket clientSocket) {
             try {
-                // Assuming you already have a socket connection to the target device
+
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
                 List<ParentalAppUsageInfo> appUsageList = collectAppUsageData();
 
-                // Send each app's data
                 for (ParentalAppUsageInfo parentalAppUsageInfo : appUsageList) {
                     String dataToSend = String.format("%s|%d|%d|%s",
                             parentalAppUsageInfo.getAppName(),
                             parentalAppUsageInfo.getUsageTime(),
                             parentalAppUsageInfo.getLastTimeUsed(),
-                            encodeIconToBase64(parentalAppUsageInfo.getAppIcon())  // Convert icon to Base64 string
+                            encodeIconToBase64(parentalAppUsageInfo.getAppIcon())
                     );
                     Log.d("CondecParentalService", "App Data Sent: " + dataToSend);
                     out.println(dataToSend);
                 }
 
-                out.println("END_OF_APP_USAGE_DATA");  // Mark the end of the data
+                out.println("END_OF_APP_USAGE_DATA");
                 out.flush();
                 clientSocket.close();
             } catch (IOException e) {
@@ -448,7 +437,6 @@ public class CondecParentalService extends Service {
             }
     }
 
-    // Helper method to convert Drawable to Base64 string
     private String encodeIconToBase64(Drawable icon) {
         Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -463,10 +451,9 @@ public class CondecParentalService extends Service {
                 Socket socket = new Socket(deviceInfo.getHost(), deviceInfo.getPort());
                 PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 
-                // Send the request for app usage data
                 out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "APP_USAGE_DATA");
                 Log.d("CondecParentalService", "REQUESTING APP USAGE DATA");
-                // Listen for data from the target device
+
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 List<String> receivedData = new ArrayList<>();
                 String line;
@@ -475,7 +462,7 @@ public class CondecParentalService extends Service {
                     Log.d("CondecParentalService", "App Data Received: " + line);
                     temp += line;
                     if (line.equals("END_OF_APP_USAGE_DATA")) {
-                        break;  // End of data marker
+                        break;
                     }
                     if(line.isEmpty()){
 
@@ -491,7 +478,6 @@ public class CondecParentalService extends Service {
                     Log.d("CondecParentalService", data);
                 }
 
-                // Handle the received app usage data (e.g., start a new activity)
                 handleReceivedAppUsageData(receivedData, parentalControlActivity);
 
                 socket.close();
@@ -523,13 +509,10 @@ public class CondecParentalService extends Service {
             }
         }
 
-        // Sort the appUsageList by lastTimeUsed in descending order
         appUsageList.sort((app1, app2) -> Long.compare(app2.getLastTimeUsed(), app1.getLastTimeUsed()));
 
-        // Proceed to use appUsageList, e.g., pass it to the activity or process it
         Log.d("CondecParentalService", "App usage data processed: " + appUsageList.size() + " apps.");
 
-        // Pass the sorted list to the activity (for example)
         Intent intent = new Intent(parentalControlActivity, ParentalAppUsageActivity.class);
         intent.putExtra("deviceName", parentalControlActivity.getCurrentDeviceTarget());
         intent.putParcelableArrayListExtra("appUsageList", (ArrayList<ParentalAppUsageInfo>) appUsageList);
@@ -537,7 +520,6 @@ public class CondecParentalService extends Service {
         startActivity(intent);
     }
 
-    // Helper method to decode Base64 string to Drawable
     private Drawable decodeBase64ToDrawable(String base64Icon) {
         try {
             byte[] decodedBytes = Base64.decode(base64Icon, Base64.DEFAULT);
@@ -579,11 +561,11 @@ public class CondecParentalService extends Service {
                         "BlockingApp:" + isAppBlocking,
                         "BlockingWebsite:" + isWebsiteBlocking,
                         "Sleeping:" + isSleeping,
-                };  // Example array of strings
+                };
                 for (String data : dataToSend) {
-                    out.println(data);  // Send each data item
+                    out.println(data);
                 }
-                out.println("END_OF_DATA");  // Send a marker to indicate the end of the data
+                out.println("END_OF_DATA");
                 out.flush();
             }
         } catch (IOException e) {
@@ -621,11 +603,11 @@ public class CondecParentalService extends Service {
                         "Override:" + isOverride,
                         "StartTime:" + startTime,
                         "EndTime:" + endTime,
-                };  // Example array of strings
+                };
                 for (String data : dataToSend) {
-                    out.println(data);  // Send each data item
+                    out.println(data);
                 }
-                out.println("END_OF_SLEEP_DATA");  // Send a marker to indicate the end of the data
+                out.println("END_OF_SLEEP_DATA");
                 out.flush();
             }
         } catch (IOException e) {
@@ -644,7 +626,7 @@ public class CondecParentalService extends Service {
             Log.d("Condec Parental", "Authentication: between " + senderDeviceName + " and " + targetDeviceName);
             if (localDeviceName.equals(targetDeviceName)) {
                 Log.d("Condec Parental", "Authentication: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
-                handleSleepCommand(command, parts[3]); // Handle the received command
+                handleSleepCommand(command, parts[3]);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -662,7 +644,7 @@ public class CondecParentalService extends Service {
             Log.d("Condec Parental", "Authentication: between " + senderDeviceName + " and " + targetDeviceName);
             if (localDeviceName.equals(targetDeviceName)) {
                 Log.d("Condec Parental", "Authentication: Accepted " + localDeviceName + " and " + targetDeviceName + " are equal");
-                handleCommand(command); // Handle the received command
+                handleCommand(command);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -707,7 +689,6 @@ public class CondecParentalService extends Service {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        // Load stored times
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         long startMillis = sharedPreferences.getLong("sleepStartTime", -1);
         long endMillis = sharedPreferences.getLong("sleepEndTime", -1);
@@ -729,17 +710,14 @@ public class CondecParentalService extends Service {
         PendingIntent stopPendingIntent = PendingIntent.getForegroundService(
                 this, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Cancel existing alarms before rescheduling
         if (alarmManager != null) {
             alarmManager.cancel(startPendingIntent);
             alarmManager.cancel(stopPendingIntent);
         }
 
-        // Schedule start and stop services
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTime, startPendingIntent);
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTime, stopPendingIntent);
 
-        // Check the current time
         if (currentTime >= startTime && currentTime < endTime) {
             Log.d("CondecSleepService", "Starting service immediately as current time is within the sleep window.");
             startForegroundService(new Intent(this, CondecSleepService.class));
@@ -756,17 +734,13 @@ public class CondecParentalService extends Service {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        // Schedule the service to start at the same time every day
         Intent startIntent = new Intent(this, CondecSleepService.class);
         startPendingIntent = PendingIntent.getService(this, 0, startIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Schedule the service to stop at the same time every day
         Intent stopIntent = new Intent(this, CondecSleepService.class);
         stopIntent.setAction("STOP_SERVICE");
         stopPendingIntent = PendingIntent.getService(this, 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-
-        // Cancel the scheduled service
         if (alarmManager != null) {
             if (startPendingIntent != null) {
 
@@ -950,28 +924,6 @@ public class CondecParentalService extends Service {
         }
     }
 
-    private void handleIncomingMessage(String message) {
-        String[] parts = message.split(":");
-        Log.d("CondecServer", "Handle Has MESSAGE: " + message);
-        Log.d("CondecServer", "parts: " + parts.length);
-        if (parts.length == 2) {
-            String senderDeviceName = parts[0];
-            String targetDeviceName = parts[1];
-
-            Log.d("CondecServer", "sender: " + senderDeviceName);
-            Log.d("CondecServer", "target: " + targetDeviceName);
-            Log.d("CondecServer", "local: " + localDeviceName);
-            Log.d("CondecServer", "judgement: " + localDeviceName.equals(targetDeviceName));
-            if (localDeviceName.equals(targetDeviceName)) {
-                new Handler(Looper.getMainLooper()).post(() ->
-                        Toast.makeText(CondecParentalService.this,
-                                senderDeviceName + " was calling this device. This device successfully received the call.",
-                                Toast.LENGTH_LONG).show()
-                );
-            }
-        }
-    }
-
     public void sendCommandToDevice(NsdServiceInfo deviceInfo, String command) {
         executorService.execute(() -> {
             try {
@@ -1011,13 +963,12 @@ public class CondecParentalService extends Service {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                 out.println(localDeviceName + ":" + deviceInfo.getServiceName());
 
-                // Now listen for data from Device B
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 List<String> receivedData = new ArrayList<>();
                 String line;
                 while ((line = in.readLine()) != null) {
                     if (line.equals("END_OF_DATA")) {
-                        break;  // End of data marker
+                        break;
                     }
                     receivedData.add(line);
                 }
@@ -1030,7 +981,6 @@ public class CondecParentalService extends Service {
 
                 }
 
-                // Handle the received data (e.g., start a new activity)
                 handleReceivedData(receivedData);
 
                 socket.close();
@@ -1047,7 +997,6 @@ public class CondecParentalService extends Service {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                 out.println(localDeviceName + ":" + deviceInfo.getServiceName() + ":" + "SLEEP_CONTROL");
 
-                // Now listen for data from Device B
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 List<String> receivedData = new ArrayList<>();
                 String line;
@@ -1066,7 +1015,6 @@ public class CondecParentalService extends Service {
 
                 }
 
-                // Handle the received data (e.g., start a new activity)
                 handleReceivedSleepData(receivedData, parentalControlActivity);
 
                 socket.close();
@@ -1077,7 +1025,6 @@ public class CondecParentalService extends Service {
     }
 
     private void handleReceivedData(List<String> data) {
-        // Example: Start a new activity and pass the data
         Intent intent = new Intent(this, ParentalControlActivity.class);
         intent.putStringArrayListExtra("receivedData", new ArrayList<>(data));
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1096,9 +1043,9 @@ public class CondecParentalService extends Service {
     }
 
     public void refreshDiscoveredDevices() {
-        stopDiscovery(); // Stop any ongoing discovery
-        startDiscovery(); // Restart discovery with the latest settings
-        notifyDevicesChanged(); // Broadcast the updated device list
+        stopDiscovery();
+        startDiscovery();
+        notifyDevicesChanged();
     }
 
     private void notifyDeviceDiscovered(NsdServiceInfo deviceInfo) {
@@ -1121,34 +1068,33 @@ public class CondecParentalService extends Service {
         int resolvedPort = resolvedServiceInfo.getPort();
 
         if (resolvedHost != null && resolvedPort > 0) {
-            // Remove any existing entries with the same service name but different address/port
+
             discoveredDevices.removeIf(device -> device.getServiceName().equals(resolvedServiceInfo.getServiceName()));
 
-            // Add the new entry
             discoveredDevices.add(resolvedServiceInfo);
             Log.d("NSD Condec", "Added resolved device to the list.");
         } else {
             Log.e("NSD Condec", "Resolved service has invalid host or port. Device ignored.");
         }
 
-        cleanUpDiscoveredDevices(); // Clean up invalid entries
+        cleanUpDiscoveredDevices();
     }
 
     private void cleanUpDiscoveredDevices() {
         Iterator<NsdServiceInfo> iterator = discoveredDevices.iterator();
         while (iterator.hasNext()) {
             NsdServiceInfo device = iterator.next();
-            // Check for invalid devices or outdated device names
+
             if (device.getHost() == null || device.getPort() <= 0) {
                 Log.d("NSD Condec", "Removing invalid or outdated device: " + device.getServiceName());
                 iterator.remove();
             }
         }
-        notifyDevicesChanged(); // Notify the UI to update with the cleaned list
+        notifyDevicesChanged();
     }
 
     public List<NsdServiceInfo> getDiscoveredDevices() {
-        return new ArrayList<>(discoveredDevices); // Ensure the list is correctly populated
+        return new ArrayList<>(discoveredDevices);
     }
 
     private boolean isServiceRunning(Class<?> serviceClass) {
@@ -1163,16 +1109,16 @@ public class CondecParentalService extends Service {
 
     private void startDiscovery() {
         if (discoveryListener != null) {
-            stopDiscovery(); // Stop any ongoing discovery
+            stopDiscovery();
         }
-        initializeDiscoveryListener(); // Reinitialize listener
+        initializeDiscoveryListener();
         nsdManager.discoverServices("_condec._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
 
     private void stopDiscovery() {
         if (discoveryListener != null) {
             nsdManager.stopServiceDiscovery(discoveryListener);
-            discoveryListener = null; // Clear reference to avoid reuse
+            discoveryListener = null;
         }
     }
 }

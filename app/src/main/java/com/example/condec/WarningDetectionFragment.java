@@ -32,18 +32,14 @@ import android.widget.TextView;
  */
 public class WarningDetectionFragment extends Fragment implements View.OnClickListener {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
     private static final int REQUEST_CAPTURE_CODE = 1;
     private MediaProjectionManager mediaProjectionManager;
-    private CondecDetectionService condecDetectionService;
     private SharedPreferences condecPreferences;
 
     private ImageButton btnTipWarning;
@@ -51,25 +47,13 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     private Button btnDetectionServiceStatus;
     private TextView txtDetectionServiceStatus;
 
-    private boolean isServiceActive = false;
-
     boolean isBinded = false;
     boolean hasAllowedScreenCapture = false;
 
-
     public WarningDetectionFragment() {
-        // Required empty public constructor
+
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment WarningDetectionFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static WarningDetectionFragment newInstance(String param1, String param2) {
         WarningDetectionFragment fragment = new WarningDetectionFragment();
         Bundle args = new Bundle();
@@ -94,7 +78,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_warning_detection, container, false);
     }
 
@@ -113,7 +97,7 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         this.btnDetectionServiceStatus.setOnClickListener(this);
         this.imgViewDetectionServiceStatus.setOnClickListener(this);
 
-        checkAndBindService(); // Check if service is already running and bind to it
+        checkAndBindService();
 
     }
 
@@ -140,15 +124,12 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void requestCapturePermission(){
 
-        //hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
-        //hasAllowedScreenCapture = false;
         if (hasAllowedScreenCapture == false){
 
             System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
             mediaProjectionManager = (MediaProjectionManager) getActivity().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
             Intent permissionIntent = mediaProjectionManager.createScreenCaptureIntent();
             startActivityForResult(permissionIntent, REQUEST_CAPTURE_CODE);
-
 
         }
 
@@ -168,10 +149,6 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         }
 
         update();
-/*
-        SharedPreferences.Editor editor = this.condecPreferences.edit();
-        editor.putBoolean("isSystemActive", this.isSystemActive);
-        editor.apply();*/
 
     }
 
@@ -196,11 +173,8 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
 
     private void startService(int screenCaptureResultCode, Intent screenCaptureIntent)  {
 
-        //boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
-
         if (screenCaptureResultCode == RESULT_OK){
 
-            this.isServiceActive = true;
             Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY TURNED ON");
             SharedPreferences.Editor editor =  this.condecPreferences.edit();
             editor.putBoolean("isDetectionServiceManuallyOff", false);
@@ -212,13 +186,8 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
             boolean isDetectionServiceManuallyOff = this.condecPreferences.getBoolean("isDetectionServiceManuallyOff", true);
             Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY: " + isDetectionServiceManuallyOff);
 
-            // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
-            //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
-
             Intent serviceIntent = CondecDetectionService.newIntent(getActivity(), screenCaptureResultCode, screenCaptureIntent);
             getActivity().startForegroundService(serviceIntent);
-
-
 
         }
         else {
@@ -243,16 +212,13 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         boolean isDetectionServiceManuallyOff = this.condecPreferences.getBoolean("isDetectionServiceManuallyOff", true);
         Log.d("Condec Security", "DETECTION SERVICE WAS MANUALLY: " + isDetectionServiceManuallyOff);
 
-
         try {
 
             this.hasAllowedScreenCapture = false;
-            this.isServiceActive = false;
             this.isBinded = false;
 
             Intent serviceIntent = new Intent(getActivity(), CondecDetectionService.class);
             getActivity().stopService(serviceIntent);
-
 
         }catch (Exception e){
 
@@ -266,9 +232,8 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CAPTURE_CODE) {
             if (resultCode == getActivity().RESULT_OK) {
-                // Get the MediaProjection
                 this.hasAllowedScreenCapture = true;
-                boolean hasAllowedScreenCapture = false; // FORCED CODE
+                boolean hasAllowedScreenCapture = false;
                 int screenCaptureResultCode = resultCode;
                 String serializedIntent = data.toUri(Intent.URI_INTENT_SCHEME);
 
@@ -280,9 +245,8 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
                 editor.putString("savedScreenCaptureIntent", serializedIntent);
                 editor.apply();
 
-                // Continue with using the mediaProjection object
             } else {
-                // User denied permission
+
                 this.hasAllowedScreenCapture = false;
             }
         }
@@ -291,7 +255,6 @@ public class WarningDetectionFragment extends Fragment implements View.OnClickLi
     private void checkAndBindService() {
         if (isServiceRunning(CondecDetectionService.class)) {
 
-            this.isServiceActive = true;
             update();
 
         }

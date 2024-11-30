@@ -56,18 +56,17 @@ public class CondecSleepService extends Service {
         if (intent != null) {
             String action = intent.getAction();
             if ("START_SERVICE".equals(action)) {
-                // Handle service start
+
                 startForegroundService();
                 handler.postDelayed(runnable, 500);
                 return START_STICKY;
             } else if ("STOP_SERVICE".equals(action)) {
-                // Handle service stop
+
                 stopForeground(true);
                 stopSelf();
                 return START_NOT_STICKY;
             }
         }
-        // Service logic here
 
         startForegroundService();
         handler.postDelayed(runnable, 500);
@@ -85,17 +84,15 @@ public class CondecSleepService extends Service {
         editor.apply();
 
         allowedApps = new HashSet<>();
-        allowedApps.add("com.example.condec");  // Your app's package name
-        allowedApps.add("com.android.settings"); // Allow settings
+        allowedApps.add("com.example.condec");
+        allowedApps.add("com.android.settings");
 
-        // Allow the home screen (launcher)
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
         ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         String defaultLauncher = resolveInfo.activityInfo.packageName;
         allowedApps.add(defaultLauncher);
 
-        // Allow default dialer app
         Intent dialerIntent = new Intent(Intent.ACTION_DIAL);
         ResolveInfo dialerInfo = getPackageManager().resolveActivity(dialerIntent, PackageManager.MATCH_DEFAULT_ONLY);
         if (dialerInfo != null) {
@@ -103,13 +100,11 @@ public class CondecSleepService extends Service {
             allowedApps.add(dialerPackage);
         }
 
-        // Allow default SMS app
         String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(this);
         if (defaultSmsPackage != null) {
             allowedApps.add(defaultSmsPackage);
         }
 
-        // Allow Contacts app
         Intent contactsIntent = new Intent(Intent.ACTION_VIEW);
         contactsIntent.setType(ContactsContract.Contacts.CONTENT_TYPE);
         ResolveInfo contactsInfo = getPackageManager().resolveActivity(contactsIntent, PackageManager.MATCH_DEFAULT_ONLY);
@@ -168,18 +163,16 @@ public class CondecSleepService extends Service {
                 String currentPackageName = recentStats.getPackageName();
 
                 if (currentPackageName.equals(getPackageName())) {
-                    return; // Skip self
+                    return;
                 }
 
-                // Reset authentication for the previous foreground app if switching
                 if (lastForegroundPackage != null && !lastForegroundPackage.equals(currentPackageName)) {
                     authenticatedApps.remove(lastForegroundPackage);
-                    isLockActivityRunning = false;  // Ensure lock screen can show again
+                    isLockActivityRunning = false;
                 }
 
-                lastForegroundPackage = currentPackageName; // Update last foreground package
+                lastForegroundPackage = currentPackageName;
 
-                // If the current app is not allowed and not authenticated, show the lock screen
                 if (!allowedApps.contains(currentPackageName)) {
                     Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
 

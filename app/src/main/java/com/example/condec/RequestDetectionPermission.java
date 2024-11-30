@@ -27,7 +27,6 @@ public class RequestDetectionPermission extends AppCompatActivity {
             startLockTask();
         }
 
-        // Request Media Projection permission
         requestMediaProjectionPermission();
     }
 
@@ -42,10 +41,9 @@ public class RequestDetectionPermission extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_MEDIA_PROJECTION) {
             if (resultCode == RESULT_OK) {
-                // Stop Lock Task Mode after permission is granted
+
                 stopLockTask();
 
-                // Start your service with the granted permission
                 Intent serviceIntent = CondecDetectionService.newIntent(this, resultCode, data);
                 startForegroundService(serviceIntent);
                 Intent backIntent = new Intent(this, EnterPinActivity.class);
@@ -55,9 +53,9 @@ public class RequestDetectionPermission extends AppCompatActivity {
                 CondecSecurityService.isRequestPermissionActivityRunning = false;
                 Intent broadcastIntent = new Intent("com.example.condec.SECURITY_RESTART_SERVICE_CHECKER");
                 sendBroadcast(broadcastIntent);
-                finish(); // Close the activity
+                finish();
             } else {
-                // User denied the permission, prompt again
+
                 requestMediaProjectionPermission();
             }
         }
@@ -97,7 +95,7 @@ public class RequestDetectionPermission extends AppCompatActivity {
         if (keyCode == KeyEvent.KEYCODE_BACK ||
                 keyCode == KeyEvent.KEYCODE_HOME ||
                 keyCode == KeyEvent.KEYCODE_APP_SWITCH) {
-            // Prevent default behavior
+
             return true;
         }
         return super.onKeyDown(keyCode, event);

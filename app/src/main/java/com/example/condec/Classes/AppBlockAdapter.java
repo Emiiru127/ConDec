@@ -40,7 +40,7 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
         this.appListFiltered = new ArrayList<>(appList);
 
         if (previouslySelectedApps == null) {
-            // If no apps were previously selected, block all apps by default
+
             this.selectedApps = new HashSet<>();
             for (ApplicationInfo app : appList) {
                 selectedApps.add(app.packageName);
@@ -49,7 +49,6 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
             this.selectedApps = new HashSet<>(previouslySelectedApps);
         }
 
-        // Initialize appSelectionState based on selectedApps
         for (ApplicationInfo app : appList) {
             appSelectionState.put(app.packageName, selectedApps.contains(app.packageName));
         }
@@ -69,13 +68,10 @@ public class AppBlockAdapter extends RecyclerView.Adapter<AppBlockAdapter.AppVie
         holder.appIcon.setImageDrawable(appInfo.loadIcon(packageManager));
         holder.appName.setText(appInfo.loadLabel(packageManager));
 
-        // Detach listener before setting checked state
         holder.appSwitch.setOnCheckedChangeListener(null);
 
-        // Set switch state based on appSelectionState map
         holder.appSwitch.setChecked(appSelectionState.getOrDefault(appInfo.packageName, false));
 
-        // Reattach listener after setting the checked state
         holder.appSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             appSelectionState.put(appInfo.packageName, isChecked);
 

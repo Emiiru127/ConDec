@@ -34,15 +34,8 @@ import com.example.condec.Database.UserBlockedUrl;
 
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link WebsiteBlockingFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class WebsiteBlockingFragment extends Fragment implements View.OnClickListener {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
@@ -53,7 +46,6 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     private Switch switchWebsiteBlock;
 
-    // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
@@ -63,18 +55,9 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
 
     public WebsiteBlockingFragment() {
-        // Required empty public constructor
+
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment WebsiteBlockingFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static WebsiteBlockingFragment newInstance(String param1, String param2) {
         WebsiteBlockingFragment fragment = new WebsiteBlockingFragment();
         Bundle args = new Bundle();
@@ -98,7 +81,6 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_website_blocking, container, false);
 
     }
@@ -122,7 +104,6 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
         LiveData<List<String>> blockedUrls = blockedURLRepository.getAllBlockedUrls();
 
         blockedUrls.observe(getViewLifecycleOwner(), urls -> {
-            // Update UI with the list of URLs
 
             for (String url : urls){
 
@@ -157,11 +138,9 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
         repository = new BlockedURLRepository(requireActivity().getApplication());
 
-// Observe the LiveData
         repository.getUserBlockedUrls().observe(getViewLifecycleOwner(), new Observer<List<UserBlockedUrl>>() {
             @Override
             public void onChanged(List<UserBlockedUrl> userBlockedUrls) {
-                // Initialize adapter with the list of URLs and context
                 adapter = new WebsiteBlockAdapter(userBlockedUrls, repository, getContext());
                 recyclerView.setAdapter(adapter);
             }
@@ -169,7 +148,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
 
     }
     private void stopVpnService() {
-        // Stop the VPN service if it is running
+
         Log.d("Condec Security", "VPN SERVICE WAS MANUALLY TURNED OFF");
 
         SharedPreferences.Editor editor =  this.condecPreferences.edit();
@@ -238,7 +217,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     }
 
     private void showAddUrlDialog() {
-        // Inflate the custom dialog view
+
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.layout_request_string, null);
 
@@ -270,7 +249,7 @@ public class WebsiteBlockingFragment extends Fragment implements View.OnClickLis
     }
 
     private void addUrlToDatabase(String url) {
-        // Perform the database operation
+
         UserBlockedUrl userBlockedUrl = new UserBlockedUrl(url);
         repository.insertUserBlockedUrl(userBlockedUrl);
 

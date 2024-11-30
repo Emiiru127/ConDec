@@ -55,9 +55,9 @@ public class AppSelectionActivity extends AppCompatActivity {
         String defaultLauncher = resolveInfo.activityInfo.packageName;
 
         Set<String> includePackages = new HashSet<>();
-        includePackages.add("com.android.vending"); // Play Store
-        includePackages.add("com.android.chrome");  // Chrome
-        includePackages.add("com.google.android.youtube"); // YouTube
+        includePackages.add("com.android.vending");
+        includePackages.add("com.android.chrome");
+        includePackages.add("com.google.android.youtube");
 
         for (ApplicationInfo app : installedApps) {
             if (!app.packageName.equals(getPackageName())
@@ -110,7 +110,6 @@ public class AppSelectionActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Set<String> selectedApps = appsAdapter.getSelectedApps();
 
-        // Save selected apps to SharedPreferences
         editor.putStringSet("blockedApps", selectedApps.isEmpty() ? new HashSet<>() : selectedApps);
 
         editor.apply();
@@ -129,7 +128,6 @@ public class AppSelectionActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
 
-        // Trigger the result to notify the fragment
         Bundle result = new Bundle();
         getSupportFragmentManager().setFragmentResult("appSelection", result);
     }

@@ -36,14 +36,14 @@ public class RequestAdminPermission extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_ENABLE_ADMIN && resultCode == RESULT_OK) {
-            //mDPM.setUninstallBlocked(mAdminName, getPackageName(), true);
+
             Intent intent = new Intent(RequestAdminPermission.this, MainMenuActivity.class);
             intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
             startActivity(intent);
             finish();
-            // Device Admin enabled
+
         } else {
-            // Device Admin not enabled
+
             Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, mAdminName);
             intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Condec requires Admin Permission to be able to do its operations well,");

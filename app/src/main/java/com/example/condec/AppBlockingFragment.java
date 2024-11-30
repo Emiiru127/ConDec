@@ -29,11 +29,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AppBlockingFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class AppBlockingFragment extends Fragment implements View.OnClickListener {
 
     private static final int REQUEST_CODE_APP_SELECTION = 3;
@@ -50,7 +45,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     private static final String SWITCH_STATE_KEY = "switch_state";
 
     public AppBlockingFragment() {
-        // Required empty public constructor
+
     }
 
     public static AppBlockingFragment newInstance(String param1, String param2) {
@@ -64,7 +59,7 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            // Handle your fragment arguments here
+
         }
 
     }
@@ -72,17 +67,15 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_app_blocking, container, false);
 
         blockedAppsContainer = view.findViewById(R.id.blockedAppsContainer);
         lockedApps = getLockedAppsFromPreferences();
 
-        // Get the list of installed apps and display them
         List<ApplicationInfo> installedApps = getInstalledApps();
 
         for (ApplicationInfo app : installedApps) {
-            // Check if the app is in the locked apps list, if so, add it to the UI
+
             if (lockedApps.contains(app.packageName)) {
                 createAppToggleView(app, blockedAppsContainer);
             }
@@ -116,19 +109,19 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
         switchAppBlock.setChecked(isServiceRunning);
 
         switchAppBlock.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save the switch state
+
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean(SWITCH_STATE_KEY, isChecked);
             editor.apply();
 
             if (isChecked) {
-                // Start the service
+
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
                 getActivity().startForegroundService(serviceIntent);
 
 
             } else {
-                // Stop the service
+
                 Intent serviceIntent = new Intent(getActivity(), CondecBlockingService.class);
                 getActivity().stopService(serviceIntent);
             }
@@ -177,16 +170,11 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     }
 
     public void refresh() {
-        // Reload the selected apps from SharedPreferences
+
         lockedApps = getLockedAppsFromPreferences();
-
-        // Clear the existing views in the container
         blockedAppsContainer.removeAllViews();
-
-        // Get the list of installed apps
         List<ApplicationInfo> installedApps = getInstalledApps();
 
-        // Recreate the UI based on the updated locked apps list
         for (ApplicationInfo app : installedApps) {
             if (lockedApps.contains(app.packageName)) {
                 createAppToggleView(app, blockedAppsContainer);
@@ -213,7 +201,6 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_APP_SELECTION && resultCode == Activity.RESULT_OK) {
-            // Handle the result here
             refresh();
         }
     }

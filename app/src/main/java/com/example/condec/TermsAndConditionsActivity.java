@@ -69,7 +69,7 @@ public class TermsAndConditionsActivity extends AppCompatActivity implements Vie
 
     @Override
     public void onBackPressed() {
-        if (shouldAllowBack()) { // true for allow back
+        if (shouldAllowBack()) {
             super.onBackPressed();
         } else {
 

@@ -35,9 +35,6 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
 
     private NumpadView numpadView;
     private Button btnPinEnter;
-
-    private DevicePolicyManager mDPM;
-    private ComponentName mAdminName;
     private SharedPreferences condecPreferences;
     private String correctPassword;
 
@@ -86,9 +83,6 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
         condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         correctPassword = condecPreferences.getString("savedPin", null);
 
-        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mAdminName = new ComponentName(this, AdminReceiver.class);
-
         this.isForResult = getIntent().getBooleanExtra("isForResult", false);
 
         Log.d("CondecPassword", "isForResult: " + this.isForResult);
@@ -100,14 +94,14 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
         String enteredPassword = this.pinController.getEnteredData();
 
         if (correctPassword.equals(enteredPassword)) {
-            // Correct password, allow access and finish the activity
+
             String currentPackageName = getIntent().getStringExtra("PACKAGE_NAME");
             System.out.println("starting to Broadcast: " + currentPackageName);
             if (currentPackageName != null) {
 
                     Intent intent = new Intent("com.example.condec.UNLOCK_APP");
                     intent.putExtra("PACKAGE_NAME", currentPackageName);
-                    sendBroadcast(intent); // Broadcast the unlock event
+                    sendBroadcast(intent);
                     System.out.println("Sent Broadcast.");
 
             }
@@ -135,8 +129,6 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
             }
             finish();
         } else {
-            // Incorrect password, show a message
-
             if (isForResult){
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("password_correct", false);
@@ -152,7 +144,6 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        // Notify the service that the lock activity should no longer be running
         Intent intent = new Intent("com.example.condec.RESET_LOCK_STATE");
         sendBroadcast(intent);
     }
@@ -161,7 +152,6 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     protected void onPause() {
         super.onPause();
 
-        // Send a broadcast to reset the lock state
         Intent resetIntent = new Intent("com.example.condec.RESET_LOCK_STATE");
         sendBroadcast(resetIntent);
     }
@@ -169,8 +159,8 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent); // Update the intent
-        onResume(); // Call onResume to handle the new intent
+        setIntent(intent);
+        onResume();
     }
 
 

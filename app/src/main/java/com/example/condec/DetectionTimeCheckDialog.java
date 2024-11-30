@@ -14,7 +14,6 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Set the background color programmatically
         getWindow().setBackgroundDrawableResource(R.color.blue_main_background);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -22,7 +21,7 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Start PasswordPromptActivity to validate password
+
                         Intent passwordIntent = new Intent(DetectionTimeCheckDialog.this, PasswordPromptActivity.class);
                         passwordIntent.putExtra("isForResult", true);
                         startActivityForResult(passwordIntent, 1);
@@ -31,7 +30,7 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Just dismiss the dialog and keep the service running
+
                         Intent homeIntent = new Intent("com.example.ACTION_GO_HOME");
                         sendBroadcast(homeIntent);
                         finish();
@@ -40,9 +39,8 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
                 .setCancelable(false)
                 .show();
 
-        // Access the buttons and set the color
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background)); // Set positive button color
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));   // Set negative button color
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));
 
     }
 
@@ -53,12 +51,10 @@ public class DetectionTimeCheckDialog extends AppCompatActivity {
         if (requestCode == 1 && resultCode == RESULT_OK) {
             boolean passwordCorrect = data.getBooleanExtra("password_correct", false);
             if (passwordCorrect) {
-                // Broadcast to stop the service if the password is correct
                 finish();
-
             }
         }
-        finish(); // Close the activity
+        finish();
     }
 
 }

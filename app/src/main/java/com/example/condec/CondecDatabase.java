@@ -142,47 +142,4 @@ public abstract class CondecDatabase extends RoomDatabase {
         }
     };
 
-    // Define migration for version 2
-    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add unique index to default_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_default_blocked_urls_url ON default_blocked_urls(url)");
-
-            // Add unique index to user_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_user_blocked_urls_url ON user_blocked_urls(url)");
-        }
-    };
-    static final Migration MIGRATION_1_3 = new Migration(1, 2) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add unique index to default_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_default_blocked_urls_url ON default_blocked_urls(url)");
-
-            // Add unique index to user_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_user_blocked_urls_url ON user_blocked_urls(url)");
-        }
-    };
-
-    static final Migration MIGRATION_1_4 = new Migration(1, 2) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add unique index to default_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_default_blocked_urls_url ON default_blocked_urls(url)");
-
-            // Add unique index to user_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_user_blocked_urls_url ON user_blocked_urls(url)");
-        }
-    };
-
-    static final Migration MIGRATION_1_5 = new Migration(1, 2) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add unique index to default_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_default_blocked_urls_url ON default_blocked_urls(url)");
-
-            // Add unique index to user_blocked_urls table
-            database.execSQL("CREATE UNIQUE INDEX index_user_blocked_urls_url ON user_blocked_urls(url)");
-        }
-    };
 }

@@ -41,7 +41,6 @@ public class CondecVPNService extends VpnService {
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
 
-    // List of domains to block
     private List<String> blockedDomains = new ArrayList<>();
 
     private ExecutorService executorService;
@@ -171,13 +170,10 @@ public class CondecVPNService extends VpnService {
         stopVpn();
         Log.d(TAG, "VPN is On Destroy LAst");
 
-
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("condecVPNServiceStatus", false);
         editor.apply();
-
-        // Properly clean up and stop the VPN
 
         super.onDestroy();
     }
@@ -187,7 +183,7 @@ public class CondecVPNService extends VpnService {
         if (vpnThread != null && vpnThread.isAlive()) {
             vpnThread.interrupt();
             try {
-                vpnThread.join(); // Wait for the thread to finish
+                vpnThread.join();
                 Log.d(TAG, "VPN thread stopped successfully");
             } catch (InterruptedException e) {
                 Log.e(TAG, "Error waiting for VPN thread to stop", e);
@@ -216,17 +212,15 @@ public class CondecVPNService extends VpnService {
             URI uri = new URI(url);
             String host = uri.getHost();
             if (host == null) {
-                return url; // Return the original URL if host is null
+                return url;
             }
             return host.startsWith("www.") ? host.substring(4) : host;
         } catch (URISyntaxException e) {
-            // Handle invalid URL format
             Log.e(TAG, "Invalid URL format: " + url, e);
-            return url; // Return the original URL if parsing fails
+            return url;
         }
     }
 
-    // Method to resolve the domain to its IP addresses
     private List<InetAddress> resolveDomainToIps(String domain) {
         List<InetAddress> ipAddresses = new ArrayList<>();
         try {
@@ -240,12 +234,10 @@ public class CondecVPNService extends VpnService {
         return ipAddresses;
     }
 
-    // Validate if the IP address is in valid IPv4 format
     private boolean isValidIPv4Address(String ip) {
         return ip != null && ip.matches("^\\d{1,3}(\\.\\d{1,3}){3}$");
     }
 
-    // Validate if the IP address is in valid IPv6 format
     private boolean isValidIPv6Address(String ip) {
         return ip != null && ip.matches("^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$");
     }

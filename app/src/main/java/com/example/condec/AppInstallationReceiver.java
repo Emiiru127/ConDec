@@ -27,21 +27,19 @@ public class AppInstallationReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
-            // Get the package name of the newly installed app
+
             Uri data = intent.getData();
             if (data != null) {
                 String packageName = data.getSchemeSpecificPart();
 
                 SharedPreferences sharedPreferences = context.getSharedPreferences("condecPref", Context.MODE_PRIVATE);
                 Set<String> previouslySelectedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
-                boolean isInitializationDone = sharedPreferences.getBoolean("isInitializationDone", false);
 
-                // On first launch, select all apps by default and save them as blocked apps
                 previouslySelectedApps.add(packageName);
 
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putStringSet("blockedApps", previouslySelectedApps);
-                editor.putBoolean("isInitializationDone", true); // Mark initialization as done
+                editor.putBoolean("isInitializationDone", true);
                 editor.apply();
 
                 if (isServiceRunning(CondecBlockingService.class, context)){
@@ -52,7 +50,7 @@ public class AppInstallationReceiver extends BroadcastReceiver {
                 }
 
                 Log.d("AppInstallationReceiver", "New app installed: " + packageName);
-                // Handle the package name (e.g., save or display it)
+
             }
         }
     }

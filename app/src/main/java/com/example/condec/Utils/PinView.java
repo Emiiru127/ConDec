@@ -127,33 +127,23 @@ public class PinView {
     }
 
     public void setPinViewBackground(LinearLayout layout){
-
         this.background = layout;
-
     }
 
     public void setBackgroundColor(Drawable color){
-
         this.background.setBackground(color);
-
     }
 
     public boolean isFull(){
-
         return this.isFull;
-
     }
 
     public boolean isEmpty(){
-
         return this.isEmpty;
-
     }
 
     public String[] getPinData(){
-
         return this.pinData;
-
     }
 
 }

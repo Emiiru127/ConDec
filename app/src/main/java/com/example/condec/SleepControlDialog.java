@@ -69,20 +69,17 @@ public class SleepControlDialog extends DialogFragment {
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        // Inflate the custom layout
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.layout_sleep_controls, null);
 
         builder.setView(view);
 
-        // Find views from the dialog layout
         this.btnSetStartTime = view.findViewById(R.id.btnSetStartTime);
         this.btnSetEndTime = view.findViewById(R.id.btnSetEndTime);
         this.switchUseTime = view.findViewById(R.id.switchUseTime);
         this.switchManual = view.findViewById(R.id.switchManual);
         Button doneButton = view.findViewById(R.id.btnDoneSleep);
 
-        // Set button click listener for Done
         doneButton.setOnClickListener(v -> dismiss());
 
         if (this.isParentalControl) {
@@ -91,7 +88,6 @@ public class SleepControlDialog extends DialogFragment {
             initializeStandardUI();
         }
 
-        // Set initial text based on switch states
         updateSwitchText();
 
         return builder.create();
@@ -104,22 +100,18 @@ public class SleepControlDialog extends DialogFragment {
         long startMillis = Long.parseLong((this.sleepData.get(3)).split(":")[1]);
         long endMillis = Long.parseLong((this.sleepData.get(4)).split(":")[1]);
 
-        // Set the switch states
         switchUseTime.setChecked(useTimeOn);
         switchManual.setChecked(manualOn);
 
         startTimeCalendar.setTimeInMillis(startMillis);
         endTimeCalendar.setTimeInMillis(endMillis);
 
-        // Update button texts
         btnSetStartTime.setText(formatTime(startTimeCalendar));
         btnSetEndTime.setText(formatTime(endTimeCalendar));
 
-        // Set button click listeners for time settings
         btnSetStartTime.setOnClickListener(v -> showTimePickerDialog(true));
         btnSetEndTime.setOnClickListener(v -> showTimePickerDialog(false));
 
-        // Handle switch toggles
         switchUseTime.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 switchManual.setChecked(false);
@@ -216,7 +208,6 @@ public class SleepControlDialog extends DialogFragment {
         });
     }
 
-    // Check if both switches are off and stop the service
     private void checkAndStopService() {
         if (!switchUseTime.isChecked() && !switchManual.isChecked()) {
             Log.d("SleepControlDialog", "Both switches are OFF. Stopping service.");
@@ -225,7 +216,6 @@ public class SleepControlDialog extends DialogFragment {
     }
 
     private void updateSwitchText() {
-        // Update the switch texts based on the state
         switchUseTime.setText(switchUseTime.isChecked() ? "ON" : "OFF");
         switchManual.setText(switchManual.isChecked() ? "ON" : "OFF");
     }
@@ -252,19 +242,17 @@ public class SleepControlDialog extends DialogFragment {
         TimePickerDialog timePickerDialog = new TimePickerDialog(
                 getActivity(),
                 (view, hourOfDay, selectedMinute) -> {
-                    // Set the calendar to today's date to avoid date misalignment
+
                     Calendar today = Calendar.getInstance();
                     calendar.set(Calendar.YEAR, today.get(Calendar.YEAR));
                     calendar.set(Calendar.MONTH, today.get(Calendar.MONTH));
                     calendar.set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH));
 
-                    // Update the time
                     calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     calendar.set(Calendar.MINUTE, selectedMinute);
                     calendar.set(Calendar.SECOND, 0);
                     calendar.set(Calendar.MILLISECOND, 0);
 
-                    // Update the button text
                     String time = formatTime(calendar);
                     if (isStartTime) {
                         btnSetStartTime.setText(time);
@@ -290,7 +278,6 @@ public class SleepControlDialog extends DialogFragment {
 
                     if (isParentalControl == false){
 
-                        // Save the new time in SharedPreferences
                         SharedPreferences.Editor editor = sharedPreferences.edit();
                         if (isStartTime) {
                             editor.putLong("sleepStartTime", startTimeCalendar.getTimeInMillis());
@@ -299,7 +286,6 @@ public class SleepControlDialog extends DialogFragment {
                         }
                         editor.apply();
 
-                        // Reschedule service with updated times
                         if (switchUseTime.isChecked()) {
                             scheduleService();
                         }
@@ -324,7 +310,6 @@ public class SleepControlDialog extends DialogFragment {
         long startTime = startTimeCalendar.getTimeInMillis();
         long endTime = endTimeCalendar.getTimeInMillis();
 
-        // If end time is earlier than start time, add a day to the end time
         if (endTime <= startTime) {
             endTimeCalendar.add(Calendar.DAY_OF_MONTH, 1);
             endTime = endTimeCalendar.getTimeInMillis();
@@ -346,17 +331,14 @@ public class SleepControlDialog extends DialogFragment {
         stopPendingIntent = PendingIntent.getForegroundService(
                 getActivity(), 1, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Cancel existing alarms before rescheduling
         if (alarmManager != null) {
             alarmManager.cancel(startPendingIntent);
             alarmManager.cancel(stopPendingIntent);
         }
 
-        // Schedule the service start and stop
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startTime, startPendingIntent);
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, endTime, stopPendingIntent);
 
-        // Check if service should be started immediately
         Log.d("SleepControlDialog", "Checking if service should start or stop.");
         if (currentTime >= startTime && currentTime < endTime) {
             Log.d("SleepControlDialog", "Starting service manually.");
@@ -403,14 +385,12 @@ public class SleepControlDialog extends DialogFragment {
     }
 
     private void startServiceManually() {
-        // Start the service immediately
         Log.d("DialogSleepControl", "Starting service manually.");
         Intent startIntent = new Intent(getActivity(), CondecSleepService.class);
         getActivity().startForegroundService(startIntent);
     }
 
     private void stopServiceManually() {
-        // Stop the service immediately
         Log.d("DialogSleepControl", "Stopping service manually.");
         Intent stopIntent = new Intent(getActivity(), CondecSleepService.class);
         getActivity().stopService(stopIntent);
