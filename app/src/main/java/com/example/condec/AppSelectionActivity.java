@@ -2,6 +2,7 @@ package com.example.condec;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -112,33 +113,26 @@ public class AppSelectionActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        // Get the currently selected apps
         Set<String> selectedApps = appsAdapter.getSelectedApps();
 
-        // Save the new blocked apps list to SharedPreferences
         editor.putStringSet("blockedApps", selectedApps.isEmpty() ? new HashSet<>() : selectedApps);
         editor.apply();
 
-        // Get the list of all installed apps (filtered for user apps)
         PackageManager pm = getPackageManager();
         List<ApplicationInfo> installedApps = getInstalledApps(pm);
         Set<String> installedAppPackages = new HashSet<>();
 
-        // Collect installed app package names
         for (ApplicationInfo app : installedApps) {
             if (shouldIncludeApp(app, pm)) {
                 installedAppPackages.add(app.packageName);
             }
         }
 
-        // Find deselected apps (installed apps that are not in selected apps)
         Set<String> deselectedApps = new HashSet<>(installedAppPackages);
         deselectedApps.removeAll(selectedApps);
 
-        // Generate URLs for deselected apps based on their labels
         List<String> urlsToRemove = generateUrlsFromAppLabels(deselectedApps);
 
-        // Remove URLs from the database in a background thread
         new Thread(() -> {
             List<String> userBlockedUrls = repository.userBlockedUrlDao.getAllUrlsSync(); // Fetch only user-blocked URLs
             Log.d("AppSelection", "User Blocked URLs in DB: " + userBlockedUrls);
@@ -151,17 +145,17 @@ public class AppSelectionActivity extends AppCompatActivity {
                     Log.d("AppSelection", "URL not found in DB: " + urlToRemove);
                 }
             }
-            // Handle addition of URLs
+
             List<String> urlsToAdd = generateUrlsFromAppLabels(selectedApps);
             urlsToAdd.removeAll(userBlockedUrls); // Avoid re-adding already present URLs
 
             runOnUiThread(() -> {
                 if (urlsToAdd.isEmpty() && urlsToRemove.isEmpty()) {
-                    // No URLs to add or remove; finish the activity
+
                     Log.d("AppSelection", "No URLs to add or remove; finishing activity.");
                     finishWithResult();
                 } else {
-                    // Show dialog for new URLs
+
                     showAddUrlsDialog(urlsToAdd);
                 }
             });
@@ -193,16 +187,15 @@ public class AppSelectionActivity extends AppCompatActivity {
 
         for (String packageName : appPackages) {
             try {
-                // Use the package name to get the ApplicationInfo
+
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
 
-                // Get the app label (user-friendly name)
                 String appLabel = pm.getApplicationLabel(appInfo).toString().toLowerCase().replace(" ", "");
-                // Generate a URL based on the app label
+
                 String url = appLabel + ".com";
                 urls.add(url);
             } catch (PackageManager.NameNotFoundException e) {
-                // Log the error but continue processing other apps
+
                 Log.e("AppSelection", "Error getting app info for: " + packageName, e);
             }
         }
@@ -213,14 +206,12 @@ public class AppSelectionActivity extends AppCompatActivity {
     private void showAddUrlsDialog(List<String> generatedUrls) {
         if (generatedUrls.isEmpty()) {
             Log.d("AppSelection", "No new URLs to add; finishing activity.");
-            finishWithResult(); // Ensure the activity ends
+            finishWithResult();
             return;
         }
 
-        // Inflate the custom layout
         View dialogView = getLayoutInflater().inflate(R.layout.layout_dialog_add_url_to_website, null);
 
-        // Set up the views
         TextView urlsList = dialogView.findViewById(R.id.urlsList);
         StringBuilder urlsBuilder = new StringBuilder();
         for (String url : generatedUrls) {
@@ -228,11 +219,10 @@ public class AppSelectionActivity extends AppCompatActivity {
         }
         urlsList.setText(urlsBuilder.toString());
 
-        // Build and show the dialog
-        new AlertDialog.Builder(this)
+        AlertDialog urlDialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    // Add URLs to the database
+
                     List<UserBlockedUrl> userBlockedUrls = new ArrayList<>();
                     for (String url : generatedUrls) {
                         userBlockedUrls.add(new UserBlockedUrl(url));
@@ -245,6 +235,9 @@ public class AppSelectionActivity extends AppCompatActivity {
                     finishWithResult();
                 })
                 .show();
+
+        urlDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.blue_main_background));
+        urlDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.blue_main_background));
     }
 
 
