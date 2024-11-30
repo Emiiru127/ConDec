@@ -10,7 +10,6 @@
         android:id="@+id/imageView4"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginTop="3dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.97"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,13 +19,14 @@
     <LinearLayout
         android:id="@+id/pinViewEnterBackground"
         android:layout_width="328dp"
-        android:layout_height="75dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="5dp"
         android:background="@drawable/layout_round_main_background"
         android:orientation="horizontal"
         android:paddingLeft="10dp"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnForgotPassword"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent"
@@ -90,8 +90,7 @@
         android:id="@+id/textView13"
         android:layout_width="177dp"
         android:layout_height="27dp"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginTop="15dp"
         android:gravity="center|left"
         android:text="Enter PIN"
         android:textColor="@color/new_color_textlightgray"
@@ -99,7 +98,7 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/pinViewEnterBackground"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.23"
+        app:layout_constraintHorizontal_bias="0.150"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView6" />
 
@@ -107,18 +106,18 @@
         android:id="@+id/textView6"
         android:layout_width="303dp"
         android:layout_height="46dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="15dp"
         android:autoSizeTextType="uniform"
+        android:fontFamily="arialbd"
         android:gravity="center"
         android:text="Log in"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:fontFamily="arialbd"
         app:layout_constraintBottom_toTopOf="@+id/textView13"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.75" />
+        app:layout_constraintTop_toBottomOf="@+id/imageView4"
+        app:layout_constraintVertical_bias="0.69" />
 
     <Button
         android:id="@+id/btnForgotPassword"
@@ -142,14 +141,27 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/layout_white_top_corners"
-        android:padding="25dp"
+        android:padding="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnForgotPassword"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/btnEnterLogin"
+            android:layout_width="243dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:backgroundTint="@color/dark_blue_button"
+            android:enabled="false"
+            android:text="Log In"
+            android:textColor="@color/black_main_background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tableLayout" />
 
         <TableLayout
             android:id="@+id/tableLayout"
@@ -346,19 +358,6 @@
             </TableRow>
 
         </TableLayout>
-
-        <Button
-            android:id="@+id/btnEnterLogin"
-            android:layout_width="243dp"
-            android:layout_height="60dp"
-            android:backgroundTint="@color/dark_blue_button"
-            android:enabled="false"
-            android:text="Log In"
-            android:textColor="@color/black_main_background"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tableLayout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

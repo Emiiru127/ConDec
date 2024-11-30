@@ -10,7 +10,6 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.system.OsConstants;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 public class CondecVPNService extends VpnService {
 
     private static final String TAG = "Condec Vpn Service";
+
     public static final String ACTION_STOP_VPN = "com.example.condec.STOP_VPN";
     private Thread vpnThread;
     private ParcelFileDescriptor vpnInterface;
@@ -74,7 +75,6 @@ public class CondecVPNService extends VpnService {
     }
 
     private void fetchBlockedDomainsAndStartVpn() {
-        // Use AsyncTask to run the database query on a background thread
         executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -82,8 +82,10 @@ public class CondecVPNService extends VpnService {
                 List<String> urls = blockedURLRepository.getAllBlockedUrlsSync();
 
                 if (urls != null) {
-                    blockedDomains.clear();
-                    blockedDomains.addAll(urls);
+                    synchronized (blockedDomains) {
+                        blockedDomains.clear();
+                        blockedDomains.addAll(urls);
+                    }
 
                     Log.d(TAG, "Blocked Domains Updated:");
                     for (String url : blockedDomains) {
@@ -102,8 +104,16 @@ public class CondecVPNService extends VpnService {
             public void run() {
                 try {
                     List<InetAddress> blockedIps = new ArrayList<>();
-                    for (String domain : blockedDomains) {
-                        blockedIps.addAll(resolveDomainToIps(domain));
+
+                    synchronized (blockedDomains) {
+                        for (String domain : blockedDomains) {
+                            String extractedDomain = getDomainFromUrl(domain);
+                            if (extractedDomain != null && !extractedDomain.isEmpty()) {
+                                blockedIps.addAll(resolveDomainToIps(extractedDomain));
+                            } else {
+                                Log.e(TAG, "Invalid or empty domain: " + domain);
+                            }
+                        }
                     }
 
                     if (blockedIps.isEmpty()) {
@@ -117,11 +127,19 @@ public class CondecVPNService extends VpnService {
 
                     for (InetAddress ip : blockedIps) {
                         String ipAddress = ip.getHostAddress();
-                        if (isValidIPv4Address(ipAddress)) {
-                            Log.i(TAG, "Blocking IP: " + ipAddress);
-                            builder.addRoute(ipAddress, 32);
-                        } else {
-                            Log.w(TAG, "Invalid IP address format: " + ipAddress);
+                        try {
+
+                            if (isValidIPv4Address(ipAddress)) {
+                                Log.i(TAG, "Blocking IP: " + ipAddress);
+                                builder.addRoute(ipAddress, 32);
+                            } else {
+                                Log.w(TAG, "Invalid IP address format: " + ipAddress);
+                            }
+
+                        }catch (Exception e){
+
+                            Log.w(TAG, "ERROR: Invalid IP address format: " + ipAddress);
+
                         }
                     }
 
@@ -144,7 +162,6 @@ public class CondecVPNService extends VpnService {
             }
         });
         vpnThread.start();
-
     }
 
     @Override
@@ -153,6 +170,7 @@ public class CondecVPNService extends VpnService {
         Log.d(TAG, "VPN is On Destroy");
         stopVpn();
         Log.d(TAG, "VPN is On Destroy LAst");
+
 
         SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

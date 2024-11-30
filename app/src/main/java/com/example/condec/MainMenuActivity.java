@@ -264,7 +264,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     }
 
     // Check and request all necessary permissions
-    private void checkAndRequestPermissions() {
+    public void checkAndRequestPermissions() {
         mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         mAdminName = new ComponentName(this, AdminReceiver.class);
         String deviceName = condecPreferences.getString("deviceName", null);
@@ -317,7 +317,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                         Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
                         startActivityForResult(intent, ACCESSIBILITY_REQUEST_CODE);
                     }
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "AccessibilityPermissionDialog");
     }
 
@@ -332,7 +332,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                         Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
                         startActivity(intent);
                     }
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "AdminPermissionDialog");
     }
 
@@ -346,7 +346,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                         intent.setData(Uri.parse("package:" + getPackageName()));
                         startActivityForResult(intent, REQUEST_CODE_BATTERY_OPTIMIZATION);
                     }
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "BatteryOptimizationPermissionDialog");
     }
 
@@ -367,7 +367,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 () -> {
                     Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
                     startActivityForResult(intent, REQUEST_CODE_DRAW_OVERLAY);
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "OverlayPermissionDialog");
     }
 
@@ -376,7 +376,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 () -> {
                     Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
                     startActivityForResult(intent, REQUEST_CODE_USAGE_ACCESS);
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "UsageAccessPermissionDialog");
     }
 
@@ -391,7 +391,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                         // VPN permission is already granted
                         startRequiredServices();
                     }
-                });
+                }, this);
         tipDialog.show(getSupportFragmentManager(), "VPNPermissionDialog");
     }
     private boolean isUsageAccessGranted() {

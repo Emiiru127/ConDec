@@ -121,16 +121,28 @@ public class SleepControlDialog extends DialogFragment {
 
         // Handle switch toggles
         switchUseTime.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            switchManual.setChecked(false);
-            this.parentalControlActivity.sendSleepCommandToDevice(isChecked ? "TIMED_BASED" : "CANCEL_SCHEDULED_SLEEP", "true");
-            checkAndStopService();
+            if (isChecked) {
+                switchManual.setChecked(false);
+                this.parentalControlActivity.sendSleepCommandToDevice("TIMED_BASED", "true");
+            } else {
+                if (!switchManual.isChecked()) {
+                    this.parentalControlActivity.sendSleepCommandToDevice("CANCEL_SCHEDULED_SLEEP", null);
+                }
+                this.parentalControlActivity.sendSleepCommandToDevice("TIMED_BASED", "false");
+            }
             updateSwitchText();
         });
 
         switchManual.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            switchUseTime.setChecked(false);
-            this.parentalControlActivity.sendSleepCommandToDevice(isChecked ? "SLEEP_OVERRIDE" : "CANCEL_SCHEDULED_SLEEP", "true");
-            checkAndStopService();
+            if (isChecked) {
+                switchUseTime.setChecked(false);
+                this.parentalControlActivity.sendSleepCommandToDevice("SLEEP_OVERRIDE", "true");
+            } else {
+                this.parentalControlActivity.sendSleepCommandToDevice("SLEEP_OVERRIDE", "false");
+                if (!switchUseTime.isChecked()) {
+                    this.parentalControlActivity.sendSleepCommandToDevice("CANCEL_SCHEDULED_SLEEP", null);
+                }
+            }
             updateSwitchText();
         });
     }
@@ -175,15 +187,22 @@ public class SleepControlDialog extends DialogFragment {
         btnSetEndTime.setOnClickListener(v -> showTimePickerDialog(false));
 
         switchUseTime.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            switchManual.setChecked(false);
-            scheduleService();
+            if (isChecked) {
+                switchManual.setChecked(false);
+                scheduleService();
+            } else {
+                if (!switchManual.isChecked()) {
+                    cancelScheduledService();
+                }
+            }
+            saveSwitchStates();
             checkAndStopService();
             updateSwitchText();
         });
 
         switchManual.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            switchUseTime.setChecked(false);
             if (isChecked) {
+                switchUseTime.setChecked(false);
                 startServiceManually();
             } else {
                 stopServiceManually();
@@ -191,6 +210,7 @@ public class SleepControlDialog extends DialogFragment {
                     cancelScheduledService();
                 }
             }
+            saveSwitchStates();
             checkAndStopService();
             updateSwitchText();
         });

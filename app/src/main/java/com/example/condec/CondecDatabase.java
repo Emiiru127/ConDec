@@ -128,7 +128,6 @@ public abstract class CondecDatabase extends RoomDatabase {
                 defaultDao.insert(new DefaultBlockedUrl("search.aol.com"));
                 defaultDao.insert(new DefaultBlockedUrl("startpage.com"));
                 defaultDao.insert(new DefaultBlockedUrl("qwant.com"));
-                defaultDao.insert(new DefaultBlockedUrl("gigablast.com"));
                 defaultDao.insert(new DefaultBlockedUrl("searchencrypt.com"));
                 defaultDao.insert(new DefaultBlockedUrl("mojeek.com"));
                 defaultDao.insert(new DefaultBlockedUrl("searx.me"));

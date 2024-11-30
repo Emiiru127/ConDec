@@ -17,6 +17,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.util.Log;
 
@@ -106,6 +107,15 @@ public class CondecSleepService extends Service {
         String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(this);
         if (defaultSmsPackage != null) {
             allowedApps.add(defaultSmsPackage);
+        }
+
+        // Allow Contacts app
+        Intent contactsIntent = new Intent(Intent.ACTION_VIEW);
+        contactsIntent.setType(ContactsContract.Contacts.CONTENT_TYPE);
+        ResolveInfo contactsInfo = getPackageManager().resolveActivity(contactsIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        if (contactsInfo != null) {
+            String contactsPackage = contactsInfo.activityInfo.packageName;
+            allowedApps.add(contactsPackage);
         }
 
         IntentFilter filter = new IntentFilter("com.example.condec.UNLOCK_APP");
