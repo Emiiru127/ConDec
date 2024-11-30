@@ -112,6 +112,14 @@ public class PasswordPromptActivity extends AppCompatActivity implements View.On
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // Notify the service that the lock activity should no longer be running
+        Intent intent = new Intent("com.example.condec.RESET_LOCK_STATE");
+        sendBroadcast(intent);
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
 

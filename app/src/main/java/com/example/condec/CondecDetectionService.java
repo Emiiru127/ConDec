@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
@@ -78,6 +79,11 @@ public class CondecDetectionService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("condecDetectionServiceStatus", true);
+        editor.apply();
 
         this.mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
@@ -204,7 +210,7 @@ public class CondecDetectionService extends Service {
                     }
                 });
             }
-        }, 0, 1000); // Run every 3 seconds
+        }, 0, 2000); // Run every 2 seconds
 
     }
 
@@ -388,6 +394,12 @@ public class CondecDetectionService extends Service {
             handler.getLooper().quitSafely();
             handler = null;
         }
+
+        SharedPreferences sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("condecDetectionServiceStatus", false);
+        editor.apply();
+
     }
 
 }

@@ -10,34 +10,40 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.condec.Classes.DeviceAdapter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SettingsActivity extends AppCompatActivity implements View.OnClickListener {
 
     private RecyclerView rvDevices;
     private DeviceAdapter deviceAdapter;
     private List<String> deviceList = new ArrayList<>();
-    private CondecMainService condecMainService;
+    private CondecParentalService condecParentalService;
     private boolean isBound = false;
+    private SharedPreferences condecPreferences;
+
+    // Map to track old names to new names
+    private Map<String, String> deviceNameMap = new HashMap<>();
 
     // ServiceConnection for interacting with the CondecMainService
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            CondecMainService.LocalBinder binder = (CondecMainService.LocalBinder) service;
-            condecMainService = binder.getService();
+            CondecParentalService.LocalBinder binder = (CondecParentalService.LocalBinder) service;
+            condecParentalService = binder.getService();
             isBound = true;
 
             // Update device list on service connection
@@ -64,8 +70,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
     private final BroadcastReceiver deviceListChangedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Refresh the device list
-            updateDeviceList();
+            updateDeviceList(); // Refresh the list when the broadcast is received
         }
     };
 
@@ -79,8 +84,10 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         rvDevices.setAdapter(deviceAdapter);
         rvDevices.setLayoutManager(new LinearLayoutManager(this));
 
+        condecPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+
         // Bind to the service
-        Intent serviceIntent = new Intent(this, CondecMainService.class);
+        Intent serviceIntent = new Intent(this, CondecParentalService.class);
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
 
         // Set up click listener for the back button
@@ -116,10 +123,10 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
     // Handle device click
     private void onDeviceClicked(String deviceName) {
-        if (condecMainService != null) {
-            NsdServiceInfo targetDeviceInfo = condecMainService.getDeviceInfoByName(deviceName);
+        if (condecParentalService != null) {
+            NsdServiceInfo targetDeviceInfo = condecParentalService.getDeviceInfoByName(deviceName);
             if (targetDeviceInfo != null) {
-                condecMainService.sendCallToDevice(targetDeviceInfo); // Notify the service to send a call to the tapped device
+                condecParentalService.sendCallToDevice(targetDeviceInfo);
             } else {
                 Toast.makeText(this, "Device not found: " + deviceName, Toast.LENGTH_SHORT).show();
             }
@@ -128,7 +135,6 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onClick(View view) {
-        // Handle back button
         if (view.getId() == R.id.btnSettingsBack) {
             Intent intent = new Intent(SettingsActivity.this, MainMenuActivity.class);
             startActivity(intent);
@@ -136,15 +142,61 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    // Update device list by fetching it from the service
+    // Update device list by fetching it from the service and handling renaming
     private void updateDeviceList() {
-        if (condecMainService != null) {
+        if (condecParentalService != null) {
+            List<NsdServiceInfo> discoveredDevices = condecParentalService.getDiscoveredDevices();
+
+            // Clear the existing list before updating
             deviceList.clear();
-            List<NsdServiceInfo> discoveredDevices = condecMainService.getDiscoveredDevices();
-            for (NsdServiceInfo deviceInfo : discoveredDevices) {
-                deviceList.add(deviceInfo.getServiceName()); // Add the device name to the list
+
+            // Iterate through the discovered devices
+            for (NsdServiceInfo device : discoveredDevices) {
+                String deviceName = device.getServiceName();
+                String host = device.getHost() != null ? device.getHost().getHostAddress() : null;
+                int port = device.getPort();
+
+                // Ensure valid devices and not self-device
+                if (host != null && port != 0 && !isSelfDevice(device)) {
+                    // Check if the device name has changed
+                    String oldDeviceName = deviceNameMap.get(host);  // Assuming host is used as a unique key
+
+                    if (oldDeviceName != null && !oldDeviceName.equals(deviceName)) {
+                        removeOldDeviceFromList(oldDeviceName);
+                    }
+
+                    // Update the map and the list
+                    deviceNameMap.put(host, deviceName);
+                    deviceList.add(deviceName);
+                } else {
+                    Log.d("CondecSender", "Skipping invalid device: " + deviceName + " (host: " + host + ", port: " + port + ")");
+                }
             }
+            Log.d("CondecSender", "Devices:");
+            // Notify the RecyclerView adapter to refresh the list
             deviceAdapter.notifyDataSetChanged();
+            for(String device : deviceList){
+
+                Log.d("CondecSender", device);
+
+            }
         }
+    }
+
+    // Method to remove the old device from the list
+    private void removeOldDeviceFromList(String oldDeviceName) {
+        if (deviceList.contains(oldDeviceName)) {
+            deviceList.remove(oldDeviceName);
+        }
+    }
+
+    // Helper method to check if the device is the current device
+    private boolean isSelfDevice(NsdServiceInfo device) {
+        String selfDeviceName = getSelfDeviceName();
+        return selfDeviceName.equals(device.getServiceName());
+    }
+
+    private String getSelfDeviceName() {
+        return condecPreferences.getString("deviceName", "My Device");
     }
 }

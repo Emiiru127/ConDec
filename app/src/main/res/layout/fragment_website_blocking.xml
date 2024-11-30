@@ -23,31 +23,98 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:autoSizeMaxTextSize="25sp"
-                android:autoSizeMinTextSize="15sp"
-                android:autoSizeTextType="uniform"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:background="@color/transparent"
-                android:gravity="center|left"
-                android:maxLines="1"
-                android:text="Blocked Websites"
-                android:textColor="@color/blue_main_background"
+                android:gravity="left"
+                android:orientation="horizontal"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/button6"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Button
-                android:id="@+id/button6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="\?"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/transparent">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/constraintLayout6"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/transparent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/constraintLayout8"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:id="@+id/textView"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:autoSizeMaxTextSize="25sp"
+                            android:autoSizeMinTextSize="15sp"
+                            android:autoSizeTextType="uniform"
+                            android:background="@color/transparent"
+                            android:gravity="center|left"
+                            android:maxLines="1"
+                            android:padding="5dp"
+                            android:text="Blocked Websites
+"
+                            android:textColor="@color/blue_main_background"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/switchWebsiteBlock"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <Switch
+                            android:id="@+id/switchWebsiteBlock"
+                            style="@style/CustomSwitchStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_marginEnd="20dp"
+                            android:switchMinWidth="60dp"
+                            android:textSize="12sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/textView"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/constraintLayout8"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/transparent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageButton
+                            android:id="@+id/btnTipWebsiteBlock"
+                            android:layout_width="65dp"
+                            android:layout_height="65dp"
+                            android:adjustViewBounds="true"
+                            android:backgroundTint="@color/transparent"
+                            android:gravity="center|right"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/icon_question_mark"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            app:cornerRadius="30dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintHorizontal_bias="0.5"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintVertical_bias="0.5" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -60,68 +127,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
 
-            <TextView
-                android:id="@+id/textView23"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/btnAddWebsite"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@color/transparent"
-                android:gravity="center"
-                android:text="This is Under Development"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@+id/btnStartVpnService"
-                tools:layout_editor_absoluteX="0dp" />
-
-            <EditText
-                android:id="@+id/editTextText"
-                android:layout_width="250dp"
-                android:layout_height="75dp"
-                android:layout_marginTop="16dp"
-                android:ems="10"
-                android:enabled="false"
-                android:inputType="text"
-                android:text="URL"
-                app:layout_constraintBottom_toTopOf="@+id/button7"
+                android:backgroundTint="@color/blue_main_background"
+                android:text="Add Website"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.15"
+                app:layout_constraintHorizontal_bias="0.498"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/button7"
-                android:layout_width="wrap_content"
+            <ScrollView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:enabled="false"
-                android:text="Add URL"
-                app:layout_constraintBottom_toTopOf="@+id/button8"
+                android:background="@color/transparent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.15"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/editTextText" />
+                app:layout_constraintTop_toBottomOf="@+id/btnAddWebsite">
 
-            <Button
-                android:id="@+id/button8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="1dp"
-                android:enabled="false"
-                android:text="Remove URL"
-                app:layout_constraintBottom_toTopOf="@+id/btnStartVpnService"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.15"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/button7" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recylcerWebsiteBlocked"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/transparent" />
+            </ScrollView>
 
-            <Button
-                android:id="@+id/btnStartVpnService"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="START VPN"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/button8" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

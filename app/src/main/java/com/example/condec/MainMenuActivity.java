@@ -49,6 +49,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private ImageButton btnSettings;
 
+    private MaterialButton btnSleep;
+
     private FrameLayout frameFeatures;
     private MaterialButton btnFeatureWarningDetection;
     private MaterialButton btnFeatureAppBlocking;
@@ -57,8 +59,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private MaterialButton[] btnFeatures;
 
-    private CondecMainService condecMainService;
+    private CondecParentalService condecParentalService;
+    private CondecSecurityService condecSecurityService;
+    private CondecSecurityService condecSleepService;
 
+    private boolean isToggleSleep;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,21 +76,10 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         updateFrameFeatures("Warning Detection");
 
-        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mAdminName = new ComponentName(this, AdminReceiver.class);
+        checkAdminPermission();
+        checkRequiredServices();
+        checkSleepService();
 
-        if (!mDPM.isAdminActive(mAdminName)) {
-            Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
-            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
-            startActivity(intent);
-            finish();
-        }
-
-        // Start the service only if it's not already running
-        if (!isServiceRunning(CondecMainService.class)) {
-            Intent serviceIntent = new Intent(this, CondecMainService.class);
-            startForegroundService(serviceIntent);
-        }
     }
 
    /* private void requestPermissions() {
@@ -103,7 +97,40 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         }
     }*/
 
+    private void checkAdminPermission(){
 
+        mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        mAdminName = new ComponentName(this, AdminReceiver.class);
+
+        if (!mDPM.isAdminActive(mAdminName)) {
+            Intent intent = new Intent(MainMenuActivity.this, RequestAdminPermission.class);
+            intent.putExtra("hasLoaded", getIntent().getBooleanExtra("hasLoaded", false));
+            startActivity(intent);
+            finish();
+        }
+
+    }
+
+    private void checkRequiredServices(){
+
+        // Start the service only if it's not already running
+        if (!isServiceRunning(CondecParentalService.class)) {
+            Intent serviceIntent = new Intent(this, CondecParentalService.class);
+            startForegroundService(serviceIntent);
+        }
+        if (!isServiceRunning(CondecSecurityService.class)) {
+            Intent serviceIntent = new Intent(this, CondecSecurityService.class);
+            startForegroundService(serviceIntent);
+        }
+
+    }
+
+    private void checkSleepService(){
+
+        this.isToggleSleep = isServiceRunning(CondecSleepService.class);
+        update();
+
+    }
 
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -156,6 +183,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         this.btnSettings = findViewById(R.id.btnSettings);
 
+        this.btnSleep = findViewById(R.id.btnSleep);
+
         this.frameFeatures = findViewById(R.id.frameFeatures);
 
         this.btnFeatureWarningDetection = findViewById(R.id.btnWarningDetection);
@@ -172,6 +201,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.imgViewRename.setOnClickListener(this);
         this.txtViewRename.setOnClickListener(this);
 
+        this.btnSleep.setOnClickListener(this);
+
         this.btnSettings.setOnClickListener(this);
 
         this.btnFeatureWarningDetection.setOnClickListener(this);
@@ -179,6 +210,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         this.btnFeatureWebsiteBlocking.setOnClickListener(this);
         this.btnFeatureAppUsage.setOnClickListener(this);
 
+        update();
         refreshDeviceName();
 
     }
@@ -320,6 +352,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void renameDevice(String name) {
         SharedPreferences.Editor editor = this.condecPreferences.edit();
+        editor.putString("oldDeviceName", this.txtViewRename.toString());
         editor.putString("deviceName", name);
         editor.apply();
         Toast.makeText(MainMenuActivity.this, "Device Renamed: " + name, Toast.LENGTH_SHORT).show();
@@ -331,8 +364,8 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void refreshDeviceListWithNewName() {
         // If the discovery process is ongoing, re-run or update the list
-        if (condecMainService != null) {
-            condecMainService.refreshDiscoveredDevices();
+        if (condecParentalService != null) {
+            condecParentalService.refreshDiscoveredDevices();
         }
 
         // Optionally, directly update the UI here if necessary
@@ -343,6 +376,50 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         String name = this.condecPreferences.getString("deviceName", "My Device");
         this.txtViewRename.setText(name);
+
+    }
+
+    private void toggleSleepMode(){
+
+        Intent intent = new Intent(MainMenuActivity.this, CondecSleepService.class);
+
+
+        if (this.isToggleSleep == true){
+
+            this.isToggleSleep = false;
+            stopService(intent);
+
+
+        }
+        else if (this.isToggleSleep == false){
+
+            this.isToggleSleep = true;
+            startService(intent);
+
+
+        }
+        Log.d("Condec Sleep", "Sleep Mode Status: " + this.isToggleSleep);
+
+        update();
+    }
+
+    private void update(){
+
+        if (this.isToggleSleep == true){
+
+            this.btnSleep.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.sleep_icon_on)));
+            this.btnSleep.setTextColor(getResources().getColor(R.color.sleep_icon_on));
+            this.btnSleep.setText("Sleep On");
+            Log.d("Condec Sleep", "Sleep Mode Icon: ON");
+        }
+        else if (this.isToggleSleep == false){
+
+            this.btnSleep.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.sleep_icon_off)));
+            this.btnSleep.setTextColor(getResources().getColor(R.color.sleep_icon_off));
+            this.btnSleep.setText("Sleep Off");
+            Log.d("Condec Sleep", "Sleep Mode Icon: OFF");
+
+        }
 
     }
 
@@ -370,6 +447,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
             showRenameDeviceDialog();
 
+        }
+        if (this.btnSleep == view){
+
+            toggleSleepMode();
+            return;
         }
         if (this.btnFeatureWarningDetection == view){
 

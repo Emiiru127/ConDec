@@ -21,6 +21,7 @@ public class DualPinController {
         this.numpadView = numpadView;
 
         this.numpadView.setController(this);
+        this.pinView1.setPinCursor();
 
     }
 
@@ -59,6 +60,12 @@ public class DualPinController {
             this.pinView1.setBackgroundColor(this.createPinActivity.getDrawable(R.drawable.layout_round_highlight));
             this.pinView2.setBackgroundColor(this.createPinActivity.getDrawable(R.drawable.layout_round_main_background));
 
+            if (this.pinView2.isEmpty()){
+
+                this.pinView2.removePinCursor();
+
+            }
+
             if (data.equals("X")){
 
                 this.pinView1.removePin();
@@ -80,6 +87,7 @@ public class DualPinController {
 
                 this.pinView2.removePin();
 
+
             }
             else {
 
@@ -93,6 +101,12 @@ public class DualPinController {
 
             this.pinView1.setBackgroundColor(this.createPinActivity.getDrawable(R.drawable.layout_round_main_background));
             this.pinView2.setBackgroundColor(this.createPinActivity.getDrawable(R.drawable.layout_round_highlight));
+
+            if (this.pinView1.isFull()){
+
+                this.pinView2.setPinCursor();
+
+            }
 
         }
 

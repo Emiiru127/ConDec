@@ -31,7 +31,7 @@ public class AdminReceiver extends DeviceAdminReceiver {
         }*/
 
 
-        requirePassword(context);
+        //requirePassword(context);
         Toast.makeText(context, "You are disabling Condec's Admin Permission", Toast.LENGTH_SHORT).show();
 
 

@@ -1,5 +1,6 @@
 package com.example.condec;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -14,15 +15,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.fragment.app.FragmentResultListener;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,14 +37,16 @@ import java.util.List;
  */
 public class AppBlockingFragment extends Fragment implements View.OnClickListener {
 
+    private static final int REQUEST_CODE_APP_SELECTION = 3;
     private final int REQUEST_CODE_OVERLAY_PERMISSION = 1;
 
     private LinearLayout blockedAppsContainer;
     private List<String> lockedApps;
 
-    private Button btnAddBlockApp;
+    private ImageButton btnTipAppBlock;
+    private Button btnManageBlockApp;
 
-    private SwitchCompat switchAppBlock;
+    private Switch switchAppBlock;
     private SharedPreferences sharedPreferences;
     private static final String SWITCH_STATE_KEY = "switch_state";
 
@@ -64,13 +68,6 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
             // Handle your fragment arguments here
         }
 
-        getParentFragmentManager().setFragmentResultListener("appSelection", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                // Refresh the fragment's UI
-                refresh();
-            }
-        });
     }
 
     @Override
@@ -99,9 +96,11 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        this.btnAddBlockApp = view.findViewById(R.id.btnManageBlockApp);
+        this.btnTipAppBlock = view.findViewById(R.id.btnTipAppBlock);
+        this.btnManageBlockApp = view.findViewById(R.id.btnManageBlockApp);
 
-        this.btnAddBlockApp.setOnClickListener(this);
+        this.btnTipAppBlock.setOnClickListener(this);
+        this.btnManageBlockApp.setOnClickListener(this);
 
         this.switchAppBlock = view.findViewById(R.id.switchAppBlock);
         sharedPreferences = getActivity().getSharedPreferences("condecPref", Context.MODE_PRIVATE);
@@ -134,18 +133,6 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
             }
         });
 
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
-            if (Settings.canDrawOverlays(getActivity())) {
-                // Permission granted, you can overlay your activity
-            } else {
-                // Permission denied
-            }
-        }
     }
 
     private List<String> getLockedAppsFromPreferences() {
@@ -209,7 +196,16 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
     private void selectApp(){
 
         Intent intent = new Intent(getActivity(), AppSelectionActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_APP_SELECTION);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_APP_SELECTION && resultCode == Activity.RESULT_OK) {
+            // Handle the result here
+            refresh();
+        }
     }
 
     private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -222,10 +218,23 @@ public class AppBlockingFragment extends Fragment implements View.OnClickListene
         return false;
     }
 
+    private void showTip(){
+
+        DialogTip dialog = new DialogTip();
+        dialog.show(requireActivity().getSupportFragmentManager(), "BlockedAppsInfoDialog");
+
+    }
+
     @Override
     public void onClick(View view) {
 
-        if (this.btnAddBlockApp == view){
+        if (this.btnTipAppBlock == view){
+
+            showTip();
+
+        }
+
+        if (this.btnManageBlockApp == view){
 
             selectApp();
 

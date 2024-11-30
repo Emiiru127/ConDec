@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -54,10 +55,23 @@ public class CondecBlockingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("condecBlockingServiceStatus", true);
+        editor.apply();
+
         blockedApps = sharedPreferences.getStringSet("blockedApps", new HashSet<>());
 
         authenticatedApps.clear();
+
+        Log.d("Condec App Block", "Blocked Apps:");
+
+        for(String app : blockedApps){
+
+            Log.d("Condec App Block", app);
+
+        }
 
         IntentFilter filter = new IntentFilter("com.example.condec.UNLOCK_APP");
         filter.addAction("com.example.condec.RESET_LOCK_STATE");
@@ -100,7 +114,7 @@ public class CondecBlockingService extends Service {
         UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
         List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
-
+        Log.d("Condec App Block", "Checking Running Apps");
         if (appList != null && !appList.isEmpty()) {
             UsageStats recentStats = null;
             for (UsageStats stats : appList) {
@@ -115,11 +129,16 @@ public class CondecBlockingService extends Service {
                     return; // Skip self
                 }
 
+                if (!currentPackageName.equals(getPackageName())) {
+                    isLockActivityRunning = false;
+                }
+
                 // Update the last seen time for the current app
                 appLastSeenTime.put(currentPackageName, time);
-                System.out.println("appLastSeenTime: " + appLastSeenTime);
-                System.out.println("lastForegroundPackage: " + lastForegroundPackage);
-                System.out.println("currentPackageName: " + currentPackageName);
+                Log.d("Condec App Block", "appLastSeenTime: " + appLastSeenTime);
+                Log.d("Condec App Block", "lastForegroundPackage: " + lastForegroundPackage);
+                Log.d("Condec App Block", "currentPackageName: " + currentPackageName);
+
                 // Check if the previously foreground app has been exited
                 if (lastForegroundPackage != null && !lastForegroundPackage.equals(currentPackageName)) {
                     if (blockedApps.contains(lastForegroundPackage)) {
@@ -131,12 +150,17 @@ public class CondecBlockingService extends Service {
 
                 // Update last foreground package
                 lastForegroundPackage = currentPackageName;
+                Log.d("Condec App Block", "new lastForegroundPackage: " + lastForegroundPackage);
 
                 if (blockedApps.contains(currentPackageName)) {
-                    Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
 
+                    Log.d("Condec App Block", "Blocking: " + currentPackageName);
+                    Boolean isAuthenticated = authenticatedApps.get(currentPackageName);
+                    Log.d("Condec App Block", "Authenticated: " + isAuthenticated);
                     if (isAuthenticated == null || !isAuthenticated) {
+                        Log.d("Condec App Block", "isLockActivityRunning: " + isLockActivityRunning);
                         if (!isLockActivityRunning) {
+                            Log.d("Condec App Block", "Password Prompt Shown ");
                             isLockActivityRunning = true;
                             Intent lockIntent = new Intent(this, PasswordPromptActivity.class);
                             lockIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -161,16 +185,25 @@ public class CondecBlockingService extends Service {
     }
 
     public void resetLockState() {
+
         isLockActivityRunning = false;
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
         unregisterReceiver(unlockReceiver);
         handler.removeCallbacks(runnable);
         stopForeground(true);
         authenticatedApps.clear();
+
+        sharedPreferences = getSharedPreferences("condecPref", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("condecBlockingServiceStatus", false);
+        editor.apply();
+
     }
 
     @Override

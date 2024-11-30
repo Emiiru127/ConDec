@@ -23,6 +23,7 @@ public class PinController {
         this.numpadView = numpadView;
 
         this.numpadView.setController(this);
+        this.pinView.setPinCursor();
 
     }
 
@@ -33,6 +34,7 @@ public class PinController {
         this.numpadView = numpadView;
 
         this.numpadView.setController(this);
+        this.pinView.setPinCursor();
 
     }
 

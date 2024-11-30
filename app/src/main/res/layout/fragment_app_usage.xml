@@ -36,18 +36,27 @@
                 android:text="App Usage"
                 android:textColor="@color/blue_main_background"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/button6"
-                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintEnd_toStartOf="@+id/btnTipAppUsage"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/button6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="\?"
+            <ImageButton
+                android:id="@+id/btnTipAppUsage"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:adjustViewBounds="true"
+                android:backgroundTint="@color/transparent"
+                android:gravity="center|right"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_question_mark"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                app:cornerRadius="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/textView"
                 app:layout_constraintTop_toTopOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout

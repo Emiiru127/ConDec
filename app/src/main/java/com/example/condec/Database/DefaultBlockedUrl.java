@@ -1,9 +1,10 @@
 package com.example.condec.Database;
 
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "default_blocked_urls")
+@Entity(tableName = "default_blocked_urls", indices = {@Index(value = "url", unique = true)})
 public class DefaultBlockedUrl {
     @PrimaryKey(autoGenerate = true)
     private int id;

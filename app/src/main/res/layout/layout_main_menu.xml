@@ -193,17 +193,17 @@
         </LinearLayout>
     </LinearLayout>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSleep"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@color/transparent"
         android:text="Sleep Off"
-        android:textColor="@color/sleep_icon"
+        android:textColor="@color/sleep_icon_off"
         app:icon="@drawable/icon_sleep_time"
         app:iconGravity="top"
         app:iconSize="30dp"
-        app:iconTint="@color/sleep_icon"
+        app:iconTint="@color/sleep_icon_off"
         app:layout_constraintBottom_toTopOf="@+id/constraintLayout5"
         app:layout_constraintEnd_toEndOf="parent" />
 
