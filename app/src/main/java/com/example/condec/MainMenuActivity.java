@@ -7,9 +7,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
@@ -31,7 +36,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private boolean isServiceActive = false;
 
     private SurfaceView surfaceView;
+    private Surface surface;
     boolean isBinded = false;
+    boolean hasAllowedScreenCapture = false;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -39,8 +46,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
             CondecService.LocalBinder binder = (CondecService.LocalBinder) service;
             condecService = binder.getService();
 
-            condecService.setSurfaceView(surfaceView);
-
+            condecService.setSurface(surface);
             isBinded = true;
 
         }
@@ -71,6 +77,20 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         this.surfaceView = findViewById(R.id.screenView);
         this.surfaceView.setZOrderOnTop(true);
+        this.surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                surface = holder.getSurface();
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                surface = null;
+            }
+        });
 
         update();
 
@@ -82,7 +102,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         if (condecService != null){
 
-            this.condecService.setSurfaceView(this.surfaceView);
+            //this.condecService.setSurface(this.surface);
 
         }
 
@@ -111,24 +131,55 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void toggleService(){
 
-        this.isServiceActive = !this.isServiceActive;
-/*
-        if (this.isSystemActive == true){
+        if (this.isServiceActive == false){
 
-
+            requestCapturePermission();
 
         }
+        else if(this.isServiceActive == true){
 
+            stopCondecService();
+            this.isServiceActive = false;
+            clearSurface();
+
+        }
+/*
         SharedPreferences.Editor editor = this.condecPreferences.edit();
         editor.putBoolean("isSystemActive", this.isSystemActive);
         editor.apply();*/
 
     }
 
+    private void clearSurface() {
+
+        SurfaceHolder surfaceHolder = this.surfaceView.getHolder();
+        Surface surface = this.surfaceView.getHolder().getSurface();
+
+        if (surface != null && surface.isValid()) {
+            Canvas canvas = null;
+            try {
+                canvas = surfaceHolder.lockCanvas();
+                if (canvas != null) {
+                    canvas.drawColor(Color.BLACK);
+                }
+            }
+            catch (IllegalArgumentException exception){
+
+                System.out.println("Ilegal Argument Error");
+
+            }
+            finally {
+                if (canvas != null) {
+                    surfaceHolder.unlockCanvasAndPost(canvas);
+                }
+            }
+        }
+    }
+
     private void requestCapturePermission(){
 
-        boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
-        hasAllowedScreenCapture = false;
+        //hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
+        //hasAllowedScreenCapture = false;
         if (hasAllowedScreenCapture == false){
 
             System.out.println("REQUESTING MEDIA PROJECTION PERMISSION");
@@ -143,10 +194,12 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     private void startService(int screenCaptureResultCode, Intent screenCaptureIntent)  {
 
-        boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
+        //boolean hasAllowedScreenCapture = this.condecPreferences.getBoolean("hasAllowedScreenCapture", false);
 
-        hasAllowedScreenCapture = false;
-        if (hasAllowedScreenCapture == false){
+        if (hasAllowedScreenCapture == true){
+
+            this.isServiceActive = true;
+            update();
 
            // int screenCaptureResultCode = this.condecPreferences.getInt("screenCaptureResultCode", 0);
             //String serializedScreenCaptureIntent = this.condecPreferences.getString("savedScreenCaptureIntent", null);
@@ -164,18 +217,34 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
+    private void stopCondecService()  {
+
+        if (isBinded == true){
+
+            unbindService(this.serviceConnection);
+            this.hasAllowedScreenCapture = false;
+            this.isServiceActive = false;
+            this.isBinded = false;
+
+            Intent serviceIntent = new Intent(this, CondecService.class);
+            stopService(serviceIntent);
+
+        }
+
+    }
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CAPTURE_CODE) {
             if (resultCode == RESULT_OK) {
                 // Get the MediaProjection
-
+                this.hasAllowedScreenCapture = true;
                 boolean hasAllowedScreenCapture = false; // FORCED CODE
                 int screenCaptureResultCode = resultCode;
                 String serializedIntent = data.toUri(Intent.URI_INTENT_SCHEME);
 
-
                 startService(resultCode, data);
+
 
                 SharedPreferences.Editor editor = condecPreferences.edit();
                 editor.putBoolean("hasAllowedScreenCapture", hasAllowedScreenCapture);
@@ -186,6 +255,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 // Continue with using the mediaProjection object
             } else {
                 // User denied permission
+                this.hasAllowedScreenCapture = false;
             }
         }
     }
@@ -195,9 +265,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
         if (this.btnServiceStatus == view || this.imgViewServiceStatus == view){
 
-            this.isServiceActive = !this.isServiceActive;
-            //startMainSystem();
-            requestCapturePermission();
+            toggleService();
             update();
 
         }

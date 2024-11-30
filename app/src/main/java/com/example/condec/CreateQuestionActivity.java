@@ -151,6 +151,13 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
         String enteredPin = this.editTxtAnswer.getText().toString().trim();
         String reEnteredPin = this.editTxtReAnswer.getText().toString().trim();
 
+        if (checkString(this.editTxtQuestion.getText().toString().trim()) == false){
+
+            Toast.makeText(CreateQuestionActivity.this, "INVALID Question", Toast.LENGTH_SHORT).show();
+            return;
+
+        }
+
         if (enteredPin.equals(reEnteredPin)){
 
             Toast.makeText(CreateQuestionActivity.this, "VALID: Backup Password", Toast.LENGTH_SHORT).show();
@@ -224,12 +231,7 @@ public class CreateQuestionActivity extends AppCompatActivity implements View.On
 
         for(int i = 0; i < data.length(); i++){
 
-            if (data.charAt(i) == ' '){
-
-                check = false;
-
-            }
-            else {
+            if (data.charAt(i) != ' '){
 
                 check = true;
                 break;

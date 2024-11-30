@@ -10,7 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
 import android.media.ImageReader;
@@ -24,6 +27,8 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -43,6 +48,7 @@ public class CondecService extends Service {
     private ImageReader imageReader;
 
     private SurfaceView surfaceView;
+    private Surface surface;
 
     private int resultCode;
     private Intent data;
@@ -141,10 +147,10 @@ public class CondecService extends Service {
         }, null);*/
     }
 
-    public void setSurfaceView(SurfaceView surfaceView){
+    public void setSurface(Surface surface){
         System.out.println("Adding Surface");
-        this.surfaceView = surfaceView;
-        this.virtualDisplay.setSurface(this.surfaceView.getHolder().getSurface());
+        this.surface = surface;
+        this.virtualDisplay.setSurface(this.surface);
         System.out.println("Added Surface");
     }
 
@@ -154,6 +160,20 @@ public class CondecService extends Service {
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+    }
+
+    private void stopProjection() {
+
+        if (virtualDisplay != null) {
+            virtualDisplay.release();
+            virtualDisplay = null;
+        }
+
+        if (mediaProjection != null) {
+            mediaProjection.stop();
+            mediaProjection = null;
+        }
+
     }
 
     @Override
@@ -178,6 +198,20 @@ public class CondecService extends Service {
 
         return binder;
 
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        // Handle service unbinding
+        stopProjection();
+        stopSelf(); // Optionally stop the service when unbound
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopProjection();
     }
 
 }
